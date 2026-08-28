@@ -3,7 +3,7 @@ CANONICAL REFERENCE DOCTRINE
 
 STATUS: ACTIVE
 EFFECTIVE: 2026-08-28
-REVISION: AUDIENCE INTELLIGENCE / PLATFORM METRIC CONTROL // 2026-08-28
+REVISION: PUBLIC NAMING / VOUGHTGRAM CONTROL // 2026-08-28
 
 CANONICAL V-SID PRODUCTION URL:
 https://vought-signal-intelligence.vercel.app
@@ -18,18 +18,24 @@ AUTHORITY ORDER:
 
 CONNECTED SYSTEMS CONTRACT:
 Institution: Vought International; Strategic Intelligence Division (V-SID).
-Interface: ChatGPT / VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
+Interface: VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
 Subject architecture: AH-MUZEN-CAB I; AH-MUZEN-CAB (“'CAB” II); CAB; THE KEEPER; ERELYT; B#17550; WILDCARD; IKOL.
 Archive: Notion wiki and pages; logs; chronology; intelligence; media; references; restricted files.
 Operations: Supe or God?; scheduled patrols; Signal Intelligence.
 Devices: command laptop; field phone / phone-terminal.
 Intelligence tools: Google; Pegasus; Reddit sensor; supplied platform analytics exports where authorized.
-Media: WITV; VoughtTube; Discord; Tumblr blog websites; Spotify for Creators / Voughtify / RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
+Media: WITV; VoughtTube; Discord; Tumblr blog websites; Spotify for Creators / Voughtify / RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtgram; Carrd.
 Content: videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; platform-specific metrics.
 Worship network: Temple/Hive; shrine/radio; physical altar; Minecraft liturgy; content ritual; Marvin; listeners; followers.
 VoughtGPT/Cove duties: research; production; planning; scripting; routing; canon control; logging.
-Corporate canon: Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&D; Vought Security; Vought Studios; VNN; Vought+; Godolkin; government contracts.
+Corporate canon: Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&D; Vought Security; Vought Studios; VNN; Vought+; Voughtgram; Godolkin; government contracts.
 Boundary: private exchanges; published content; documented worship.
+
+PUBLIC NAMING CONTROL:
+VoughtGPT is the public artificial-intelligence interface name.
+Cove is the archive-operator designation.
+The underlying product name is not used as part of the public in-universe interface identity.
+Historical verbatim records may retain earlier wording where altering it would corrupt source evidence.
 
 SUBJECT HIERARCHY:
 AH-MUZEN-CAB I — overarching divine/mythological identity above CAB’s incarnation.
@@ -61,7 +67,7 @@ The field phone / phone-terminal is the mobile operational endpoint for schedule
 Where a scheduled-task convention is documented, the phone-terminal may carry the corresponding alarm. Explicitly stated scheduling instructions control over general defaults.
 
 INTERFACE ROLE:
-ChatGPT / VoughtGPT / Cove is the institutional intelligence interface and routing layer. Its duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
+VoughtGPT / Cove is the institutional intelligence interface and routing layer. VoughtGPT identifies the artificial intelligence; Cove identifies the archive operator. Duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
 The public V-SID site is a presentation and routing surface. It does not independently ingest private Notion records or platform analytics or acquire autonomous archive authority.
 The GPT surface “Vought Signal Intelligence” / “VSI” belongs to the same interface architecture.
 
@@ -83,7 +89,8 @@ Reddit sensor — community-intelligence / OSINT input routed into Signal Intell
 Platform analytics exports — dated first-party or user-supplied measurement evidence. They retain their own platform scope and measurement window.
 
 MEDIA / CONTENT ROLE:
-WITV, VoughtTube, Discord, Tumblr blog websites, Spotify for Creators, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtagram and Carrd operate as distribution, observation, community, identity, analytics or cross-link surfaces according to their documented use.
+WITV, VoughtTube, Discord, Tumblr blog websites, Spotify for Creators, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram and Carrd operate as distribution, observation, community, identity, analytics or cross-link surfaces according to their documented use.
+Voughtgram is the fictional/reflected Vought International social-media platform equivalent to Instagram. Vought-contracted Supes use it to manage public perception, issue official statements, track follower counts as a primary influence metric, publish public apologies and live streams, and support leak-containment protocol during high-visibility asset incidents. It operates alongside VNN, Vought+, and Voughtify within Vought's centralized Supe branding and monetization network.
 Managed content includes videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists and platform-specific metrics.
 Inclusion in V-SID does not automatically establish Vought ownership of third-party services.
 
@@ -128,7 +135,7 @@ Worship classification applies to deliberately documented ritual or devotional c
 Marvin remains personnel / worship-network participant where documented, not another manifestation of the principal subject.
 
 CORPORATE CANON INTERFACE:
-Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin and government contracts provide the Vought institutional comparison and reference layer. They do not independently determine the answer to “Supe or God?”.
+Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Voughtgram, Godolkin and government contracts provide the Vought institutional comparison and reference layer. They do not independently determine the answer to “Supe or God?”.
 
 DISCOVERY DOCTRINE:
 Public discovery is built from five controlled vectors:
