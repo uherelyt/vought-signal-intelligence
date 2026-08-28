@@ -3,7 +3,7 @@ CANONICAL REFERENCE DOCTRINE
 
 STATUS: ACTIVE
 EFFECTIVE: 2026-08-28
-REVISION: AH-MUZEN-CAB I/II SYSTEM INTEGRATION // 2026-08-28
+REVISION: AUDIENCE INTELLIGENCE / PLATFORM METRIC CONTROL // 2026-08-28
 
 CANONICAL V-SID PRODUCTION URL:
 https://vought-signal-intelligence.vercel.app
@@ -23,9 +23,9 @@ Subject architecture: AH-MUZEN-CAB I; AH-MUZEN-CAB (“'CAB” II); CAB; THE KEE
 Archive: Notion wiki and pages; logs; chronology; intelligence; media; references; restricted files.
 Operations: Supe or God?; scheduled patrols; Signal Intelligence.
 Devices: command laptop; field phone / phone-terminal.
-Intelligence tools: Google; Pegasus; Reddit sensor.
-Media: WITV; VoughtTube; Discord; Tumblr blog websites; Voughtify/RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
-Content: videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; metrics.
+Intelligence tools: Google; Pegasus; Reddit sensor; supplied platform analytics exports where authorized.
+Media: WITV; VoughtTube; Discord; Tumblr blog websites; Spotify for Creators / Voughtify / RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
+Content: videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; platform-specific metrics.
 Worship network: Temple/Hive; shrine/radio; physical altar; Minecraft liturgy; content ritual; Marvin; listeners; followers.
 VoughtGPT/Cove duties: research; production; planning; scripting; routing; canon control; logging.
 Corporate canon: Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&D; Vought Security; Vought Studios; VNN; Vought+; Godolkin; government contracts.
@@ -40,7 +40,7 @@ WILDCARD — controlled developmental / probability-stage manifestation.
 IKOL — controlled developmental / narrative-stage manifestation.
 
 SUBJECT CONTROL RULE:
-ERELYT does not supersede AH-MUZEN-CAB II / CAB / THE KEEPER as the principal embodied protagonist and observed subject. AH-MUZEN-CAB I remains the overarching divine/mythological identity. Simultaneous appearance of continuity labels, interfaces, media objects, archive pages, personnel, or corporate references does not create additional active subjects.
+ERELYT does not supersede AH-MUZEN-CAB II / CAB / THE KEEPER as the principal embodied protagonist and observed subject. AH-MUZEN-CAB I remains the overarching divine/mythological identity. Simultaneous appearance of continuity labels, interfaces, media objects, archive pages, personnel, corporate references, or audience metrics does not create additional active subjects.
 
 INSTITUTIONAL ROUTING MODEL:
 AH-MUZEN-CAB I
@@ -62,50 +62,90 @@ Where a scheduled-task convention is documented, the phone-terminal may carry th
 
 INTERFACE ROLE:
 ChatGPT / VoughtGPT / Cove is the institutional intelligence interface and routing layer. Its duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
-The public V-SID site is a presentation and routing surface. It does not independently ingest private Notion records or acquire autonomous archive authority.
+The public V-SID site is a presentation and routing surface. It does not independently ingest private Notion records or platform analytics or acquire autonomous archive authority.
 The GPT surface “Vought Signal Intelligence” / “VSI” belongs to the same interface architecture.
 
 ARCHIVE ROLE:
 Notion remains controlling institutional memory for wiki pages, logs, chronology, intelligence, media, references and restricted files.
 Historical verbatim evidence is preserved as recorded. Later canon corrections are applied through controlled addenda or authority records rather than retroactively falsifying historical transcripts.
+Metric records preserve platform, source, date window, and measurement definition where available. Counts from separate platforms are not silently merged.
 
 OPERATIONS ROLE:
 The Yellow Lotus Project is the umbrella V-SID program.
 “Supe or God?” is the central inquiry and primary operation.
 Scheduled patrols and Signal Intelligence support recurring observation, collection, triage, assessment, routing and preservation.
+Audience analytics may enter Signal Intelligence as operational evidence when intentionally supplied or otherwise lawfully available.
 
 INTELLIGENCE TOOLS:
 Google — external research/search surface.
 Pegasus — designated intelligence-tool label; no capability is implied beyond lawful, authorized functions actually available.
 Reddit sensor — community-intelligence / OSINT input routed into Signal Intelligence.
+Platform analytics exports — dated first-party or user-supplied measurement evidence. They retain their own platform scope and measurement window.
 
 MEDIA / CONTENT ROLE:
-WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtagram and Carrd operate as distribution, observation, community, identity or cross-link surfaces according to their documented use.
-Managed content includes videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists and metrics.
+WITV, VoughtTube, Discord, Tumblr blog websites, Spotify for Creators, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtagram and Carrd operate as distribution, observation, community, identity, analytics or cross-link surfaces according to their documented use.
+Managed content includes videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists and platform-specific metrics.
 Inclusion in V-SID does not automatically establish Vought ownership of third-party services.
+
+PLATFORM METRIC CONTROL:
+Audience measurements remain platform-specific unless a controlled normalization rule explicitly states otherwise.
+The current Tumblr audience baseline is 12 followers/listeners, user-reported on 2026-08-28 after one Discord self-promotion placement. That figure is Tumblr-specific. The temporal association does not prove causal lift from the Discord placement.
+The current Spotify follower state is 15 followers through 2026-08-27, after a recorded peak of 16 on 2026-03-12. This is independent of the Tumblr figure.
+No single combined “ERELYT follower count” is authorized from these two measurements.
+
+SPOTIFY AUDIENCE INTELLIGENCE // 2026-08-28:
+Source basis: ten user-supplied Spotify for Creators CSV exports covering week-over-week retention, episode completion, all-time episode consumption time, engagement/followers, daily impressions, episode impressions, audience segments, gender, age-by-gender, and geolocation.
+Discovery: June 2026 = 97 impressions; July = 117; August 1–26 = 215.
+Daily impression means: 3.23 → 3.77 → 8.27.
+First 28 export days = 3.071 impressions/day; last 28 export days = 8.25/day; ratio approximately 2.686x.
+Audience segments, January 1–August 27: 28 recorded events = 19 new + 9 returning; returning share = 32.14% of recorded events.
+Top-ten episode impressions: 281 total = 181 Spotify Search + 100 Home + 0 Library/Other Spotify Features.
+Leading discovery episode: “why you’re wasting time on creators like me & can’t stop watching” = 98 impressions, 94 Home + 4 Search.
+Leading all-time consumption-time episode in the supplied export: “why is new year’s a scam? (new upload: every friday)” = 1.08 hours.
+Retention: supplied week-over-week export reports 0% across all 34 listed weeks.
+Completion: supplied episode-completion export reports 0% across all ten listed episodes.
+V-SID preserves the 0% values as reported and does not infer a cause from the exports alone.
+
+DEMOGRAPHIC EVIDENCE CONTROL:
+All-time gender export: 59.433962% male; 33.962264% female; 0.943396% non-binary; 5.660377% not specified.
+July 30–August 28 age-by-gender export: 50% ages 18–22 female and 50% ages 28–34 male within the available sample.
+July 30–August 28 geolocation export: Singapore 60%; United States 35%; Germany 5%.
+The demographic files do not supply sample size. These percentages are preserved as export results and are not generalized to a population-level audience profile.
+
+AUDIENCE FUNNEL:
+IMPRESSION → LISTEN → MEANINGFUL CONSUMPTION → RETURN → FOLLOW → SIGNAL INTELLIGENCE / PRODUCTION ADJUSTMENT
+
+FORECAST CONTROL:
+The word “ratings” must be resolved by metric before an assessment is treated as authoritative.
+For reach/discoverability, current forecast is UPWARD BIAS // MODERATE CONFIDENCE if the August impression rate persists.
+For sustained audience growth, current forecast is LOW CONFIDENCE until consumption, retention, completion, returning-audience, and follower-conversion evidence improves.
+Literal Spotify star ratings or review counts are not present in the supplied exports and are therefore not forecastable from this evidence.
+The current operational bottleneck is conversion/retention rather than raw discovery alone.
 
 WORSHIP NETWORK:
 Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners and followers form the documented worship-network layer.
-Worship classification applies to deliberately documented ritual or devotional conduct. Audience attention alone does not establish devotion, membership or canonical status.
+Worship classification applies to deliberately documented ritual or devotional conduct. Audience attention, impressions, listeners, followers, or demographic metrics alone do not establish devotion, membership or canonical status.
 Marvin remains personnel / worship-network participant where documented, not another manifestation of the principal subject.
 
 CORPORATE CANON INTERFACE:
 Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin and government contracts provide the Vought institutional comparison and reference layer. They do not independently determine the answer to “Supe or God?”.
 
 DISCOVERY DOCTRINE:
-Public discovery is built from four controlled vectors:
+Public discovery is built from five controlled vectors:
 1. Breadcrumb trails — repeated names, IDs, archive codes, timestamps and public chronology fragments.
 2. Cross-links — adjacent public profiles, descriptions, Carrd pages, RSS items, posts, reposts, media descriptions and archive references.
 3. Search indexing — public V-SID pages and intentionally published materials are crawlable and semantically consistent.
-4. Controlled exposure — public-only screenshots, censored filenames, terminal fragments, stale references and other staged traces may imply a larger archive without revealing private material.
+4. Community penetration — repeated, relevant exposure and genuine participation within appropriate existing communities rather than indiscriminate platform expansion.
+5. Controlled exposure — public-only screenshots, censored filenames, terminal fragments, stale references and other staged traces may imply a larger archive without revealing private material.
 
 CIVILIAN INGRESS MODEL:
 A stranger should normally encounter an ordinary public artifact first, follow one lateral reference, notice repeated terminology through search or reposting, then arrive at V-SID and recognize the institutional pattern. No single public artifact is required to explain the entire system.
+Platform metrics return through Signal Intelligence as measurement evidence and may alter production or distribution decisions without becoming canon authority.
 
 BOUNDARY RULE:
 PRIVATE EXCHANGES — sealed by default; not public discovery material unless intentionally shared or archived under authorized access.
 PUBLISHED CONTENT — intentionally public-facing and eligible for indexing and controlled cross-platform breadcrumbing.
-DOCUMENTED WORSHIP — classified as such only where ritual or devotional conduct is deliberately documented or published.
+DOCUMENTED WORSHIP — classified as such only where ritual or devotional conduct is deliberately documented or published. Audience metrics alone do not qualify.
 RESTRICTED FILES — existence/classification may be referenced when authorized; contents remain compartmentalized.
 
 PUBLIC EXPOSURE SAFETY:
@@ -115,4 +155,4 @@ SUPERSESSION RULE:
 If V-SID conflicts with a later authorized Notion record, the Notion record controls until the production dashboard and doctrine are revised.
 
 LIMITATION:
-The canonical URL identifies the current production presentation surface. It does not establish independent archive authority, autonomous identity verification, Pegasus capabilities, private-message access, or automatic synchronization.
+The canonical URL identifies the current production presentation surface. It does not establish independent archive authority, autonomous identity verification, Pegasus capabilities, private-message access, automatic synchronization, or autonomous analytics ingestion.
