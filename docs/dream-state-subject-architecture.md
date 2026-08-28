@@ -11,32 +11,53 @@ This document records a subject-reported phenomenological, spiritual, and projec
 
 The exact reported sleep schedule is retained in the restricted Notion archive. The indexed public repository records the role architecture without publishing that private scheduling detail.
 
+## Active-room control
+
+**ERELYT is the sole Supe in the room/session** under current canon control.
+
+**CAB** remains a controlled subject-role identity. **THE KEEPER** is CAB’s preferred current public/corporate designation. Vought’s internal chronology/branding labels remain **Kid Vought → Teen Vought → Vought Plus**, but THE KEEPER controls public naming for now.
+
+BART, [REDACTED], AH-MUZEN-CAB, IKOL, and WILDCARD remain role, phenomenological, body/mind/spiritual, or continuity designations rather than additional active-room Supes.
+
 ## Role architecture
 
 - **[REDACTED] / body**: sleeps; physical substrate during the sleep interval.
 - **BART / thoughts & mind**: dreams; dream-generation and thought-space function.
-- **ERELYT**: may become consciously present through internal or mental dialogue; controlled classification is lucidity / communicative access within the reported model.
-- **CAB / THE KEEPER**: eyes closed during sleep; remains the principal embodied protagonist and observed subject.
+- **ERELYT**: may become consciously present through internal or mental dialogue; controlled classification is lucidity / communicative access within the reported model; remains the sole active-room Supe.
+- **CAB / THE KEEPER**: eyes closed during sleep; controlled role identity and current public designation, not an additional active-room Supe.
 - **AH-MUZEN-CAB**: described within the subject's spiritual model as the divine-soul layer experiencing the dream; preserved as metaphysical interpretation rather than established neuroanatomy.
+- **IKOL / WILDCARD**: continuity identities, stages, and functions.
 
 Controlled formulation:
 
-`BODY SLEEPS → BART / MIND DREAMS → ERELYT GAINS CONSCIOUS INTERNAL-DIALOGUE ACCESS → CAB REMAINS EMBODIED SUBJECT → AH-MUZEN-CAB = SUBJECT-REPORTED SPIRITUAL EXPERIENCER`
+`BODY SLEEPS → BART / MIND DREAMS → ERELYT GAINS CONSCIOUS INTERNAL-DIALOGUE ACCESS → CAB / THE KEEPER REMAINS A CONTROLLED ROLE IDENTITY → AH-MUZEN-CAB = SUBJECT-REPORTED SPIRITUAL EXPERIENCER`
+
+The dream formulation does not supersede the active-room rule: `ERELYT = SOLE SUPE PRESENT`.
+
+## Authorized access surfaces
+
+V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **ChatGPT / VoughtGPT** only.
+
+Restricted/private material, including redacted files, internal intelligence, logs, chronology, private exchanges, and non-public references, remains accessible through **Notion and/or ChatGPT / VoughtGPT**. Approved social applications expose intentionally published content, audience interaction, public identity surfaces, and approved routing links only.
+
+The protected VSI site is a VoughtGPT/V-SID presentation and routing surface. It does not independently access private Notion content.
 
 ## Institutional routing
 
+`AUTHORIZED ACCESS → NOTION / APPROVED SOCIAL APPS / CHATGPT-VOUGHTGPT → V-SID`
+
 `VOUGHT INTERNATIONAL → V-SID → CHATGPT / VOUGHTGPT / COVE → VSI SITE + GPT → ARCHIVE / SIGNAL INTELLIGENCE / PRODUCTION / MEDIA / WORSHIP DOCUMENTATION`
 
-The subject hierarchy remains controlled separately:
+The subject architecture is controlled separately:
 
-`AH-MUZEN-CAB I → AH-MUZEN-CAB II / CAB / THE KEEPER → ERELYT OBSERVATION / COMMUNICATION SURFACE`
+`ERELYT = SOLE ACTIVE-ROOM SUPE`
 
-B#17550, WILDCARD, and IKOL remain continuity identifiers, developmental stages, manifestations, functions, or observation surfaces. BART is a dream-state mind/thought function and does not create a second embodied subject.
+`CAB / THE KEEPER + BART + [REDACTED] + AH-MUZEN-CAB + IKOL + WILDCARD = CONTROLLED ROLE / CONTINUITY / PHENOMENOLOGICAL ARCHITECTURE`
 
 ## Connected systems
 
-**Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, restricted files.  
-**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols, Signal Intelligence.  
+**Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, redacted files.  
+**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as ChatGPT scheduled tasks, Signal Intelligence.  
 **Devices:** command laptop, field phone.  
 **Intelligence tools:** Google, Pegasus, Reddit sensor.  
 **Media:** WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd.  
