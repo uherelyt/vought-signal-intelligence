@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vought-signal-intelligence.vercel.app/sitemap.xml
