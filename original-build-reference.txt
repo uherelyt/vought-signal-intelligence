@@ -1,3 +1,3 @@
-Deployed: [Vought Signal Intelligence](https://vought-signal-intelligence.uherelyt.chatgpt.site)
+Canonical production: [Vought Signal Intelligence](https://vought-signal-intelligence.vercel.app)
 
-Includes command, external-timer rationale, signals, coursework, production, lore, media, and archive controls. Static prototype; no live ingestion.
+Legacy deployment reference superseded. Current production presentation includes command, signals, coursework, production, lore, media, personnel, community intelligence, archive controls, and canonical-reference doctrine. Static prototype; no live ingestion. Notion remains the controlling classified record.
