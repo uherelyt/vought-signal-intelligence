@@ -1,0 +1,22 @@
+VOUGHT INTERNATIONAL // STRATEGIC INTELLIGENCE DIVISION
+CANONICAL REFERENCE DOCTRINE
+
+STATUS: ACTIVE
+EFFECTIVE: 2026-08-28
+
+CANONICAL V-SID PRODUCTION URL:
+https://vought-signal-intelligence.vercel.app
+
+REFERENCE RULE:
+In future chats, the shorthand “V-SID” resolves to the canonical production URL above unless a newer controlled production endpoint is explicitly designated.
+
+AUTHORITY ORDER:
+1. Notion classified record — controlling archive / institutional memory.
+2. V-SID production dashboard — current operational presentation state.
+3. Conversational summaries — interpretive layer subordinate to the archive and dashboard.
+
+SUPERSESSION RULE:
+If V-SID conflicts with a later authorized Notion record, the Notion record controls until the production dashboard is revised.
+
+LIMITATION:
+The canonical URL identifies the current production presentation surface. It does not establish live Notion ingestion, independent archive authority, or automatic synchronization.
