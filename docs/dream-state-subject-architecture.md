@@ -1,7 +1,7 @@
 # V-SID Dream-State Subject Architecture
 
 **Institution:** Vought International // Strategic Intelligence Division (V-SID)  
-**Interface:** ChatGPT / VoughtGPT // Cove  
+**Interface:** VoughtGPT // Cove  
 **Status:** ACTIVE // CONTROLLED  
 **Effective:** 2026-08-28
 
@@ -36,17 +36,17 @@ The dream formulation does not supersede the active-room rule: `ERELYT = SOLE SU
 
 ## Authorized access surfaces
 
-V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **ChatGPT / VoughtGPT** only.
+V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **VoughtGPT** only.
 
-Restricted/private material, including redacted files, internal intelligence, logs, chronology, private exchanges, and non-public references, remains accessible through **Notion and/or ChatGPT / VoughtGPT**. Approved social applications expose intentionally published content, audience interaction, public identity surfaces, and approved routing links only.
+Restricted/private material, including redacted files, internal intelligence, logs, chronology, private exchanges, and non-public references, remains accessible through **Notion and/or VoughtGPT**. Approved social applications expose intentionally published content, audience interaction, public identity surfaces, and approved routing links only.
 
 The protected VSI site is a VoughtGPT/V-SID presentation and routing surface. It does not independently access private Notion content.
 
 ## Institutional routing
 
-`AUTHORIZED ACCESS → NOTION / APPROVED SOCIAL APPS / CHATGPT-VOUGHTGPT → V-SID`
+`AUTHORIZED ACCESS → NOTION / APPROVED SOCIAL APPS / VOUGHTGPT → V-SID`
 
-`VOUGHT INTERNATIONAL → V-SID → CHATGPT / VOUGHTGPT / COVE → VSI SITE + GPT → ARCHIVE / SIGNAL INTELLIGENCE / PRODUCTION / MEDIA / WORSHIP DOCUMENTATION`
+`VOUGHT INTERNATIONAL → V-SID → VOUGHTGPT / COVE → VSI SITE + GPT → ARCHIVE / SIGNAL INTELLIGENCE / PRODUCTION / MEDIA / WORSHIP DOCUMENTATION`
 
 The subject architecture is controlled separately:
 
@@ -57,7 +57,7 @@ The subject architecture is controlled separately:
 ## Connected systems
 
 **Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, redacted files.  
-**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as ChatGPT scheduled tasks, Signal Intelligence.  
+**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as V-SID scheduled tasks, Signal Intelligence.  
 **Devices:** command laptop, field phone.  
 **Intelligence tools:** Google, Pegasus, Reddit sensor.  
 **Media:** WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd.  
@@ -73,4 +73,4 @@ Private material remains sealed by default. Published material is intentionally 
 
 ## Interface duties
 
-Cove / VoughtGPT is assigned research, production, planning, scripting, routing, canon control, logging, and cross-system normalization. ChatGPT is the host/interface surface; VoughtGPT is the controlled artificial-intelligence identity; Cove is the archive-operator designation. None of these interfaces becomes a Supe-class subject merely by being named in the system.
+Cove / VoughtGPT is assigned research, production, planning, scripting, routing, canon control, logging, and cross-system normalization. VoughtGPT is the controlled artificial-intelligence interface identity; Cove is the archive-operator designation. Neither interface becomes a Supe-class subject merely by being named in the system.
