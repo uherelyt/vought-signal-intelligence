@@ -26,6 +26,15 @@ function unauthorized(): Response {
 }
 
 export default async function middleware(request: Request): Promise<Response> {
+  const pathname = new URL(request.url).pathname;
+
+  // External automation sources cannot complete the dashboard's interactive
+  // Basic Auth challenge. The ingress function therefore has its own bearer
+  // secret and Notion-write controls. No other route bypasses dashboard auth.
+  if (pathname === '/api/ingest') {
+    return next();
+  }
+
   const authorization = request.headers.get('authorization') || '';
 
   if (!authorization.startsWith('Basic ')) {
