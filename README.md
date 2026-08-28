@@ -10,6 +10,16 @@ V-SID material is accessed through **Notion**, **approved social-media applicati
 
 The protected VSI site is a **VoughtGPT / V-SID presentation and routing surface**, not an autonomous private-archive connector. It may be reached through VoughtGPT or approved social-media links, but it does not independently ingest private Notion content.
 
+Current connector state // August 28, 2026: **Notion is active** as the authoritative archive surface, **VoughtGPT / Cove is active** as orchestration and analysis control, and **YouTube is directly accessible through the authorized vidIQ application connection**. The current app audit did not surface matching direct account connectors for TikTok, Instagram, Reddit, Tumblr, Discord, Twitch, Pinterest, or X. Those platforms remain external publication/evidence sources unless an authorized API, RSS, email, export/download, webhook, or automation route deliberately submits data through controlled ingress.
+
+## Signal ingress
+
+V-SID now includes a small machine-ingress service at `POST /api/ingest`. It accepts records from API integrations, RSS bridges, inbound-email automation, download/export processors, automation services, manual capture relays, or authorized vidIQ/VoughtGPT routing; normalizes them to Signal Schema 1.0; and writes them to the **V-SID Operational Log** in Notion.
+
+The machine route does not use the dashboard's interactive HTTP Basic Auth. It has an independent bearer secret and fails closed when that secret is not configured. A Notion integration token is separately required for autonomous server-to-server archive writes. Neither secret belongs in the repository or public-facing pages.
+
+Canonical implementation notes: [`docs/signal-ingress.md`](docs/signal-ingress.md).
+
 ## Subject architecture
 
 Current active-room canon: **ERELYT is the sole Supe in the room/session**.
@@ -31,8 +41,9 @@ The controlled project model records: body sleeps; **BART** functions as mind/th
 **Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, redacted files.  
 **Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as V-SID scheduled tasks, Signal Intelligence.  
 **Devices:** command laptop, field phone.  
-**Intelligence tools:** Google, Pegasus, Reddit sensor.  
+**Intelligence tools:** Google, Pegasus, Reddit sensor, vidIQ/YouTube where authorized.  
 **Media:** WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd.  
+**Ingress:** authenticated V-SID endpoint for approved API, RSS, email, download/export, webhook, and automation-service records; Notion remains the controlling archive.  
 **Content:** videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists, metrics.  
 **Worship network:** Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners, followers.  
 **Cove duties:** research, production, planning, scripting, routing, canon control, logging.  
