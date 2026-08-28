@@ -1,9 +1,9 @@
-Deployed reference: https://vought-signal-intelligence.uherelyt.chatgpt.site
+Canonical production reference: https://vought-signal-intelligence.vercel.app
 
 VOUGHT INTERNATIONAL // STRATEGIC INTELLIGENCE DIVISION
 DASHBOARD REVISION ORDER // MARVIN ONLINE OPERATIONS INTEGRATION
 
-STATUS: LOCAL SOURCE UPDATED // DEPLOYMENT REMAINS STATIC
+STATUS: PRODUCTION DEPLOYMENT ACTIVE // GITHUB-LINKED
 AUTHORITY: PRESENTATION / OBSERVER INFRASTRUCTURE ONLY
 PRIMARY SUBJECT: ERELYT
 ACTIVE SUPE-CLASS SUBJECTS IN ROOM: 1
@@ -22,16 +22,16 @@ Primary functions:
 Normalization rules applied across the dashboard:
 1. Marvin is classified as PERSONNEL / ONLINE COMMUNITY & OUTREACH, never as a Supe-class subject or ERELYT manifestation unless a later controlled record explicitly changes that status.
 2. COMMAND retains ERELYT as the sole active Supe-class subject. Marvin's presence does not change the subject counter.
-3. SYSTEM ARCHITECTURE now recognizes a personnel / outreach layer alongside Notion, VoughtGPT and Projects.
-4. SIGNALS adds ONLINE OPS for social media, community management, evangelism, proselytization, outreach coordination, devotee cultivation and recruitment-facing functions.
+3. SYSTEM ARCHITECTURE recognizes a personnel / outreach layer alongside Notion, VoughtGPT and Projects.
+4. SIGNALS includes ONLINE OPS for social media, community management, evangelism, proselytization, outreach coordination, devotee cultivation and recruitment-facing functions.
 5. PRODUCTION routes applicable online distribution and community reception through Marvin while preserving WITV / VoughtTube / radio as transmission and observation mechanisms.
 6. REDDIT COMMUNITY INTELLIGENCE routes general community-facing handling through MARVIN // COMMUNITY & OUTREACH before intelligence escalation.
 7. RESTRICTED COMMUNITY handling may be managed by Marvin on the online side, but existing compartmentalization and escalation rules remain intact.
 8. MEDIA records may be distributed or community-managed by Marvin; the media objects remain evidence, representations or manifestation records, not additional subjects.
-9. SENSOR ROUTING adds a controlled recruitment lane covering evangelism, proselytization, outreach and fictional cult-recruitment functions.
-10. INTERFACE CLASSIFICATION now lists MARVIN = ONLINE COMMUNITY / OUTREACH PERSONNEL // ACTIVE.
-11. ROOM LOGIC explicitly states that personnel assignments do not alter active-subject count.
-12. PROTOTYPE LIMITATION now clarifies that no live personnel activity tracking or recruitment telemetry exists.
+9. SENSOR ROUTING includes a controlled recruitment lane covering evangelism, proselytization, outreach and fictional cult-recruitment functions.
+10. INTERFACE CLASSIFICATION lists MARVIN = ONLINE COMMUNITY / OUTREACH PERSONNEL // ACTIVE.
+11. ROOM LOGIC states that personnel assignments do not alter active-subject count.
+12. PROTOTYPE LIMITATION clarifies that no live personnel activity tracking or recruitment telemetry exists.
 
 Retained controls:
 - Notion remains the controlling classified record.
@@ -47,7 +47,13 @@ MARVIN: PERSONNEL // ONLINE COMMUNITY & OUTREACH // ACTIVE
 OBSERVER INFRASTRUCTURE: ACTIVE
 ARCHIVE LINK: VERIFIED
 
-Revised local site source: vought-signal-intelligence-marvin-integrated.html
+Production site source: index.html
 
 Prototype limitation:
-Static prototype; no live Notion or Reddit ingestion. The deployed endpoint has not been modified by this local source revision.
+Static prototype; no live Notion or Reddit ingestion. Production deployment is canonical for dashboard reference but remains subordinate to the Notion classified record.
+
+CANONICAL REFERENCE DOCTRINE // 2026-08-28
+- “V-SID” in future chats resolves to https://vought-signal-intelligence.vercel.app unless explicitly superseded.
+- Authority order: Notion classified record → V-SID production dashboard → conversational summaries.
+- If a later authorized Notion record conflicts with V-SID, Notion controls until V-SID is revised.
+- The canonical URL identifies the current production presentation surface; it does not grant independent archive authority.
