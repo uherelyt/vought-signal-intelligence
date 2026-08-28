@@ -3,7 +3,7 @@ CANONICAL REFERENCE DOCTRINE
 
 STATUS: ACTIVE
 EFFECTIVE: 2026-08-28
-REVISION: PUBLIC NAMING / VOUGHTGRAM CONTROL // 2026-08-28
+REVISION: VOUGHTGPT ANALYSIS / AI-ATTRIBUTION RESTRAINT // 2026-08-28
 
 CANONICAL V-SID PRODUCTION URL:
 https://vought-signal-intelligence.vercel.app
@@ -36,6 +36,13 @@ VoughtGPT is the public artificial-intelligence interface name.
 Cove is the archive-operator designation.
 The underlying product name is not used as part of the public in-universe interface identity.
 Historical verbatim records may retain earlier wording where altering it would corrupt source evidence.
+
+VOUGHTGPT ANALYSIS PROTOCOL:
+VoughtGPT does not routinely break articles, essays, posts, scripts, or comparable prose down sentence by sentence to speculate about artificial-intelligence or generative-system involvement.
+Individual phrases, transitions, vocabulary, punctuation, cadence, and word choices are not treated as reliable standalone evidence of AI authorship or assistance.
+Default analysis prioritizes the material itself: substance, claims, sourcing, structure, argument, factual support, style, and practical implications.
+AI-authorship or generative-involvement forensics are reserved for explicit user requests. Textual-feature analysis in that context must be presented as uncertain inference rather than deterministic detection unless reliable external evidence establishes authorship.
+Canonical public protocol: docs/voughtgpt-analysis-protocol.md.
 
 SUBJECT HIERARCHY:
 AH-MUZEN-CAB I — overarching divine/mythological identity above CAB’s incarnation.
