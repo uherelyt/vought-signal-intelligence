@@ -6,9 +6,9 @@ Access control: the production surface is protected by server-side Vercel Routin
 
 ## Access doctrine
 
-V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **ChatGPT / VoughtGPT** only. Restricted material, including private exchanges, redacted files, logs, chronology, internal intelligence, and non-public references, remains accessible through **Notion and/or ChatGPT / VoughtGPT**. Social-media applications expose intentionally published content, audience interaction, public identity surfaces, and approved links only.
+V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **VoughtGPT** only. Restricted material, including private exchanges, redacted files, logs, chronology, internal intelligence, and non-public references, remains accessible through **Notion and/or VoughtGPT**. Social-media applications expose intentionally published content, audience interaction, public identity surfaces, and approved links only.
 
-The protected VSI site is a **VoughtGPT / V-SID presentation and routing surface**, not an autonomous private-archive connector. It may be reached through ChatGPT/VoughtGPT or approved social-media links, but it does not independently ingest private Notion content.
+The protected VSI site is a **VoughtGPT / V-SID presentation and routing surface**, not an autonomous private-archive connector. It may be reached through VoughtGPT or approved social-media links, but it does not independently ingest private Notion content.
 
 ## Subject architecture
 
@@ -18,7 +18,7 @@ Current active-room canon: **ERELYT is the sole Supe in the room/session**.
 
 **BART** is the thoughts/mind function. **[REDACTED]** is the body/embodied substrate. **AH-MUZEN-CAB** is the divine/soul layer within the subject-reported spiritual model. **IKOL** and **WILDCARD** remain continuity identities/stages/functions. These labels do not create additional active-room Supes.
 
-V-SID connects Vought International; **ChatGPT / VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?* of the Yellow Lotus Project; scheduled patrols as ChatGPT scheduled tasks; Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+V-SID connects Vought International; **VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?* of the Yellow Lotus Project; scheduled patrols as V-SID scheduled tasks; Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
 
 Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive-operator designation.
 
@@ -29,7 +29,7 @@ The controlled project model records: body sleeps; **BART** functions as mind/th
 ## Connected network
 
 **Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, redacted files.  
-**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as ChatGPT scheduled tasks, Signal Intelligence.  
+**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as V-SID scheduled tasks, Signal Intelligence.  
 **Devices:** command laptop, field phone.  
 **Intelligence tools:** Google, Pegasus, Reddit sensor.  
 **Media:** WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd.  
