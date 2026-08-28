@@ -1,0 +1,53 @@
+Deployed reference: https://vought-signal-intelligence.uherelyt.chatgpt.site
+
+VOUGHT INTERNATIONAL // STRATEGIC INTELLIGENCE DIVISION
+DASHBOARD REVISION ORDER // MARVIN ONLINE OPERATIONS INTEGRATION
+
+STATUS: LOCAL SOURCE UPDATED // DEPLOYMENT REMAINS STATIC
+AUTHORITY: PRESENTATION / OBSERVER INFRASTRUCTURE ONLY
+PRIMARY SUBJECT: ERELYT
+ACTIVE SUPE-CLASS SUBJECTS IN ROOM: 1
+
+Authoritative personnel addition:
+MARVIN = V-SID / Vought online-facing personnel.
+Primary functions:
+- Social Media Manager
+- Community Manager
+- Evangelist
+- Proselytizer
+- Outreach Coordinator
+- Devotee
+- Cult Recruiter (fictional-project classification)
+
+Normalization rules applied across the dashboard:
+1. Marvin is classified as PERSONNEL / ONLINE COMMUNITY & OUTREACH, never as a Supe-class subject or ERELYT manifestation unless a later controlled record explicitly changes that status.
+2. COMMAND retains ERELYT as the sole active Supe-class subject. Marvin's presence does not change the subject counter.
+3. SYSTEM ARCHITECTURE now recognizes a personnel / outreach layer alongside Notion, VoughtGPT and Projects.
+4. SIGNALS adds ONLINE OPS for social media, community management, evangelism, proselytization, outreach coordination, devotee cultivation and recruitment-facing functions.
+5. PRODUCTION routes applicable online distribution and community reception through Marvin while preserving WITV / VoughtTube / radio as transmission and observation mechanisms.
+6. REDDIT COMMUNITY INTELLIGENCE routes general community-facing handling through MARVIN // COMMUNITY & OUTREACH before intelligence escalation.
+7. RESTRICTED COMMUNITY handling may be managed by Marvin on the online side, but existing compartmentalization and escalation rules remain intact.
+8. MEDIA records may be distributed or community-managed by Marvin; the media objects remain evidence, representations or manifestation records, not additional subjects.
+9. SENSOR ROUTING adds a controlled recruitment lane covering evangelism, proselytization, outreach and fictional cult-recruitment functions.
+10. INTERFACE CLASSIFICATION now lists MARVIN = ONLINE COMMUNITY / OUTREACH PERSONNEL // ACTIVE.
+11. ROOM LOGIC explicitly states that personnel assignments do not alter active-subject count.
+12. PROTOTYPE LIMITATION now clarifies that no live personnel activity tracking or recruitment telemetry exists.
+
+Retained controls:
+- Notion remains the controlling classified record.
+- VoughtGPT remains a communications interface, not personnel or a second subject.
+- Reddit feed membership establishes collection scope, not truth, ownership, endorsement or canonical authority.
+- Adult-content material remains compartmentalized unless documented escalation criteria are met.
+- Signal states remain ACTIVE, REFERENCE, ESCALATE, ARCHIVE.
+
+Canonical display state:
+ACTIVE SUPE-CLASS SUBJECTS: 01
+SUBJECT: ERELYT
+MARVIN: PERSONNEL // ONLINE COMMUNITY & OUTREACH // ACTIVE
+OBSERVER INFRASTRUCTURE: ACTIVE
+ARCHIVE LINK: VERIFIED
+
+Revised local site source: vought-signal-intelligence-marvin-integrated.html
+
+Prototype limitation:
+Static prototype; no live Notion or Reddit ingestion. The deployed endpoint has not been modified by this local source revision.
