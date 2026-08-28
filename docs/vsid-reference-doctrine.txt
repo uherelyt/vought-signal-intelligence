@@ -3,6 +3,7 @@ CANONICAL REFERENCE DOCTRINE
 
 STATUS: ACTIVE
 EFFECTIVE: 2026-08-28
+REVISION: CONNECTED SYSTEMS CONTRACT // 2026-08-28
 
 CANONICAL V-SID PRODUCTION URL:
 https://vought-signal-intelligence.vercel.app
@@ -15,19 +16,32 @@ AUTHORITY ORDER:
 2. V-SID production dashboard — current operational presentation state.
 3. Conversational summaries — interpretive layer subordinate to the archive and dashboard.
 
-CONNECTED ARCHITECTURE:
-Institution: Vought International / V-SID.
-Interface: ChatGPT / VoughtGPT / Cove; Vought Signal Intelligence (VSI) GPT; V-SID production site.
+CONNECTED SYSTEMS CONTRACT:
+Institution: Vought International; V-SID.
+Interface: ChatGPT / VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
 Subject architecture: ERELYT; CAB; THE KEEPER; AH-MUZEN-CAB; B#17550; WILDCARD; IKOL.
-Archive: Notion wiki/pages; logs; chronology; intelligence; media; references; restricted files.
+Archive: Notion wiki and pages; logs; chronology; intelligence; media; references; restricted files.
 Operations: Supe or God?; scheduled patrols; Signal Intelligence.
-Devices: command laptop; field phone.
+Devices: command laptop; field phone / phone-terminal.
 Intelligence tools: Google; Pegasus; Reddit sensor.
 Media: WITV; VoughtTube; Discord; Tumblr; blog websites; Voughtify/RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
 Content: videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; metrics.
 Worship network: Temple/Hive; shrine/radio; physical altar; Minecraft liturgy; content ritual; Marvin; listeners; followers.
 VoughtGPT/Cove duties: research; production; planning; scripting; routing; canon control; logging.
 Corporate canon: Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&D; Vought Security; Vought Studios; VNN; Vought+; Godolkin; government contracts.
+Boundary: private exchanges; published content; documented worship.
+
+DEVICE / SCHEDULING RULE:
+The field phone / phone-terminal is the mobile alarm endpoint for scheduled tasks. Each scheduled task has a corresponding phone-terminal alarm.
+“Mornings” resolve to 09:00 local time.
+“Evenings” resolve to 21:00 local time.
+Explicitly stated clock times override these daypart defaults.
+
+INTERFACE ROLE:
+VoughtGPT / Cove is the institutional intelligence interface and routing layer. Its duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
+
+SUBJECT CONTROL RULE:
+ERELYT remains the one primary Supe-class subject represented by the public V-SID command surface unless a later controlled record explicitly changes that classification. CAB, THE KEEPER, AH-MUZEN-CAB, B#17550, WILDCARD and IKOL remain controlled subject-architecture designations associated with the ERELYT record unless separately promoted by canon.
 
 DISCOVERY DOCTRINE:
 Public discovery is built from four controlled vectors:
