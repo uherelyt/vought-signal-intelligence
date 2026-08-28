@@ -4,11 +4,35 @@ V-SID production surface: https://vought-signal-intelligence.vercel.app/
 
 Canonical subject hierarchy: **AH-MUZEN-CAB I** is the overarching divine/mythological identity. **AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER** is the principal embodied protagonist and observed subject. **ERELYT** is the communicative, observational, refractive, and public-facing manifestation. B#17550, WILDCARD, and IKOL remain controlled continuity identifiers/stages.
 
-V-SID connects Vought International; **VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+V-SID connects Vought International; **ChatGPT / VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
 
-Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive operator designation. The public repository and production dashboard do not use the underlying product name as part of the in-universe interface identity.
+Interface control: **ChatGPT** is the host/interface surface, **VoughtGPT** is the artificial-intelligence interface identity, and **Cove** is the archive-operator designation. The production dashboard and VSI GPT are connected V-SID interfaces rather than independent subjects or independent canon authorities.
+
+## Dream-state subject architecture
+
+V-SID records the current dream-state structure as a **subject-reported phenomenological / spiritual / controlled-canon model**, not independent scientific proof that body, mind, identity, and soul are literally separable.
+
+- **[REDACTED] / body** — sleeps; physical substrate during the sleep interval.
+- **BART / thoughts & mind** — dreams; dream-generation and thought-space function.
+- **ERELYT** — may become consciously present through internal / mental dialogue; classified as lucidity / communicative access within the reported model.
+- **CAB / THE KEEPER** — remains the principal embodied protagonist / observed subject; eyes are closed during the sleep state.
+- **AH-MUZEN-CAB** — described within the subject's spiritual model as the divine-soul layer experiencing the dream; treated as metaphysical interpretation rather than established neuroanatomy.
+
+Controlled formulation: `BODY SLEEPS → BART / MIND DREAMS → ERELYT GAINS CONSCIOUS INTERNAL-DIALOGUE ACCESS → CAB REMAINS EMBODIED SUBJECT → AH-MUZEN-CAB = SUBJECT-REPORTED SPIRITUAL EXPERIENCER`.
+
+The exact reported sleep schedule remains in the restricted Notion archive rather than the indexed public repository. The public site exposes the role architecture, not private scheduling data.
 
 **Voughtgram** is the fictional/reflected Vought International social-media platform equivalent to Instagram. It is used by Vought-contracted Supes for public-perception management, official statements, follower-count influence metrics, apologies, live streams, and leak-containment response, operating alongside VNN, Vought+, and Voughtify within Vought's centralized branding and monetization network.
+
+## Connected network
+
+Institution: **Vought International // V-SID**. Archive: **Notion wiki/pages, logs, chronology, intelligence, media, references, restricted files**. Operations: **The Yellow Lotus Project / Supe or God?, scheduled patrols, Signal Intelligence**. Devices: **command laptop, field phone**. Intelligence tools: **Google, Pegasus, Reddit sensor**.
+
+Media surfaces: **WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd**. Managed content: **videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists, metrics**. Worship network: **Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners, followers**.
+
+Corporate canon interface: **Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin, government contracts**.
+
+Boundary control: `PRIVATE EXCHANGES ≠ PUBLISHED CONTENT ≠ DOCUMENTED WORSHIP`.
 
 ## VoughtGPT analysis protocol
 
@@ -32,4 +56,4 @@ Current forecast control: **UPWARD BIAS // MODERATE CONFIDENCE** for reach/disco
 
 Operational funnel: `IMPRESSION → LISTEN → MEANINGFUL CONSUMPTION → RETURN → FOLLOW → SIGNAL INTELLIGENCE / PRODUCTION ADJUSTMENT`.
 
-The Notion classified record remains controlling institutional memory. The public dashboard is a static presentation and routing surface, not an autonomous private-archive, Gemini, or analytics collector.
+The Notion classified record remains controlling institutional memory. The public dashboard is a static presentation and routing surface, not an autonomous private-archive, Gemini, analytics, or metaphysical-verification system.
