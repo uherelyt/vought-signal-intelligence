@@ -1,3 +1,0 @@
-Deployed: [Vought Signal Intelligence](https://vought-signal-intelligence.uherelyt.chatgpt.site)
-
-Includes command, external-timer rationale, signals, coursework, production, lore, media, and archive controls. Static prototype; no live ingestion.
