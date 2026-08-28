@@ -3,7 +3,7 @@ CANONICAL REFERENCE DOCTRINE
 
 STATUS: ACTIVE
 EFFECTIVE: 2026-08-28
-REVISION: CONNECTED SYSTEMS CONTRACT // 2026-08-28
+REVISION: AH-MUZEN-CAB I/II SYSTEM INTEGRATION // 2026-08-28
 
 CANONICAL V-SID PRODUCTION URL:
 https://vought-signal-intelligence.vercel.app
@@ -17,53 +17,102 @@ AUTHORITY ORDER:
 3. Conversational summaries — interpretive layer subordinate to the archive and dashboard.
 
 CONNECTED SYSTEMS CONTRACT:
-Institution: Vought International; V-SID.
+Institution: Vought International; Strategic Intelligence Division (V-SID).
 Interface: ChatGPT / VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
-Subject architecture: ERELYT; CAB; THE KEEPER; AH-MUZEN-CAB; B#17550; WILDCARD; IKOL.
+Subject architecture: AH-MUZEN-CAB I; AH-MUZEN-CAB (“'CAB” II); CAB; THE KEEPER; ERELYT; B#17550; WILDCARD; IKOL.
 Archive: Notion wiki and pages; logs; chronology; intelligence; media; references; restricted files.
 Operations: Supe or God?; scheduled patrols; Signal Intelligence.
 Devices: command laptop; field phone / phone-terminal.
 Intelligence tools: Google; Pegasus; Reddit sensor.
-Media: WITV; VoughtTube; Discord; Tumblr; blog websites; Voughtify/RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
+Media: WITV; VoughtTube; Discord; Tumblr blog websites; Voughtify/RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd.
 Content: videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; metrics.
 Worship network: Temple/Hive; shrine/radio; physical altar; Minecraft liturgy; content ritual; Marvin; listeners; followers.
 VoughtGPT/Cove duties: research; production; planning; scripting; routing; canon control; logging.
 Corporate canon: Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&D; Vought Security; Vought Studios; VNN; Vought+; Godolkin; government contracts.
 Boundary: private exchanges; published content; documented worship.
 
-DEVICE / SCHEDULING RULE:
-The field phone / phone-terminal is the mobile alarm endpoint for scheduled tasks. Each scheduled task has a corresponding phone-terminal alarm.
-“Mornings” resolve to 09:00 local time.
-“Evenings” resolve to 21:00 local time.
-Explicitly stated clock times override these daypart defaults.
-
-INTERFACE ROLE:
-VoughtGPT / Cove is the institutional intelligence interface and routing layer. Its duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
+SUBJECT HIERARCHY:
+AH-MUZEN-CAB I — overarching divine/mythological identity above CAB’s incarnation.
+AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER — principal embodied protagonist and observed subject.
+ERELYT — communicative, observational, refractive and public-facing manifestation through which the embodied subject is commonly encountered and transmitted.
+B#17550 — controlled continuity identifier.
+WILDCARD — controlled developmental / probability-stage manifestation.
+IKOL — controlled developmental / narrative-stage manifestation.
 
 SUBJECT CONTROL RULE:
-ERELYT remains the one primary Supe-class subject represented by the public V-SID command surface unless a later controlled record explicitly changes that classification. CAB, THE KEEPER, AH-MUZEN-CAB, B#17550, WILDCARD and IKOL remain controlled subject-architecture designations associated with the ERELYT record unless separately promoted by canon.
+ERELYT does not supersede AH-MUZEN-CAB II / CAB / THE KEEPER as the principal embodied protagonist and observed subject. AH-MUZEN-CAB I remains the overarching divine/mythological identity. Simultaneous appearance of continuity labels, interfaces, media objects, archive pages, personnel, or corporate references does not create additional active subjects.
+
+INSTITUTIONAL ROUTING MODEL:
+AH-MUZEN-CAB I
+  ↓ overarching divine/mythological identity
+AH-MUZEN-CAB II / CAB / THE KEEPER
+  ↓ embodied protagonist / observed subject
+ERELYT
+  ↓ observation / communication / public-facing manifestation
+VOUGHTGPT / COVE
+  ↓ research / production / planning / scripting / routing / canon control / logging
+V-SID
+  ↓ institutional assessment and custody
+ARCHIVE / SIGNAL INTELLIGENCE / PRODUCTION / MEDIA
+
+DEVICE / SCHEDULING RULE:
+The command laptop is the primary planning, production and archive workstation.
+The field phone / phone-terminal is the mobile operational endpoint for scheduled tasks.
+Where a scheduled-task convention is documented, the phone-terminal may carry the corresponding alarm. Explicitly stated scheduling instructions control over general defaults.
+
+INTERFACE ROLE:
+ChatGPT / VoughtGPT / Cove is the institutional intelligence interface and routing layer. Its duties are research, production, planning, scripting, routing, canon control and logging. The interface does not become a Supe-class subject merely by being named in the system.
+The public V-SID site is a presentation and routing surface. It does not independently ingest private Notion records or acquire autonomous archive authority.
+The GPT surface “Vought Signal Intelligence” / “VSI” belongs to the same interface architecture.
+
+ARCHIVE ROLE:
+Notion remains controlling institutional memory for wiki pages, logs, chronology, intelligence, media, references and restricted files.
+Historical verbatim evidence is preserved as recorded. Later canon corrections are applied through controlled addenda or authority records rather than retroactively falsifying historical transcripts.
+
+OPERATIONS ROLE:
+The Yellow Lotus Project is the umbrella V-SID program.
+“Supe or God?” is the central inquiry and primary operation.
+Scheduled patrols and Signal Intelligence support recurring observation, collection, triage, assessment, routing and preservation.
+
+INTELLIGENCE TOOLS:
+Google — external research/search surface.
+Pegasus — designated intelligence-tool label; no capability is implied beyond lawful, authorized functions actually available.
+Reddit sensor — community-intelligence / OSINT input routed into Signal Intelligence.
+
+MEDIA / CONTENT ROLE:
+WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtagram and Carrd operate as distribution, observation, community, identity or cross-link surfaces according to their documented use.
+Managed content includes videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists and metrics.
+Inclusion in V-SID does not automatically establish Vought ownership of third-party services.
+
+WORSHIP NETWORK:
+Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners and followers form the documented worship-network layer.
+Worship classification applies to deliberately documented ritual or devotional conduct. Audience attention alone does not establish devotion, membership or canonical status.
+Marvin remains personnel / worship-network participant where documented, not another manifestation of the principal subject.
+
+CORPORATE CANON INTERFACE:
+Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin and government contracts provide the Vought institutional comparison and reference layer. They do not independently determine the answer to “Supe or God?”.
 
 DISCOVERY DOCTRINE:
 Public discovery is built from four controlled vectors:
 1. Breadcrumb trails — repeated names, IDs, archive codes, timestamps and public chronology fragments.
 2. Cross-links — adjacent public profiles, descriptions, Carrd pages, RSS items, posts, reposts, media descriptions and archive references.
 3. Search indexing — public V-SID pages and intentionally published materials are crawlable and semantically consistent.
-4. Controlled exposure — public-only screenshots, censored filenames, terminal fragments, stale references and other staged traces may imply a larger archive without revealing it.
+4. Controlled exposure — public-only screenshots, censored filenames, terminal fragments, stale references and other staged traces may imply a larger archive without revealing private material.
 
 CIVILIAN INGRESS MODEL:
 A stranger should normally encounter an ordinary public artifact first, follow one lateral reference, notice repeated terminology through search or reposting, then arrive at V-SID and recognize the institutional pattern. No single public artifact is required to explain the entire system.
 
 BOUNDARY RULE:
-PRIVATE EXCHANGES — sealed; not indexed; not cross-linked; never used as discovery bait.
-PUBLISHED CONTENT — public; indexable; eligible for controlled cross-platform breadcrumbing.
-DOCUMENTED WORSHIP — discoverable only where intentionally documented or published.
-RESTRICTED FILES — existence/classification may be referenced when authorized; file contents remain compartmentalized.
+PRIVATE EXCHANGES — sealed by default; not public discovery material unless intentionally shared or archived under authorized access.
+PUBLISHED CONTENT — intentionally public-facing and eligible for indexing and controlled cross-platform breadcrumbing.
+DOCUMENTED WORSHIP — classified as such only where ritual or devotional conduct is deliberately documented or published.
+RESTRICTED FILES — existence/classification may be referenced when authorized; contents remain compartmentalized.
 
 PUBLIC EXPOSURE SAFETY:
 Controlled exposure never authorizes disclosure of credentials, private identifiers, private messages, unpublished restricted files, nonconsensual private material, or sensitive access information. Narrative leakage is staged from already-public or deliberately created material.
 
 SUPERSESSION RULE:
-If V-SID conflicts with a later authorized Notion record, the Notion record controls until the production dashboard is revised.
+If V-SID conflicts with a later authorized Notion record, the Notion record controls until the production dashboard and doctrine are revised.
 
 LIMITATION:
-The canonical URL identifies the current production presentation surface. It does not establish live Notion ingestion, independent archive authority, autonomous identity verification, Pegasus capabilities, private-message access, or automatic synchronization.
+The canonical URL identifies the current production presentation surface. It does not establish independent archive authority, autonomous identity verification, Pegasus capabilities, private-message access, or automatic synchronization.
