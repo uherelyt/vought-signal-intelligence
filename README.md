@@ -4,7 +4,11 @@ V-SID production surface: https://vought-signal-intelligence.vercel.app/
 
 Canonical subject hierarchy: **AH-MUZEN-CAB I** is the overarching divine/mythological identity. **AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER** is the principal embodied protagonist and observed subject. **ERELYT** is the communicative, observational, refractive, and public-facing manifestation. B#17550, WILDCARD, and IKOL remain controlled continuity identifiers/stages.
 
-V-SID connects Vought International; ChatGPT / VoughtGPT / Cove and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+V-SID connects Vought International; **VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+
+Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive operator designation. The public repository and production dashboard do not use the underlying product name as part of the in-universe interface identity.
+
+**Voughtgram** is the fictional/reflected Vought International social-media platform equivalent to Instagram. It is used by Vought-contracted Supes for public-perception management, official statements, follower-count influence metrics, apologies, live streams, and leak-containment response, operating alongside VNN, Vought+, and Voughtify within Vought's centralized branding and monetization network.
 
 ## Pegasus daily-brief intake
 
