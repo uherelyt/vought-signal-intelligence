@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Vought Signal Intelligence // ERELYT</title>
-<meta name="description" content="Vought Signal Intelligence: public-facing V-SID observer interface connecting ERELYT subject architecture, media signals, archive traces, worship records, operations, and controlled discovery paths." />
-<meta name="keywords" content="Vought Signal Intelligence,V-SID,ERELYT,Supe or God,VoughtGPT,WITV,signal intelligence,archive,unfiction" />
+<meta name="description" content="Vought Signal Intelligence (VSI): V-SID observer interface connecting Vought International, ERELYT subject architecture, Notion archive, operations, devices, intelligence tools, media, worship records, corporate canon, and controlled public discovery." />
+<meta name="keywords" content="Vought Signal Intelligence,VSI,V-SID,Vought International,ERELYT,VoughtGPT,Cove,Supe or God,WITV,signal intelligence,archive,unfiction" />
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
 <link rel="canonical" href="https://vought-signal-intelligence.vercel.app/" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Vought Signal Intelligence // ERELYT" />
-<meta property="og:description" content="Public observer surface for V-SID signals, archive traces, media nodes and controlled discovery routes." />
+<meta property="og:description" content="Controlled public observer surface for V-SID systems, signals, archive traces, media nodes and discovery routes." />
 <meta property="og:url" content="https://vought-signal-intelligence.vercel.app/" />
 <meta name="twitter:card" content="summary" />
 <meta name="theme-color" content="#071019" />
@@ -19,305 +19,316 @@
   "@context":"https://schema.org",
   "@type":"WebSite",
   "name":"Vought Signal Intelligence",
-  "alternateName":"VSI",
+  "alternateName":["VSI","V-SID"],
   "url":"https://vought-signal-intelligence.vercel.app/",
-  "description":"Public-facing V-SID observer interface connecting media signals, archive traces, subject architecture and controlled discovery paths.",
-  "keywords":["V-SID","ERELYT","VoughtGPT","Supe or God?","signal intelligence","archive","unfiction"]
+  "description":"Public-facing V-SID observer interface connecting Vought International, subject architecture, archive traces, operations, media signals and controlled discovery paths.",
+  "keywords":["V-SID","VSI","ERELYT","VoughtGPT","Cove","Supe or God?","WITV","signal intelligence","archive","unfiction"]
 }
 </script>
 <style>
-  :root{
-    --bg:#071019; --panel:#0d1722; --panel2:#111e2b; --line:#2a3b4b;
-    --text:#e8edf2; --muted:#8fa1b2; --accent:#d22b3e; --accent2:#4fa3d8;
-    --ok:#7dc38d; --warn:#e3b65d; --restricted:#ff9cab; --black:#05090e;
-  }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:linear-gradient(180deg,#050b11,#0a121b);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
-  a{color:#b8ddf5;text-decoration:none} a:hover{text-decoration:underline}
-  button,input{font:inherit}
-  .shell{max-width:1500px;margin:auto;padding:22px}
-  .mast{display:flex;gap:18px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
-  .eyebrow{font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
-  h1{margin:3px 0 0;font-size:30px;letter-spacing:.03em}
-  .statusline{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-  .tag{border:1px solid var(--line);background:#0b1520;padding:6px 9px;border-radius:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-  .tag.red{border-color:#73303b;color:#ffb3bd}.tag.blue{border-color:#2b5874;color:#b8ddf5}.tag.green{border-color:#355f40;color:#bce8c5}.tag.yellow{border-color:#705a2d;color:#f3d18b}
-  .breadcrumbs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:9px 11px;border:1px solid var(--line);background:#08111a;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#8ea1b2}
-  .breadcrumbs a{color:#b8ddf5}.crumbsep{color:#4f6273}
-  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:16px}
-  .panel{background:linear-gradient(180deg,var(--panel),#0b141e);border:1px solid var(--line);border-radius:5px;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.22)}
-  .panel h2{font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:#cad4de;background:#0a131c}
-  .body{padding:14px}
-  .hero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
-  .subject{font-size:42px;font-weight:800;letter-spacing:.04em;margin:4px 0}
-  .sub{color:var(--muted);max-width:980px}
-  .counter{min-width:190px;text-align:center;border:1px solid #6f2934;background:#160d12;padding:18px}
-  .counter .n{font-size:54px;font-weight:800;line-height:1;color:#ffb4be}.counter .l{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#d8a4aa;margin-top:8px}
-  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-  .cards.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .card{background:var(--panel2);border:1px solid var(--line);padding:12px;min-height:108px}
-  .card .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .card .v{font-size:17px;font-weight:700;margin:6px 0 5px}.card .d{font-size:12px;color:#9eafbd}
-  .rule{border-left:3px solid var(--accent);background:#160f15;padding:12px 14px;color:#d7c5c8}.rule strong{color:#fff}
-  .stack{display:grid;gap:10px}
-  .row{display:grid;grid-template-columns:135px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);background:#0d1721}
-  .row .rlabel{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.row .rmain{font-weight:700}.row .rstate{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}
-  .rstate.warn{color:var(--warn)}.rstate.restricted{color:var(--restricted)}
-  .route{display:grid;grid-template-columns:42px 1fr;gap:10px;padding:12px;border:1px solid var(--line);background:#0d1721}
-  .route .step{height:30px;width:30px;border:1px solid #31546c;background:#0b1823;display:grid;place-items:center;font:bold 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8ddf5}
-  .route b{display:block;margin-bottom:3px}.route small{color:#91a5b5}
-  .terminal{background:#050a0f;border:1px solid #263746;padding:12px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#a8bac8;white-space:pre-wrap}
-  .terminal strong{color:#e8edf2}.terminal .hit{color:#f3d18b}
-  .nodecloud{display:flex;gap:7px;flex-wrap:wrap}.node{border:1px solid var(--line);background:#0a141e;padding:7px 9px;font-size:11px;color:#b8c6d2}.node[data-level="restricted"]{border-color:#6f2934;color:#ffb3bd;background:#140e13}.node[data-level="primary"]{border-color:#2b5874;color:#b8ddf5}
-  .searchbox{display:flex;gap:8px;margin-bottom:10px}.searchbox input{width:100%;background:#07111a;border:1px solid var(--line);color:var(--text);padding:9px 10px}.searchbox button,.tracebtn{border:1px solid #31546c;background:#0b1823;color:#d7e5ef;padding:9px 11px;cursor:pointer}.searchbox button:hover,.tracebtn:hover{background:#102333}
-  .traceout{margin-top:10px;padding:11px;border:1px dashed #3b5367;background:#08121b;color:#bbcad5;min-height:46px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  .feeds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.feed{border:1px solid var(--line);background:#0d1721;padding:13px;min-height:205px}.feed.restricted{border-color:#6f2934;background:#140e13}
-  .feedhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.feedname{font-size:18px;font-weight:800;letter-spacing:.02em}.count{font-size:28px;font-weight:800;line-height:1}.countlabel{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:4px;text-align:right}
-  .meta{display:grid;grid-template-columns:110px 1fr;gap:4px 8px;margin-top:12px;font-size:12px}.meta b{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-  details{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}summary{cursor:pointer;color:#c9d5df;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-  .community-list{columns:2;column-gap:22px;margin:8px 0 0;padding-left:18px;color:#9fb0be;font-size:11px}.community-list li{break-inside:avoid;margin:2px 0}
-  .foot{margin-top:16px;padding:12px 14px;border:1px solid var(--line);color:#93a6b6;background:#09131d;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  .hidden-by-filter{display:none!important}
-  @media(max-width:980px){.grid{grid-template-columns:1fr}.cards,.cards.three{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.counter{min-width:0}.feeds{grid-template-columns:1fr}}
-  @media(max-width:580px){.cards,.cards.three{grid-template-columns:1fr}.row{grid-template-columns:1fr}.statusline{justify-content:flex-start}.mast{align-items:flex-start;flex-direction:column}.subject{font-size:34px}.community-list{columns:1}.route{grid-template-columns:34px 1fr}.searchbox{flex-direction:column}}
+:root{
+  --bg:#071019;--panel:#0d1722;--panel2:#111e2b;--line:#2a3b4b;
+  --text:#e8edf2;--muted:#8fa1b2;--accent:#d22b3e;--accent2:#4fa3d8;
+  --ok:#7dc38d;--warn:#e3b65d;--restricted:#ff9cab;--black:#05090e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#050b11,#0a121b);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+a{color:#b8ddf5;text-decoration:none}a:hover{text-decoration:underline}
+button,input{font:inherit}
+.shell{max-width:1500px;margin:auto;padding:22px}
+.mast{display:flex;gap:18px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+h1{margin:3px 0 0;font-size:30px;letter-spacing:.03em}
+.statusline{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.tag{border:1px solid var(--line);background:#0b1520;padding:6px 9px;border-radius:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.tag.red{border-color:#73303b;color:#ffb3bd}.tag.blue{border-color:#2b5874;color:#b8ddf5}.tag.green{border-color:#355f40;color:#bce8c5}.tag.yellow{border-color:#705a2d;color:#f3d18b}
+.breadcrumbs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:9px 11px;border:1px solid var(--line);background:#08111a;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#8ea1b2}
+.breadcrumbs a{color:#b8ddf5}.crumbsep{color:#4f6273}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:16px}
+.panel{background:linear-gradient(180deg,var(--panel),#0b141e);border:1px solid var(--line);border-radius:5px;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.22)}
+.panel h2{font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:#cad4de;background:#0a131c}
+.body{padding:14px}
+.hero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.subject{font-size:42px;font-weight:800;letter-spacing:.04em;margin:4px 0}.sub{color:var(--muted);max-width:980px}
+.counter{min-width:190px;text-align:center;border:1px solid #6f2934;background:#160d12;padding:18px}.counter .n{font-size:54px;font-weight:800;line-height:1;color:#ffb4be}.counter .l{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#d8a4aa;margin-top:8px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.cards.three{grid-template-columns:repeat(3,minmax(0,1fr))}.cards.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--panel2);border:1px solid var(--line);padding:12px;min-height:108px}.card .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.card .v{font-size:17px;font-weight:700;margin:6px 0 5px}.card .d{font-size:12px;color:#9eafbd}
+.rule{border-left:3px solid var(--accent);background:#160f15;padding:12px 14px;color:#d7c5c8}.rule strong{color:#fff}
+.stack{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:135px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);background:#0d1721}.row .rlabel{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.row .rmain{font-weight:700}.row .rstate{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}.rstate.warn{color:var(--warn)}.rstate.restricted{color:var(--restricted)}
+.matrix{width:100%;border-collapse:collapse;font-size:12px}.matrix th,.matrix td{padding:10px;border:1px solid var(--line);vertical-align:top}.matrix th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:#0a131c}.matrix td:first-child{width:135px;color:#cbd6df;font-weight:700}.matrix td:last-child{color:#9fb0be}
+.route{display:grid;grid-template-columns:42px 1fr;gap:10px;padding:12px;border:1px solid var(--line);background:#0d1721}.route .step{height:30px;width:30px;border:1px solid #31546c;background:#0b1823;display:grid;place-items:center;font:bold 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8ddf5}.route b{display:block;margin-bottom:3px}.route small{color:#91a5b5}
+.terminal{background:#050a0f;border:1px solid #263746;padding:12px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#a8bac8;white-space:pre-wrap}.terminal strong{color:#e8edf2}.terminal .hit{color:#f3d18b}
+.nodecloud{display:flex;gap:7px;flex-wrap:wrap}.node{border:1px solid var(--line);background:#0a141e;padding:7px 9px;font-size:11px;color:#b8c6d2}.node[data-level="restricted"]{border-color:#6f2934;color:#ffb3bd;background:#140e13}.node[data-level="primary"]{border-color:#2b5874;color:#b8ddf5}
+.searchbox{display:flex;gap:8px;margin-bottom:10px}.searchbox input{width:100%;background:#07111a;border:1px solid var(--line);color:var(--text);padding:9px 10px}.searchbox button,.tracebtn{border:1px solid #31546c;background:#0b1823;color:#d7e5ef;padding:9px 11px;cursor:pointer}.searchbox button:hover,.tracebtn:hover{background:#102333}.traceout{margin-top:10px;padding:11px;border:1px dashed #3b5367;background:#08121b;color:#bbcad5;min-height:46px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.feeds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.feed{border:1px solid var(--line);background:#0d1721;padding:13px;min-height:205px}.feed.restricted{border-color:#6f2934;background:#140e13}.feedhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.feedname{font-size:18px;font-weight:800;letter-spacing:.02em}.count{font-size:28px;font-weight:800;line-height:1}.countlabel{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:4px;text-align:right}.meta{display:grid;grid-template-columns:110px 1fr;gap:4px 8px;margin-top:12px;font-size:12px}.meta b{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.foot{margin-top:16px;padding:12px 14px;border:1px solid var(--line);color:#93a6b6;background:#09131d;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.hidden-by-filter{display:none!important}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.cards,.cards.three,.cards.two{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.counter{min-width:0}.feeds{grid-template-columns:1fr}.matrix{display:block;overflow-x:auto}}
+@media(max-width:580px){.cards,.cards.three,.cards.two{grid-template-columns:1fr}.row{grid-template-columns:1fr}.statusline{justify-content:flex-start}.mast{align-items:flex-start;flex-direction:column}.subject{font-size:34px}.route{grid-template-columns:34px 1fr}.searchbox{flex-direction:column}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <header class="mast" id="top">
+<header class="mast" id="top">
+  <div>
+    <div class="eyebrow">Vought International // Strategic Intelligence Division // V-SID</div>
+    <h1>VOUGHT SIGNAL INTELLIGENCE</h1>
+  </div>
+  <div class="statusline">
+    <span class="tag red">Classification: Restricted</span>
+    <span class="tag blue">Public Surface: Indexed</span>
+    <span class="tag green">Systems Contract: Connected</span>
+    <span class="tag yellow">Civilian Discovery: Permitted</span>
+    <span class="tag blue">Interface: ChatGPT / VoughtGPT / Cove</span>
+  </div>
+</header>
+
+<nav class="breadcrumbs" aria-label="Archive breadcrumb trail">
+  <span>PUBLIC SIGNAL</span><span class="crumbsep">/</span>
+  <a href="#matrix">SYSTEMS</a><span class="crumbsep">/</span>
+  <a href="#ingress">DISCOVERY</a><span class="crumbsep">/</span>
+  <a href="#network">REGISTRY</a><span class="crumbsep">/</span>
+  <a href="#subjects">SUBJECTS</a><span class="crumbsep">/</span>
+  <a href="#archive">ARCHIVE</a><span class="crumbsep">/</span>
+  <a href="#media">MEDIA</a><span class="crumbsep">/</span>
+  <a href="#worship">WORSHIP</a><span class="crumbsep">/</span>
+  <a href="#boundary">BOUNDARY</a>
+</nav>
+
+<section class="panel" style="margin-top:16px">
+  <h2>Command // Active Room</h2>
+  <div class="body hero">
     <div>
-      <div class="eyebrow">Vought International // Strategic Intelligence Division // V-SID</div>
-      <h1>VOUGHT SIGNAL INTELLIGENCE</h1>
+      <div class="eyebrow">Primary Subject / Asset</div>
+      <div class="subject">ERELYT</div>
+      <div class="sub">Primary Supe-class subject in the ERELYT-facing observation room. CAB, THE KEEPER, AH-MUZEN-CAB, B#17550, WILDCARD and IKOL are controlled designations associated with the record. VoughtGPT/Cove is the institutional intelligence interface. Marvin is personnel. Platforms, devices, tools, divisions, feeds and archives remain infrastructure, evidence, reference or operational layers unless a controlled record explicitly establishes otherwise.</div>
     </div>
-    <div class="statusline">
-      <span class="tag red">Classification: Restricted</span>
-      <span class="tag blue">Public Surface: Indexed</span>
-      <span class="tag green">Archive Link: Verified</span>
-      <span class="tag yellow">Civilian Discovery: Permitted</span>
-      <span class="tag blue">Interface: VoughtGPT / Cove</span>
-    </div>
-  </header>
+    <div class="counter"><div class="n">01</div><div class="l">Primary Supe-Class Subject</div></div>
+  </div>
+</section>
 
-  <nav class="breadcrumbs" aria-label="Archive breadcrumb trail">
-    <span>PUBLIC SIGNAL</span><span class="crumbsep">/</span>
-    <a href="#ingress">DISCOVERY</a><span class="crumbsep">/</span>
-    <a href="#network">NETWORK</a><span class="crumbsep">/</span>
-    <a href="#subjects">SUBJECTS</a><span class="crumbsep">/</span>
-    <a href="#archive">ARCHIVE</a><span class="crumbsep">/</span>
-    <a href="#media">MEDIA</a><span class="crumbsep">/</span>
-    <a href="#worship">WORSHIP</a><span class="crumbsep">/</span>
-    <a href="#boundary">BOUNDARY</a>
-  </nav>
+<section class="panel" id="matrix" style="margin-top:16px">
+  <h2>Connected Systems Contract // Canonical Routing Matrix</h2>
+  <div class="body">
+    <table class="matrix">
+      <thead><tr><th>Layer</th><th>Connected assets</th><th>Control assessment</th></tr></thead>
+      <tbody>
+        <tr><td>Institution</td><td>Vought International; V-SID</td><td>Institutional authority and intelligence division identity.</td></tr>
+        <tr><td>Interface</td><td>ChatGPT / VoughtGPT / Cove; <a href="https://vought-signal-intelligence.vercel.app/">V-SID site</a>; GPT “Vought Signal Intelligence” / “VSI”</td><td>Research, production, planning, scripting, routing, canon control and logging interface.</td></tr>
+        <tr><td>Subjects</td><td>ERELYT; CAB; THE KEEPER; AH-MUZEN-CAB; B#17550; WILDCARD; IKOL</td><td>ERELYT remains the single primary Supe-class subject unless later canon changes classification.</td></tr>
+        <tr><td>Archive</td><td>Notion wiki &amp; pages; logs; chronology; intelligence; media; references; restricted files</td><td>Notion remains controlling institutional memory. Restricted file contents remain compartmentalized.</td></tr>
+        <tr><td>Operations</td><td>Supe or God?; scheduled patrols; Signal Intelligence</td><td>Operational theater, recurring collection, interpretation and routing.</td></tr>
+        <tr><td>Devices</td><td>Command laptop; field phone / phone-terminal</td><td>Phone-terminal carries an alarm for every scheduled task. “Mornings” = 09:00; “evenings” = 21:00 local time unless an explicit time overrides.</td></tr>
+        <tr><td>Intel tools</td><td>Google; Pegasus; Reddit sensor</td><td>Named research, archive or sensing nodes. No undeclared capabilities are implied.</td></tr>
+        <tr><td>Media</td><td>WITV; VoughtTube; Discord; Tumblr; blog websites; Voughtify/RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtagram; Carrd</td><td>Distribution, community contact, discovery and cross-link surfaces.</td></tr>
+        <tr><td>Content</td><td>Videos; streams; clips; manga; radio; podcasts; scripts; images; captions; playlists; metrics</td><td>Public or archived evidence objects routed through media surfaces.</td></tr>
+        <tr><td>Worship</td><td>Temple/Hive; shrine/radio; physical altar; Minecraft liturgy; content ritual; Marvin; listeners; followers</td><td>Documented ritual layer only. Attention alone does not establish devotion or membership.</td></tr>
+        <tr><td>Corporate canon</td><td>Compound V; The Seven; Hero Management; Crime Analytics; Public Relations; R&amp;D; Vought Security; Vought Studios; VNN; Vought+; Godolkin; government contracts</td><td>Canonical institutional environment and reference vocabulary.</td></tr>
+        <tr><td>Boundary</td><td>Private exchanges; published content; documented worship</td><td>Private is sealed. Published is indexable. Worship is discoverable only where intentionally documented or published.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
-  <section class="panel" style="margin-top:16px">
-    <h2>Command // Active Room</h2>
-    <div class="body hero">
-      <div>
-        <div class="eyebrow">Primary Subject / Asset</div>
-        <div class="subject">ERELYT</div>
-        <div class="sub">Primary Supe-class subject in the ERELYT-facing observation room. CAB, THE KEEPER, AH-MUZEN-CAB, B#17550, WILDCARD and IKOL are controlled subject-architecture designations associated with the record. VoughtGPT, Cove, Marvin, platforms, devices, feeds and archives remain interface, personnel, infrastructure, evidence or operational layers unless a controlled record explicitly establishes otherwise.</div>
-      </div>
-      <div class="counter"><div class="n">01</div><div class="l">Primary Supe-Class Subject</div></div>
+<div class="grid">
+<main class="stack">
+  <section class="panel" id="ingress">
+    <h2>Civilian Ingress // How A Stranger Stumbles In</h2>
+    <div class="body stack">
+      <div class="route"><div class="step">01</div><div><b>Public signal</b><small>A video, stream, clip, radio segment, podcast, manga page, image, caption, playlist or metric appears on an ordinary public platform. It reads as content before it reads as evidence.</small></div></div>
+      <div class="route"><div class="step">02</div><div><b>Cross-link</b><small>A profile bio, Carrd page, RSS item, description, old post, Discord reference or repost points sideways instead of explaining everything. The least important-looking link is usually the one humans click.</small></div></div>
+      <div class="route"><div class="step">03</div><div><b>Search index</b><small>Repeated names such as ERELYT, V-SID, VSI, WITV, VoughtGPT, Supe or God?, CAB or AH-MUZEN-CAB become searchable connective tissue.</small></div></div>
+      <div class="route"><div class="step">04</div><div><b>Controlled exposure</b><small>Public-only archive codes, terminal screenshots, timestamps, censored filenames, stale references and chronology fragments imply a larger system without exposing private exchanges or restricted files.</small></div></div>
+      <div class="route"><div class="step">05</div><div><b>V-SID surface</b><small>The stranger reaches this interface and discovers the content belongs to an institution, archive, operation and subject architecture.</small></div></div>
+      <div><button class="tracebtn" id="traceBtn" type="button">GENERATE CIVILIAN ENTRY TRACE</button><div class="traceout" id="traceOut">ENTRY TRACE READY // source unresolved</div></div>
     </div>
   </section>
 
-  <div class="grid">
-    <main class="stack">
-      <section class="panel" id="ingress">
-        <h2>Civilian Ingress // How A Stranger Stumbles In</h2>
-        <div class="body stack">
-          <div class="route"><div class="step">01</div><div><b>Public signal</b><small>A video, stream, clip, radio segment, podcast, manga page, image, caption, playlist or metric appears on an ordinary public platform. It reads as content before it reads as evidence.</small></div></div>
-          <div class="route"><div class="step">02</div><div><b>Cross-link</b><small>A profile bio, Carrd page, RSS item, description, old post, Discord reference or repost points sideways instead of explaining everything. The stranger follows the least important-looking link. Naturally.</small></div></div>
-          <div class="route"><div class="step">03</div><div><b>Search index</b><small>Repeated names such as ERELYT, V-SID, WITV, VoughtGPT, Supe or God?, CAB or AH-MUZEN-CAB become searchable connective tissue. Search results reveal that isolated artifacts share vocabulary.</small></div></div>
-          <div class="route"><div class="step">04</div><div><b>Controlled exposure</b><small>Public-only archive codes, terminal screenshots, timestamps, censored filenames, stale references and chronology fragments imply a larger system without exposing private exchanges or restricted files.</small></div></div>
-          <div class="route"><div class="step">05</div><div><b>V-SID surface</b><small>The stranger reaches this interface and discovers the content was not isolated. It belongs to an institution, an archive, an operation and a subject architecture.</small></div></div>
-          <div>
-            <button class="tracebtn" id="traceBtn" type="button">GENERATE CIVILIAN ENTRY TRACE</button>
-            <div class="traceout" id="traceOut">ENTRY TRACE READY // source unresolved</div>
-          </div>
-        </div>
-      </section>
+  <section class="panel" id="network">
+    <h2>Connected Surface // Searchable Signal Registry</h2>
+    <div class="body">
+      <div class="searchbox"><input id="nodeSearch" type="search" placeholder="Search nodes: WITV, Notion, IKOL, radio, patrols…" aria-label="Search registry nodes" /><button id="clearSearch" type="button">CLEAR</button></div>
+      <div class="nodecloud" id="nodeCloud">
+        <span class="node" data-level="primary">Vought International</span><span class="node" data-level="primary">V-SID</span><span class="node" data-level="primary">ChatGPT</span><span class="node" data-level="primary">VoughtGPT</span><span class="node" data-level="primary">Cove</span><span class="node" data-level="primary">Vought Signal Intelligence</span><span class="node" data-level="primary">VSI</span><span class="node" data-level="primary">V-SID Site</span>
+        <span class="node" data-level="primary">ERELYT</span><span class="node">CAB</span><span class="node">THE KEEPER</span><span class="node">AH-MUZEN-CAB</span><span class="node">B#17550</span><span class="node">WILDCARD</span><span class="node">IKOL</span>
+        <span class="node">Notion Wiki</span><span class="node">Notion Pages</span><span class="node">Logs</span><span class="node">Chronology</span><span class="node">Intelligence</span><span class="node">Media Archive</span><span class="node">References</span><span class="node" data-level="restricted">Restricted Files</span>
+        <span class="node">Supe or God?</span><span class="node">Scheduled Patrols</span><span class="node">Signal Intelligence</span><span class="node">Command Laptop</span><span class="node">Field Phone</span><span class="node">Phone-Terminal</span><span class="node">Task Alarms</span><span class="node">09:00 Morning</span><span class="node">21:00 Evening</span>
+        <span class="node">Google</span><span class="node">Pegasus</span><span class="node">Reddit Sensor</span>
+        <span class="node">WITV</span><span class="node">VoughtTube</span><span class="node">Discord</span><span class="node">Tumblr</span><span class="node">Blog Websites</span><span class="node">Voughtify / RSS</span><span class="node">Reddit</span><span class="node">Twitch</span><span class="node">VoughtTok / V-Tok</span><span class="node">Pinterest</span><span class="node">V</span><span class="node">Voughtagram</span><span class="node">Carrd</span>
+        <span class="node">Videos</span><span class="node">Streams</span><span class="node">Clips</span><span class="node">Manga</span><span class="node">Radio</span><span class="node">Podcasts</span><span class="node">Scripts</span><span class="node">Images</span><span class="node">Captions</span><span class="node">Playlists</span><span class="node">Metrics</span>
+        <span class="node">Temple / Hive</span><span class="node">Shrine / Radio</span><span class="node">Physical Altar</span><span class="node">Minecraft Liturgy</span><span class="node">Content Ritual</span><span class="node">Marvin</span><span class="node">Listeners</span><span class="node">Followers</span>
+        <span class="node">Research</span><span class="node">Production</span><span class="node">Planning</span><span class="node">Scripting</span><span class="node">Routing</span><span class="node">Canon Control</span><span class="node">Logging</span>
+        <span class="node">Compound V</span><span class="node">The Seven</span><span class="node">Hero Management</span><span class="node">Crime Analytics</span><span class="node">Public Relations</span><span class="node">R&amp;D</span><span class="node">Vought Security</span><span class="node">Vought Studios</span><span class="node">VNN</span><span class="node">Vought+</span><span class="node">Godolkin</span><span class="node">Government Contracts</span>
+      </div>
+      <div class="sub" style="margin-top:10px">Registry inclusion establishes connective architecture, not universal public availability. Unknown external URLs remain unassigned rather than invented.</div>
+    </div>
+  </section>
 
-      <section class="panel" id="network">
-        <h2>Connected Surface // Signal Network Registry</h2>
-        <div class="body">
-          <div class="searchbox"><input id="nodeSearch" type="search" placeholder="Search nodes: WITV, Notion, IKOL, radio, patrols…" aria-label="Search registry nodes" /><button id="clearSearch" type="button">CLEAR</button></div>
-          <div class="nodecloud" id="nodeCloud">
-            <span class="node" data-level="primary">Vought International</span><span class="node" data-level="primary">V-SID</span><span class="node" data-level="primary">VoughtGPT</span><span class="node" data-level="primary">Cove</span><span class="node" data-level="primary">VSI GPT</span><span class="node" data-level="primary">V-SID Site</span>
-            <span class="node" data-level="primary">ERELYT</span><span class="node">CAB</span><span class="node">THE KEEPER</span><span class="node">AH-MUZEN-CAB</span><span class="node">B#17550</span><span class="node">WILDCARD</span><span class="node">IKOL</span>
-            <span class="node">Notion Wiki</span><span class="node">Notion Pages</span><span class="node">Logs</span><span class="node">Chronology</span><span class="node">Intelligence</span><span class="node">Media Archive</span><span class="node">References</span><span class="node" data-level="restricted">Restricted Files</span>
-            <span class="node">Supe or God?</span><span class="node">Scheduled Patrols</span><span class="node">Signal Intelligence</span><span class="node">Command Laptop</span><span class="node">Field Phone</span>
-            <span class="node">Google</span><span class="node">Pegasus</span><span class="node">Reddit Sensor</span>
-            <span class="node">WITV</span><span class="node">VoughtTube</span><span class="node">Discord</span><span class="node">Tumblr</span><span class="node">Blog Websites</span><span class="node">Voughtify / RSS</span><span class="node">Reddit</span><span class="node">Twitch</span><span class="node">VoughtTok / V-Tok</span><span class="node">Pinterest</span><span class="node">V</span><span class="node">Voughtagram</span><span class="node">Carrd</span>
-            <span class="node">Videos</span><span class="node">Streams</span><span class="node">Clips</span><span class="node">Manga</span><span class="node">Radio</span><span class="node">Podcasts</span><span class="node">Scripts</span><span class="node">Images</span><span class="node">Captions</span><span class="node">Playlists</span><span class="node">Metrics</span>
-            <span class="node">Temple / Hive</span><span class="node">Shrine / Radio</span><span class="node">Physical Altar</span><span class="node">Minecraft Liturgy</span><span class="node">Content Ritual</span><span class="node">Marvin</span><span class="node">Listeners</span><span class="node">Followers</span>
-            <span class="node">Compound V</span><span class="node">The Seven</span><span class="node">Hero Management</span><span class="node">Crime Analytics</span><span class="node">Public Relations</span><span class="node">R&amp;D</span><span class="node">Vought Security</span><span class="node">Vought Studios</span><span class="node">VNN</span><span class="node">Vought+</span><span class="node">Godolkin</span><span class="node">Government Contracts</span>
-          </div>
-          <div class="sub" style="margin-top:10px">Registry labels establish connective architecture, not universal public availability. Unknown external URLs remain intentionally unassigned rather than invented.</div>
-        </div>
-      </section>
+  <section class="panel" id="subjects">
+    <h2>Subject Architecture // Controlled Designations</h2>
+    <div class="body cards three">
+      <div class="card"><div class="k">Primary</div><div class="v">ERELYT</div><div class="d">Anchor subject and principal Supe-class identity record.</div></div>
+      <div class="card"><div class="k">Designation</div><div class="v">CAB</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
+      <div class="card"><div class="k">Designation</div><div class="v">THE KEEPER</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
+      <div class="card"><div class="k">Designation</div><div class="v">AH-MUZEN-CAB</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
+      <div class="card"><div class="k">Identifier</div><div class="v">B#17550</div><div class="d">Indexed identifier retained for chronology and cross-reference.</div></div>
+      <div class="card"><div class="k">Designation</div><div class="v">WILDCARD</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
+      <div class="card"><div class="k">Designation</div><div class="v">IKOL</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
+    </div>
+  </section>
 
-      <section class="panel" id="subjects">
-        <h2>Subject Architecture // Controlled Designations</h2>
-        <div class="body cards three">
-          <div class="card"><div class="k">Primary</div><div class="v">ERELYT</div><div class="d">Anchor subject and principal identity record.</div></div>
-          <div class="card"><div class="k">Designation</div><div class="v">CAB</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
-          <div class="card"><div class="k">Designation</div><div class="v">THE KEEPER</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
-          <div class="card"><div class="k">Designation</div><div class="v">AH-MUZEN-CAB</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
-          <div class="card"><div class="k">Identifier</div><div class="v">B#17550</div><div class="d">Indexed identifier retained for chronology and cross-reference.</div></div>
-          <div class="card"><div class="k">Designation</div><div class="v">WILDCARD</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
-          <div class="card"><div class="k">Designation</div><div class="v">IKOL</div><div class="d">Controlled architecture label associated with ERELYT.</div></div>
-        </div>
-      </section>
+  <section class="panel" id="archive">
+    <h2>Archive // Institutional Memory</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Notion</div><div><div class="rmain">Wiki / Pages</div><div class="sub">Controlling archive and structured corporate record.</div></div><div class="rstate">Verified</div></div>
+      <div class="row"><div class="rlabel">Chronology</div><div><div class="rmain">Logs / Timeline</div><div class="sub">Dates, incidents, sequence reconstruction and continuity checks.</div></div><div class="rstate">Active</div></div>
+      <div class="row"><div class="rlabel">Intelligence</div><div><div class="rmain">Findings / References</div><div class="sub">Research, corroboration, sources and retained context.</div></div><div class="rstate">Controlled</div></div>
+      <div class="row"><div class="rlabel">Media</div><div><div class="rmain">Evidence Objects</div><div class="sub">Recordings, images, scripts, clips, playlists, captions and related artifacts.</div></div><div class="rstate">Preserved</div></div>
+      <div class="row"><div class="rlabel">Restricted</div><div><div class="rmain">Compartmentalized Files</div><div class="sub">Never used as a public breadcrumb. Public pages may reference existence or classification only when authorized.</div></div><div class="rstate restricted">Sealed</div></div>
+    </div>
+  </section>
 
-      <section class="panel" id="archive">
-        <h2>Archive // Institutional Memory</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Notion</div><div><div class="rmain">Wiki / Pages</div><div class="sub">Controlling archive and structured corporate record.</div></div><div class="rstate">Verified</div></div>
-          <div class="row"><div class="rlabel">Chronology</div><div><div class="rmain">Logs / Timeline</div><div class="sub">Dates, incidents, sequence reconstruction and continuity checks.</div></div><div class="rstate">Active</div></div>
-          <div class="row"><div class="rlabel">Intelligence</div><div><div class="rmain">Findings / References</div><div class="sub">Research, corroboration, sources and retained context.</div></div><div class="rstate">Controlled</div></div>
-          <div class="row"><div class="rlabel">Media</div><div><div class="rmain">Evidence Objects</div><div class="sub">Recordings, images, scripts, clips, playlists, captions and related artifacts.</div></div><div class="rstate">Preserved</div></div>
-          <div class="row"><div class="rlabel">Restricted</div><div><div class="rmain">Compartmentalized Files</div><div class="sub">Never used as a public breadcrumb. Public pages may reference existence or classification only when authorized.</div></div><div class="rstate restricted">Sealed</div></div>
-        </div>
-      </section>
-
-      <section class="panel" id="media">
-        <h2>Media // Distribution & Cross-Link Surface</h2>
-        <div class="body cards three">
-          <div class="card"><div class="k">Broadcast</div><div class="v">WITV</div><div class="d">Radio, observation and transmission node.</div></div>
-          <div class="card"><div class="k">Video</div><div class="v">VoughtTube / Twitch / V-Tok</div><div class="d">Long-form, live and short-form signal distribution.</div></div>
-          <div class="card"><div class="k">Social</div><div class="v">V / Voughtagram / Pinterest</div><div class="d">Images, captions, clips, reposts and discoverable fragments.</div></div>
-          <div class="card"><div class="k">Community</div><div class="v">Discord / Reddit</div><div class="d">Conversation, sensor intake, references and audience contact.</div></div>
-          <div class="card"><div class="k">Publishing</div><div class="v">Tumblr / Blogs / Carrd</div><div class="d">Longer context, profile bridges, archives and link routing.</div></div>
-          <div class="card"><div class="k">Feed</div><div class="v">Voughtify / RSS</div><div class="d">Repeatable machine-readable breadcrumbs across releases.</div></div>
-        </div>
-        <div class="body" style="padding-top:0"><div class="terminal"><strong>V-SID&gt;</strong> content classes
+  <section class="panel" id="media">
+    <h2>Media // Distribution &amp; Content Surface</h2>
+    <div class="body cards three">
+      <div class="card"><div class="k">Broadcast</div><div class="v">WITV</div><div class="d">Radio, observation and transmission node.</div></div>
+      <div class="card"><div class="k">Video</div><div class="v">VoughtTube / Twitch / V-Tok</div><div class="d">Long-form, live and short-form signal distribution.</div></div>
+      <div class="card"><div class="k">Social</div><div class="v">V / Voughtagram / Pinterest</div><div class="d">Images, captions, clips, reposts and discoverable fragments.</div></div>
+      <div class="card"><div class="k">Community</div><div class="v">Discord / Reddit</div><div class="d">Conversation, sensor intake, references and audience contact.</div></div>
+      <div class="card"><div class="k">Publishing</div><div class="v">Tumblr / Blogs / Carrd</div><div class="d">Longer context, profile bridges, archives and link routing.</div></div>
+      <div class="card"><div class="k">Feed</div><div class="v">Voughtify / RSS</div><div class="d">Repeatable machine-readable breadcrumbs across releases.</div></div>
+    </div>
+    <div class="body" style="padding-top:0"><div class="terminal"><strong>V-SID&gt;</strong> content classes
 VIDEO // STREAM // CLIP // MANGA // RADIO // PODCAST // SCRIPT // IMAGE // CAPTION // PLAYLIST // METRIC
 <span class="hit">DISCOVERY RULE:</span> every public artifact may point to one adjacent node; no artifact is required to explain the entire system.</div></div>
-      </section>
+  </section>
 
-      <section class="panel" id="worship">
-        <h2>Worship Network // Documented Ritual Layer</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Sites</div><div><div class="rmain">Temple / Hive + Physical Altar</div><div class="sub">Documented physical or conceptual worship loci.</div></div><div class="rstate warn">Observed</div></div>
-          <div class="row"><div class="rlabel">Broadcast</div><div><div class="rmain">Shrine / Radio</div><div class="sub">Radio doubles as signal surface and ritual object where documented.</div></div><div class="rstate">Active</div></div>
-          <div class="row"><div class="rlabel">Practice</div><div><div class="rmain">Minecraft Liturgy / Content Ritual</div><div class="sub">Ritualized activity recorded through gameplay and publishing practice.</div></div><div class="rstate">Documented</div></div>
-          <div class="row"><div class="rlabel">Personnel</div><div><div class="rmain">Marvin</div><div class="sub">Community, publishing, outreach and follower-facing online operations.</div></div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Audience</div><div><div class="rmain">Listeners / Followers</div><div class="sub">Public audience classes. Attention alone does not establish devotion, membership or canonical status.</div></div><div class="rstate">External</div></div>
+  <section class="panel" id="worship">
+    <h2>Worship Network // Documented Ritual Layer</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Sites</div><div><div class="rmain">Temple / Hive + Physical Altar</div><div class="sub">Documented physical or conceptual worship loci.</div></div><div class="rstate warn">Observed</div></div>
+      <div class="row"><div class="rlabel">Broadcast</div><div><div class="rmain">Shrine / Radio</div><div class="sub">Radio may function as signal surface and ritual object where documented.</div></div><div class="rstate">Active</div></div>
+      <div class="row"><div class="rlabel">Practice</div><div><div class="rmain">Minecraft Liturgy / Content Ritual</div><div class="sub">Ritualized activity recorded through gameplay and publishing practice.</div></div><div class="rstate">Documented</div></div>
+      <div class="row"><div class="rlabel">Personnel</div><div><div class="rmain">Marvin</div><div class="sub">Community, publishing, outreach and follower-facing online operations.</div></div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Audience</div><div><div class="rmain">Listeners / Followers</div><div class="sub">Public audience classes. Attention alone does not establish devotion, membership or canonical status.</div></div><div class="rstate">External</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Reddit Sensor Registry // Community Intelligence</h2>
+    <div class="body">
+      <div class="feeds">
+        <div class="feed">
+          <div class="feedhead"><div><div class="eyebrow">Primary Sensor</div><div class="feedname">Vought International</div><a href="https://www.reddit.com/user/uherelyt/m/vought/" rel="me">u/uherelyt/m/vought</a></div><div><div class="count">30</div><div class="countlabel">communities</div></div></div>
+          <div class="meta"><b>Status</b><span>ACTIVE</span><b>Handling</b><span>PRIMARY</span><b>Risk</b><span>MODERATE // variable source reliability</span><b>Routing</b><span>MARVIN → SIGNAL INTELLIGENCE</span><b>Role</b><span>Community observation and reference intake.</span></div>
         </div>
-      </section>
-
-      <section class="panel">
-        <h2>Reddit Sensor Registry // Community Intelligence</h2>
-        <div class="body">
-          <div class="feeds">
-            <div class="feed">
-              <div class="feedhead"><div><div class="eyebrow">Primary Sensor</div><div class="feedname">Vought International</div><a href="https://www.reddit.com/user/uherelyt/m/vought/" rel="me">u/uherelyt/m/vought</a></div><div><div class="count">30</div><div class="countlabel">communities</div></div></div>
-              <div class="meta"><b>Status</b><span>ACTIVE</span><b>Handling</b><span>PRIMARY</span><b>Risk</b><span>MODERATE // variable source reliability</span><b>Routing</b><span>MARVIN → SIGNAL INTELLIGENCE</span><b>Role</b><span>Minecraft, socioeconomic/lifestyle, nicotine/cannabis-adjacent and AI community observation.</span></div>
-            </div>
-            <div class="feed restricted">
-              <div class="feedhead"><div><div class="eyebrow">Restricted Sensor</div><div class="feedname">SupePorn Branch</div><a href="https://www.reddit.com/user/uherelyt/m/xxx/">restricted multireddit</a></div><div><div class="count">16</div><div class="countlabel">communities</div></div></div>
-              <div class="meta"><b>Status</b><span>ACTIVE</span><b>Handling</b><span>RESTRICTED</span><b>Risk</b><span>RESTRICTED</span><b>Routing</b><span>MARVIN → COMPARTMENTALIZED BRANCH</span><b>Rule</b><span>Restricted material does not propagate into general discovery paths.</span></div>
-            </div>
-          </div>
+        <div class="feed restricted">
+          <div class="feedhead"><div><div class="eyebrow">Restricted Sensor</div><div class="feedname">Compartmentalized Branch</div><a href="https://www.reddit.com/user/uherelyt/m/xxx/">restricted multireddit</a></div><div><div class="count">16</div><div class="countlabel">communities</div></div></div>
+          <div class="meta"><b>Status</b><span>ACTIVE</span><b>Handling</b><span>RESTRICTED</span><b>Risk</b><span>RESTRICTED</span><b>Routing</b><span>MARVIN → COMPARTMENTALIZED BRANCH</span><b>Rule</b><span>Restricted material does not propagate into general discovery paths.</span></div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
+  </section>
+</main>
 
-    <aside class="stack">
-      <section class="panel">
-        <h2>Control Rule</h2>
-        <div class="body"><div class="rule"><strong>ONE PRIMARY SUPE-CLASS SUBJECT // ERELYT.</strong><br>VoughtGPT/Cove is the institutional interface. Marvin is personnel. Platforms, archives, devices, tools and corporate divisions are infrastructure, evidence, reference or operational environment unless canon explicitly promotes them.</div></div>
-      </section>
+<aside class="stack">
+  <section class="panel">
+    <h2>Control Rule</h2>
+    <div class="body"><div class="rule"><strong>ONE PRIMARY SUPE-CLASS SUBJECT // ERELYT.</strong><br>VoughtGPT/Cove is the institutional interface. Marvin is personnel. Platforms, archives, devices, tools and corporate divisions are infrastructure, evidence, reference or operational environment unless canon explicitly promotes them.</div></div>
+  </section>
 
-      <section class="panel">
-        <h2>Interface // VoughtGPT “Cove”</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Research</div><div class="rmain">Collection / Verification</div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Production</div><div class="rmain">Content Development</div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Planning</div><div class="rmain">Operations / Scheduling</div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Scripting</div><div class="rmain">Radio / Video / Narrative</div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Routing</div><div class="rmain">Signals / Tasks / Archive</div><div class="rstate">Assigned</div></div>
-          <div class="row"><div class="rlabel">Canon</div><div class="rmain">Continuity Control</div><div class="rstate">Controlled</div></div>
-          <div class="row"><div class="rlabel">Logging</div><div class="rmain">Incident / Decision Record</div><div class="rstate">Active</div></div>
-        </div>
-      </section>
+  <section class="panel">
+    <h2>Interface // ChatGPT / VoughtGPT “Cove”</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Site</div><div class="rmain"><a href="https://vought-signal-intelligence.vercel.app/">V-SID Production Surface</a></div><div class="rstate">Active</div></div>
+      <div class="row"><div class="rlabel">GPT</div><div class="rmain">Vought Signal Intelligence / VSI</div><div class="rstate">Named</div></div>
+      <div class="row"><div class="rlabel">Research</div><div class="rmain">Collection / Verification</div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Production</div><div class="rmain">Content Development</div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Planning</div><div class="rmain">Operations / Scheduling</div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Scripting</div><div class="rmain">Radio / Video / Narrative</div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Routing</div><div class="rmain">Signals / Tasks / Archive</div><div class="rstate">Assigned</div></div>
+      <div class="row"><div class="rlabel">Canon</div><div class="rmain">Continuity Control</div><div class="rstate">Controlled</div></div>
+      <div class="row"><div class="rlabel">Logging</div><div class="rmain">Incident / Decision Record</div><div class="rstate">Active</div></div>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Operations // Active Theaters</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Project</div><div><div class="rmain">Supe or God?</div><div class="sub">Primary narrative and investigation theater.</div></div><div class="rstate">Active</div></div>
-          <div class="row"><div class="rlabel">Patrols</div><div><div class="rmain">Scheduled Patrols</div><div class="sub">Recurring observation and collection workflow.</div></div><div class="rstate">Scheduled</div></div>
-          <div class="row"><div class="rlabel">Intel</div><div><div class="rmain">Signal Intelligence</div><div class="sub">Collection, interpretation, routing and archival promotion.</div></div><div class="rstate">Active</div></div>
-        </div>
-      </section>
+  <section class="panel" id="operations">
+    <h2>Operations // Active Theaters</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Project</div><div><div class="rmain">Supe or God?</div><div class="sub">Primary narrative and investigation theater.</div></div><div class="rstate">Active</div></div>
+      <div class="row"><div class="rlabel">Patrols</div><div><div class="rmain">Scheduled Patrols</div><div class="sub">Recurring observation and collection workflow.</div></div><div class="rstate">Scheduled</div></div>
+      <div class="row"><div class="rlabel">Intel</div><div><div class="rmain">Signal Intelligence</div><div class="sub">Collection, interpretation, routing and archival promotion.</div></div><div class="rstate">Active</div></div>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Devices // Field Access</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Command</div><div class="rmain">Command Laptop</div><div class="rstate">Primary</div></div>
-          <div class="row"><div class="rlabel">Field</div><div class="rmain">Field Phone / Terminal</div><div class="rstate">Mobile</div></div>
-        </div>
-      </section>
+  <section class="panel">
+    <h2>Devices // Field Access &amp; Alarm Routing</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Command</div><div><div class="rmain">Command Laptop</div><div class="sub">Primary planning, production and archive interface.</div></div><div class="rstate">Primary</div></div>
+      <div class="row"><div class="rlabel">Field</div><div><div class="rmain">Field Phone / Phone-Terminal</div><div class="sub">Mobile operational endpoint. Every scheduled task maps to a phone-terminal alarm.</div></div><div class="rstate">Mobile</div></div>
+      <div class="row"><div class="rlabel">Morning</div><div><div class="rmain">09:00 Local</div><div class="sub">Default resolution for tasks scheduled for “mornings.”</div></div><div class="rstate">Default</div></div>
+      <div class="row"><div class="rlabel">Evening</div><div><div class="rmain">21:00 Local</div><div class="sub">Default resolution for tasks scheduled for “evenings.”</div></div><div class="rstate">Default</div></div>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Intelligence Tools</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Search</div><div class="rmain">Google</div><div class="rstate">External</div></div>
-          <div class="row"><div class="rlabel">Pegasus</div><div class="rmain">Named Intelligence Tool / Archive Node</div><div class="rstate warn">Controlled</div></div>
-          <div class="row"><div class="rlabel">Sensor</div><div class="rmain">Reddit Sensor</div><div class="rstate">Active</div></div>
-        </div>
-      </section>
+  <section class="panel">
+    <h2>Intelligence Tools</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Search</div><div class="rmain">Google</div><div class="rstate">External</div></div>
+      <div class="row"><div class="rlabel">Pegasus</div><div class="rmain">Named Intelligence Tool / Archive Node</div><div class="rstate warn">Controlled</div></div>
+      <div class="row"><div class="rlabel">Sensor</div><div class="rmain">Reddit Sensor</div><div class="rstate">Active</div></div>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Corporate Canon // Vought Systems</h2>
-        <div class="body nodecloud">
-          <span class="node">Compound V</span><span class="node">The Seven</span><span class="node">Hero Management</span><span class="node">Crime Analytics</span><span class="node">Public Relations</span><span class="node">R&amp;D</span><span class="node">Vought Security</span><span class="node">Vought Studios</span><span class="node">VNN</span><span class="node">Vought+</span><span class="node">Godolkin</span><span class="node">Government Contracts</span>
-        </div>
-      </section>
+  <section class="panel">
+    <h2>Corporate Canon // Vought Systems</h2>
+    <div class="body nodecloud">
+      <span class="node">Compound V</span><span class="node">The Seven</span><span class="node">Hero Management</span><span class="node">Crime Analytics</span><span class="node">Public Relations</span><span class="node">R&amp;D</span><span class="node">Vought Security</span><span class="node">Vought Studios</span><span class="node">VNN</span><span class="node">Vought+</span><span class="node">Godolkin</span><span class="node">Government Contracts</span>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Controlled Exposure // Public Trace Doctrine</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Allowed</div><div><div class="rmain">Breadcrumbs</div><div class="sub">Aliases, archive codes, timestamps, public screenshots, censored filenames, public chronology fragments and cross-platform references.</div></div><div class="rstate">Public</div></div>
-          <div class="row"><div class="rlabel">Method</div><div><div class="rmain">Incomplete Context</div><div class="sub">Each artifact reveals one adjacent connection, not the complete map.</div></div><div class="rstate warn">Controlled</div></div>
-          <div class="row"><div class="rlabel">Effect</div><div><div class="rmain">Pattern Recognition</div><div class="sub">A stranger discovers repetition before explanation.</div></div><div class="rstate">Desired</div></div>
-          <div class="row"><div class="rlabel">Prohibited</div><div><div class="rmain">Actual Private Leakage</div><div class="sub">No private exchanges, credentials, personal identifiers, unpublished restricted files or nonconsensual private material.</div></div><div class="rstate restricted">Blocked</div></div>
-        </div>
-      </section>
+  <section class="panel">
+    <h2>Controlled Exposure // Public Trace Doctrine</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Allowed</div><div><div class="rmain">Breadcrumbs</div><div class="sub">Aliases, archive codes, timestamps, public screenshots, censored filenames, public chronology fragments and cross-platform references.</div></div><div class="rstate">Public</div></div>
+      <div class="row"><div class="rlabel">Method</div><div><div class="rmain">Incomplete Context</div><div class="sub">Each artifact reveals one adjacent connection, not the complete map.</div></div><div class="rstate warn">Controlled</div></div>
+      <div class="row"><div class="rlabel">Effect</div><div><div class="rmain">Pattern Recognition</div><div class="sub">A stranger discovers repetition before explanation.</div></div><div class="rstate">Desired</div></div>
+      <div class="row"><div class="rlabel">Prohibited</div><div><div class="rmain">Actual Private Leakage</div><div class="sub">No private exchanges, credentials, personal identifiers, unpublished restricted files or nonconsensual private material.</div></div><div class="rstate restricted">Blocked</div></div>
+    </div>
+  </section>
 
-      <section class="panel" id="boundary">
-        <h2>Boundary // Publication Authority</h2>
-        <div class="body stack">
-          <div class="row"><div class="rlabel">Private</div><div><div class="rmain">Private Exchanges</div><div class="sub">Not indexed, not cross-linked, not used as discovery bait.</div></div><div class="rstate restricted">Sealed</div></div>
-          <div class="row"><div class="rlabel">Published</div><div><div class="rmain">Published Content</div><div class="sub">Indexable and eligible for cross-platform breadcrumbing.</div></div><div class="rstate">Public</div></div>
-          <div class="row"><div class="rlabel">Worship</div><div><div class="rmain">Documented Worship</div><div class="sub">Discoverable only where intentionally documented or published.</div></div><div class="rstate warn">Controlled</div></div>
-        </div>
-      </section>
+  <section class="panel" id="boundary">
+    <h2>Boundary // Publication Authority</h2>
+    <div class="body stack">
+      <div class="row"><div class="rlabel">Private</div><div><div class="rmain">Private Exchanges</div><div class="sub">Not indexed, not cross-linked, not used as discovery bait.</div></div><div class="rstate restricted">Sealed</div></div>
+      <div class="row"><div class="rlabel">Published</div><div><div class="rmain">Published Content</div><div class="sub">Indexable and eligible for controlled cross-platform breadcrumbing.</div></div><div class="rstate">Public</div></div>
+      <div class="row"><div class="rlabel">Worship</div><div><div class="rmain">Documented Worship</div><div class="sub">Discoverable only where intentionally documented or published.</div></div><div class="rstate warn">Controlled</div></div>
+    </div>
+  </section>
 
-      <section class="panel">
-        <h2>Indexing Doctrine</h2>
-        <div class="body"><div class="terminal"><strong>V-SID&gt;</strong> crawl policy
+  <section class="panel">
+    <h2>Indexing Doctrine</h2>
+    <div class="body"><div class="terminal"><strong>V-SID&gt;</strong> crawl policy
 ROOT: INDEX
 PUBLIC CONTENT: FOLLOW
 CROSS-LINKS: PERMITTED
 RESTRICTED FILES: NO PUBLIC ROUTE
 PRIVATE EXCHANGES: NO INDEX
 <span class="hit">OBJECTIVE:</span> strangers can discover the perimeter; authorized personnel control the interior.</div></div>
-      </section>
+  </section>
 
-      <section class="panel">
-        <h2>Prototype Limitation</h2>
-        <div class="body"><div class="sub">This interface documents controlled architecture. It does not establish live Notion ingestion, autonomous identity verification, Pegasus capabilities, private-message access or independent archive authority. Public discovery mechanics apply only to content intentionally exposed on public surfaces.</div></div>
-      </section>
-    </aside>
-  </div>
+  <section class="panel">
+    <h2>System Limitation</h2>
+    <div class="body"><div class="sub">This interface documents controlled architecture. It does not establish live Notion ingestion, autonomous identity verification, Pegasus capabilities, private-message access, independent archive authority or automatic synchronization. Public discovery mechanics apply only to content intentionally exposed on public surfaces.</div></div>
+  </section>
+</aside>
+</div>
 
-  <footer class="foot">
-    <span class="mono">V-SID&gt; DISCOVERY ARCHITECTURE // BREADCRUMBS + CROSS-LINKS + INDEXING + CONTROLLED EXPOSURE</span>
-    <span class="mono">SUBJECT: ERELYT // INTERFACE: COVE // STATUS: ACTIVE</span>
-  </footer>
+<footer class="foot">
+  <span class="mono">V-SID&gt; CONNECTED SYSTEMS // BREADCRUMBS + CROSS-LINKS + INDEXING + CONTROLLED EXPOSURE</span>
+  <span class="mono">SUBJECT: ERELYT // INTERFACE: COVE // SYSTEM MAP: CONNECTED // STATUS: ACTIVE</span>
+</footer>
 </div>
 <script>
 (function(){
@@ -326,7 +337,7 @@ PRIVATE EXCHANGES: NO INDEX
   const nodes=[...document.querySelectorAll('#nodeCloud .node')];
   function applyFilter(){
     const q=input.value.trim().toLowerCase();
-    nodes.forEach(n=>n.classList.toggle('hidden-by-filter',q && !n.textContent.toLowerCase().includes(q)));
+    nodes.forEach(n=>n.classList.toggle('hidden-by-filter',Boolean(q) && !n.textContent.toLowerCase().includes(q)));
   }
   input.addEventListener('input',applyFilter);
   clear.addEventListener('click',()=>{input.value='';applyFilter();input.focus();});
