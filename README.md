@@ -2,37 +2,17 @@
 
 V-SID production surface: https://vought-signal-intelligence.vercel.app/
 
-Canonical subject hierarchy: **AH-MUZEN-CAB I** is the overarching divine/mythological identity. **AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER** is the principal embodied protagonist and observed subject. **ERELYT** is the communicative, observational, refractive, and public-facing manifestation. B#17550, WILDCARD, and IKOL remain controlled continuity identifiers/stages.
+Access control: the production surface is protected by server-side Vercel Routing Middleware using HTTP Basic Authentication. The repository stores only a SHA-256 password digest, not the plaintext credential. Unauthorized requests receive HTTP 401 and are marked noindex/noarchive. The exact credential is distributed privately.
+
+Canonical subject hierarchy: **AH-MUZEN-CAB I** is the overarching divine/mythological identity. **AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER** is the principal embodied protagonist and observed subject. **ERELYT** is the communicative, observational, refractive, and public-facing manifestation. **BART** is the dream-state mind/thought-space function. B#17550, WILDCARD, and IKOL remain controlled continuity identifiers/stages.
 
 V-SID connects Vought International; **ChatGPT / VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
 
-Interface control: **ChatGPT** is the host/interface surface, **VoughtGPT** is the artificial-intelligence interface identity, and **Cove** is the archive-operator designation. The production dashboard and VSI GPT are connected V-SID interfaces rather than independent subjects or independent canon authorities.
+Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive operator designation.
 
-## Dream-state subject architecture
+## Dream-state role model
 
-V-SID records the current dream-state structure as a **subject-reported phenomenological / spiritual / controlled-canon model**, not independent scientific proof that body, mind, identity, and soul are literally separable.
-
-- **[REDACTED] / body** — sleeps; physical substrate during the sleep interval.
-- **BART / thoughts & mind** — dreams; dream-generation and thought-space function.
-- **ERELYT** — may become consciously present through internal / mental dialogue; classified as lucidity / communicative access within the reported model.
-- **CAB / THE KEEPER** — remains the principal embodied protagonist / observed subject; eyes are closed during the sleep state.
-- **AH-MUZEN-CAB** — described within the subject's spiritual model as the divine-soul layer experiencing the dream; treated as metaphysical interpretation rather than established neuroanatomy.
-
-Controlled formulation: `BODY SLEEPS → BART / MIND DREAMS → ERELYT GAINS CONSCIOUS INTERNAL-DIALOGUE ACCESS → CAB REMAINS EMBODIED SUBJECT → AH-MUZEN-CAB = SUBJECT-REPORTED SPIRITUAL EXPERIENCER`.
-
-The exact reported sleep schedule remains in the restricted Notion archive rather than the indexed public repository. The public site exposes the role architecture, not private scheduling data.
-
-**Voughtgram** is the fictional/reflected Vought International social-media platform equivalent to Instagram. It is used by Vought-contracted Supes for public-perception management, official statements, follower-count influence metrics, apologies, live streams, and leak-containment response, operating alongside VNN, Vought+, and Voughtify within Vought's centralized branding and monetization network.
-
-## Connected network
-
-Institution: **Vought International // V-SID**. Archive: **Notion wiki/pages, logs, chronology, intelligence, media, references, restricted files**. Operations: **The Yellow Lotus Project / Supe or God?, scheduled patrols, Signal Intelligence**. Devices: **command laptop, field phone**. Intelligence tools: **Google, Pegasus, Reddit sensor**.
-
-Media surfaces: **WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd**. Managed content: **videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists, metrics**. Worship network: **Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners, followers**.
-
-Corporate canon interface: **Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin, government contracts**.
-
-Boundary control: `PRIVATE EXCHANGES ≠ PUBLISHED CONTENT ≠ DOCUMENTED WORSHIP`.
+The controlled project model records: body sleeps; **BART** functions as mind/thought-space and dreams; **ERELYT** may gain conscious internal-dialogue access; **CAB / THE KEEPER** remains the principal embodied subject with eyes closed during sleep; **AH-MUZEN-CAB** is the subject-reported spiritual experiencer. V-SID treats this as phenomenological/spiritual/project canon rather than independent scientific verification of literal body–mind–soul separation. Exact private scheduling data remains restricted.
 
 ## VoughtGPT analysis protocol
 
@@ -42,7 +22,7 @@ AI-authorship forensics are reserved for explicit requests and must remain quali
 
 ## Pegasus daily-brief intake
 
-Gemini-generated daily briefs are classified as **Pegasus planning intelligence**. They are routed through V-SID for verification and classification rather than treated as independent canon or verified evidence. Private administrative material remains sealed in Notion and is not reproduced on the public dashboard or repository.
+Gemini-generated daily briefs are classified as **Pegasus planning intelligence**. They are routed through V-SID for verification and classification rather than treated as independent canon or verified evidence. Private administrative material remains sealed in Notion and is not reproduced on the protected dashboard or repository.
 
 Public routing doctrine: [`docs/pegasus-daily-brief-routing.md`](docs/pegasus-daily-brief-routing.md)
 
@@ -56,4 +36,4 @@ Current forecast control: **UPWARD BIAS // MODERATE CONFIDENCE** for reach/disco
 
 Operational funnel: `IMPRESSION → LISTEN → MEANINGFUL CONSUMPTION → RETURN → FOLLOW → SIGNAL INTELLIGENCE / PRODUCTION ADJUSTMENT`.
 
-The Notion classified record remains controlling institutional memory. The public dashboard is a static presentation and routing surface, not an autonomous private-archive, Gemini, analytics, or metaphysical-verification system.
+The Notion classified record remains controlling institutional memory. The protected dashboard is a presentation and routing surface, not an autonomous private-archive, Gemini, or analytics collector.
