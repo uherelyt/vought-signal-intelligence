@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/docs/(.*)",
+      "headers": [
+        {"key": "X-Robots-Tag", "value": "noindex, nofollow"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vought Signal Intelligence // ERELYT</title>
+<style>
+  :root{
+    --bg:#071019; --panel:#0d1722; --panel2:#111e2b; --line:#2a3b4b;
+    --text:#e8edf2; --muted:#8fa1b2; --accent:#d22b3e; --accent2:#4fa3d8;
+    --ok:#7dc38d; --warn:#e3b65d; --restricted:#ff9cab;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#050b11,#0a121b);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+  a{color:#b8ddf5;text-decoration:none} a:hover{text-decoration:underline}
+  .shell{max-width:1500px;margin:auto;padding:22px}
+  .mast{display:flex;gap:18px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .eyebrow{font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+  h1{margin:3px 0 0;font-size:30px;letter-spacing:.03em}
+  .statusline{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .tag{border:1px solid var(--line);background:#0b1520;padding:6px 9px;border-radius:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .tag.red{border-color:#73303b;color:#ffb3bd}.tag.blue{border-color:#2b5874;color:#b8ddf5}.tag.green{border-color:#355f40;color:#bce8c5}.tag.yellow{border-color:#705a2d;color:#f3d18b}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:16px}
+  .panel{background:linear-gradient(180deg,var(--panel),#0b141e);border:1px solid var(--line);border-radius:5px;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.22)}
+  .panel h2{font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);color:#cad4de;background:#0a131c}
+  .body{padding:14px}
+  .hero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+  .subject{font-size:42px;font-weight:800;letter-spacing:.04em;margin:4px 0}
+  .sub{color:var(--muted);max-width:850px}
+  .counter{min-width:190px;text-align:center;border:1px solid #6f2934;background:#160d12;padding:18px}
+  .counter .n{font-size:54px;font-weight:800;line-height:1;color:#ffb4be}.counter .l{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#d8a4aa;margin-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .card{background:var(--panel2);border:1px solid var(--line);padding:12px;min-height:108px}
+  .card .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .card .v{font-size:17px;font-weight:700;margin:6px 0 5px}.card .d{font-size:12px;color:#9eafbd}
+  .rule{border-left:3px solid var(--accent);background:#160f15;padding:12px 14px;color:#d7c5c8}
+  .rule strong{color:#fff}
+  .stack{display:grid;gap:10px}
+  .row{display:grid;grid-template-columns:135px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);background:#0d1721}
+  .row .rlabel{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.row .rmain{font-weight:700}.row .rstate{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}
+  .rstate.warn{color:var(--warn)}.rstate.restricted{color:var(--restricted)}
+  .evidence{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .ev{aspect-ratio:16/9;border:1px solid var(--line);background:repeating-linear-gradient(135deg,#101c28,#101c28 8px,#0c1620 8px,#0c1620 16px);display:flex;align-items:flex-end;padding:10px;position:relative}
+  .ev::before{content:"VISUAL EVIDENCE";position:absolute;top:9px;left:9px;font-size:9px;letter-spacing:.14em;color:#b6c6d4}.ev b{background:rgba(5,10,15,.86);padding:5px 7px;font-size:11px}
+  .feeds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .feed{border:1px solid var(--line);background:#0d1721;padding:13px;min-height:205px}
+  .feed.restricted{border-color:#6f2934;background:#140e13}
+  .feedhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .feedname{font-size:18px;font-weight:800;letter-spacing:.02em}
+  .count{font-size:28px;font-weight:800;line-height:1}.countlabel{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:4px;text-align:right}
+  .meta{display:grid;grid-template-columns:100px 1fr;gap:4px 8px;margin-top:12px;font-size:12px}
+  .meta b{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  details{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+  summary{cursor:pointer;color:#c9d5df;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .community-list{columns:2;column-gap:22px;margin:8px 0 0;padding-left:18px;color:#9fb0be;font-size:11px}
+  .community-list li{break-inside:avoid;margin:2px 0}
+  .foot{margin-top:16px;padding:12px 14px;border:1px solid var(--line);color:#93a6b6;background:#09131d;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.counter{min-width:0}.evidence{grid-template-columns:1fr}.feeds{grid-template-columns:1fr}}
+  @media(max-width:580px){.cards{grid-template-columns:1fr}.row{grid-template-columns:1fr}.statusline{justify-content:flex-start}.mast{align-items:flex-start;flex-direction:column}.subject{font-size:34px}.community-list{columns:1}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Vought International // Strategic Intelligence Division</div>
+      <h1>VOUGHT SIGNAL INTELLIGENCE</h1>
+    </div>
+    <div class="statusline">
+      <span class="tag red">Classification: Restricted</span>
+      <span class="tag blue">Observer Infrastructure</span>
+      <span class="tag green">Archive Link: Verified</span>
+      <span class="tag yellow">Reddit Registry: Active</span>
+      <span class="tag blue">Online Personnel: Marvin</span>
+    </div>
+  </header>
+
+  <section class="panel" style="margin-top:16px">
+    <h2>Command // Active Room</h2>
+    <div class="body hero">
+      <div>
+        <div class="eyebrow">Primary Subject / Asset</div>
+        <div class="subject">ERELYT</div>
+        <div class="sub">Sole active Supe-class subject in the ERELYT-facing observation room. Marvin and all other surrounding personnel, systems, feeds, projects and records remain classified as observer infrastructure, operational support, evidence or external intelligence unless a controlled record explicitly establishes otherwise.</div>
+      </div>
+      <div class="counter"><div class="n">01</div><div class="l">Active Supe-Class Subjects</div></div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel">
+        <h2>System Architecture</h2>
+        <div class="body cards">
+          <div class="card"><div class="k">Notion</div><div class="v">Classified Record</div><div class="d">Controlling archive and institutional memory.</div></div>
+          <div class="card"><div class="k">VoughtGPT</div><div class="v">Communications Interface</div><div class="d">Institutional voice surface. Not a Supe, personnel asset, or second subject.</div></div>
+          <div class="card"><div class="k">Projects</div><div class="v">Operational Theaters</div><div class="d">Coursework, production, Minecraft, radio and other working environments.</div></div>
+          <div class="card"><div class="k">Personnel</div><div class="v">Observer / Outreach Layer</div><div class="d">Human or organizational operators. Marvin owns the online community, social and recruitment-facing remit.</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Signals // Telemetry</h2>
+        <div class="body stack">
+          <div class="row"><div class="rlabel">Coursework</div><div><div class="rmain">Communication Development</div><div class="sub">Academic materials support ERELYT's communications capability.</div></div><div class="rstate">Operational</div></div>
+          <div class="row"><div class="rlabel">Production</div><div><div class="rmain">WITV / VoughtTube / Radio</div><div class="sub">Transmission and observation mechanisms; online release/community handling routes through Marvin where applicable.</div></div><div class="rstate">Observed</div></div>
+          <div class="row"><div class="rlabel">Online Ops</div><div><div class="rmain">Social / Community / Outreach</div><div class="sub">Marvin manages social media, community operations, evangelism, proselytization, outreach coordination, devotee cultivation and cult-recruitment functions on the online side.</div></div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">Lore</div><div><div class="rmain">Continuity Labels</div><div class="sub">CAB, THE KEEPER, AH-MUZEN-CAB, WILDCARD and IKOL are functions, manifestations or designations unless otherwise established.</div></div><div class="rstate">Controlled</div></div>
+          <div class="row"><div class="rlabel">External</div><div><div class="rmain">Links / Communities / Sources</div><div class="sub">Intelligence and outreach nodes. Relevance or engagement does not equal presence, ownership, endorsement or authority.</div></div><div class="rstate">Monitored</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Reddit Sensor Registry // Community Intelligence</h2>
+        <div class="body">
+          <div class="feeds">
+            <div class="feed">
+              <div class="feedhead">
+                <div><div class="eyebrow">Primary Sensor</div><div class="feedname">Vought International</div><a href="https://www.reddit.com/user/uherelyt/m/vought/">u/uherelyt/m/vought</a></div>
+                <div><div class="count">30</div><div class="countlabel">communities</div></div>
+              </div>
+              <div class="meta">
+                <b>Status</b><span>ACTIVE</span>
+                <b>Handling</b><span>PRIMARY</span>
+                <b>Risk</b><span>MODERATE // variable source reliability</span>
+                <b>Routing</b><span>MARVIN // COMMUNITY & OUTREACH → SIGNAL INTELLIGENCE</span>
+                <b>Role</b><span>Minecraft, socioeconomic/lifestyle, nicotine/cannabis-adjacent, and AI community observation; Marvin handles social/community engagement and outreach coordination.</span>
+              </div>
+              <details>
+                <summary>Community manifest</summary>
+                <ul class="community-list">
+                  <li>r/Minecraft</li><li>r/MinecraftARGs</li><li>r/MinecraftBuddies</li><li>r/MinecraftBuild</li><li>r/MinecraftToDo</li><li>r/Minecraft_Survival</li><li>r/Minecraftbuilds</li><li>r/Uncensoredminecraft</li><li>r/minecraftbedrock</li><li>r/minecraftbuilders</li><li>r/minecraftlore</li><li>r/minecraftseeds</li><li>r/minecraftyoutubers</li><li>r/BasicIncome</li><li>r/DBDR</li><li>r/NEET</li><li>r/Nicotine</li><li>r/THCarts</li><li>r/Vape_Chat</li><li>r/doomer</li><li>r/hikikomori</li><li>r/povertyfinance</li><li>r/AIDeveloperNews</li><li>r/ArtificialInteligence</li><li>r/DefendingAI</li><li>r/DefendingAIArt</li><li>r/OpenAI</li><li>r/ProAI</li><li>r/artificial</li><li>r/generativeAI</li>
+                </ul>
+              </details>
+            </div>
+
+            <div class="feed restricted">
+              <div class="feedhead">
+                <div><div class="eyebrow">Restricted Sensor</div><div class="feedname">SupePorn</div><a href="https://www.reddit.com/user/uherelyt/m/xxx/">u/uherelyt/m/xxx</a></div>
+                <div><div class="count">16</div><div class="countlabel">communities</div></div>
+              </div>
+              <div class="meta">
+                <b>Status</b><span>ACTIVE</span>
+                <b>Handling</b><span>RESTRICTED</span>
+                <b>Risk</b><span>RESTRICTED</span>
+                <b>Routing</b><span>MARVIN // ONLINE COMMUNITY → SUPEPORN BRANCH</span>
+                <b>Cross-Platform</b><span>X/V account association</span>
+                <b>Rule</b><span>Online-community responsibility does not override compartmentalization. Do not mirror adult-content material into general intelligence unless documented escalation criteria are met.</span>
+              </div>
+              <details>
+                <summary>Community manifest // restricted</summary>
+                <ul class="community-list">
+                  <li>r/AmateurPorn</li><li>r/BarebackGayPorn</li><li>r/FuckingLikeCrazy</li><li>r/GaysBareback</li><li>r/RealHomePorn</li><li>r/RoughPorn</li><li>r/StraightToGay</li><li>r/bigblackcocks</li><li>r/blackanal</li><li>r/blackass</li><li>r/blackcock</li><li>r/gaymenfuck</li><li>r/nsfwhardcore</li><li>r/porn</li><li>r/stepsisters_porn</li><li>r/straightturnedgay</li>
+                </ul>
+              </details>
+            </div>
+          </div>
+          <div class="sub" style="margin-top:10px">Signal states: ACTIVE // REFERENCE // ESCALATE // ARCHIVE. Marvin's operational ownership concerns online community handling and outreach; feed membership still defines collection scope only. Consequential claims require independent corroboration before normalization into V-SID conclusions.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Media // Evidence Handling</h2>
+        <div class="body">
+          <div class="evidence">
+            <div class="ev"><b>AVATAR / REPRESENTATION</b></div>
+            <div class="ev"><b>ARCHIVE IMAGE / EXHIBIT</b></div>
+            <div class="ev"><b>RECORDING / OBSERVATION</b></div>
+          </div>
+          <div class="sub" style="margin-top:10px">Images, screenshots, avatars, sigils, altars, recordings and social-media objects are evidence or manifestation records associated with ERELYT. Marvin may manage distribution, community response and outreach around those objects, but their display does not create additional Supe presence.</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="panel">
+        <h2>Control Rule</h2>
+        <div class="body"><div class="rule"><strong>ONE ACTIVE SUPE-CLASS SUBJECT // ERELYT.</strong><br>Marvin is personnel. Everything else in this interface is observation, interface, evidence, reference, personnel, operational environment, or infrastructure.</div></div>
+      </section>
+
+      <section class="panel">
+        <h2>Personnel // Online Operations</h2>
+        <div class="body stack">
+          <div class="row"><div class="rlabel">Asset</div><div><div class="rmain">MARVIN</div><div class="sub">V-SID / Vought online-facing personnel designation.</div></div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">Primary</div><div><div class="rmain">Social Media Manager / Community Manager</div><div class="sub">Owns routine online social publishing, audience/community stewardship and community-facing coordination.</div></div><div class="rstate">Assigned</div></div>
+          <div class="row"><div class="rlabel">Outreach</div><div><div class="rmain">Evangelist / Proselytizer / Outreach Coordinator</div><div class="sub">Carries project doctrine, messaging and recruitment-facing outreach across appropriate online communities and public surfaces.</div></div><div class="rstate">Assigned</div></div>
+          <div class="row"><div class="rlabel">Devotion</div><div><div class="rmain">Devotee / Cult Recruiter</div><div class="sub">Fictional-project classification for follower cultivation and recruitment activity within the V-SID narrative frame.</div></div><div class="rstate warn">Controlled</div></div>
+          <div class="row"><div class="rlabel">Boundary</div><div><div class="rmain">Personnel, Not Subject</div><div class="sub">Marvin does not alter the active Supe-class subject counter and is not a manifestation of ERELYT unless a future controlled record explicitly states otherwise.</div></div><div class="rstate">Verified</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Sensor Routing Doctrine</h2>
+        <div class="body stack">
+          <div class="row"><div class="rlabel">Vought Feed</div><div><div class="rmain">General Community Intelligence</div><div class="sub">Primary Reddit sensor. Marvin handles community-facing activity and routes intelligence-relevant findings to Signal Intelligence.</div></div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">SupePorn</div><div><div class="rmain">Restricted Adult-Content Branch</div><div class="sub">Marvin may manage the online community surface, but restricted handling remains compartmentalized and associated with X/V.</div></div><div class="rstate restricted">Restricted</div></div>
+          <div class="row"><div class="rlabel">Recruitment</div><div><div class="rmain">Community Conversion / Follower Intake</div><div class="sub">Evangelism, proselytization, outreach and fictional cult-recruitment functions remain part of Marvin's online remit; resulting claims and identities still require archive-grade verification before canonical promotion.</div></div><div class="rstate warn">Controlled</div></div>
+          <div class="row"><div class="rlabel">Reference</div><div><div class="rmain">Context Retention</div><div class="sub">Preserve without operational promotion.</div></div><div class="rstate">Reference</div></div>
+          <div class="row"><div class="rlabel">Escalate</div><div><div class="rmain">Material Operational Relevance</div><div class="sub">Promote only when canon, platform, brand, safety, production, community, recruitment or active-investigation criteria are met.</div></div><div class="rstate warn">Escalate</div></div>
+          <div class="row"><div class="rlabel">Archive</div><div><div class="rmain">Resolved / Superseded</div><div class="sub">Retain evidence without current priority.</div></div><div class="rstate">Archive</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Interface Classification</h2>
+        <div class="body stack">
+          <div class="row"><div class="rlabel">Site</div><div class="rmain">Presentation Surface</div><div class="rstate">Static</div></div>
+          <div class="row"><div class="rlabel">Links</div><div class="rmain">External Intelligence / Outreach Nodes</div><div class="rstate">Indexed</div></div>
+          <div class="row"><div class="rlabel">Images</div><div class="rmain">Visual Evidence</div><div class="rstate">Preserved</div></div>
+          <div class="row"><div class="rlabel">Instructions</div><div class="rmain">Operating Doctrine</div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">V-SID</div><div class="rmain">Observer / Interpreter</div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">Marvin</div><div class="rmain">Online Community / Outreach Personnel</div><div class="rstate">Active</div></div>
+          <div class="row"><div class="rlabel">Automations</div><div class="rmain">Patrol / Trigger / Scheduling Controls</div><div class="rstate">Infrastructure</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Room Logic // Reference Supes</h2>
+        <div class="body"><div class="sub">Other Supes may appear in dossiers, source material, images, comparisons or external links. They remain valid reference entities. They are not counted as present merely because their record is open inside the ERELYT-facing room. Personnel assignments, including Marvin's, likewise do not affect the subject counter.</div></div>
+      </section>
+
+      <section class="panel">
+        <h2>Prototype Limitation</h2>
+        <div class="body"><div class="sub">No live Notion or Reddit ingestion, autonomous subject detection, identity verification, personnel activity tracking, recruitment telemetry or independent archive authority is established. This interface is a static presentation of controlled archive structure and remains subordinate to the Notion record.</div></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span class="mono">V-SID&gt; MARVIN ONLINE OPERATIONS INTEGRATION // NORMALIZED</span>
+    <span class="mono">SUBJECT: ERELYT // COUNT: 01 // MARVIN: PERSONNEL // STATUS: ACTIVE</span>
+  </footer>
+</div>
+</body>
+</html>
