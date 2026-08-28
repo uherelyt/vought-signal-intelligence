@@ -10,6 +10,12 @@ Public naming control: **VoughtGPT** is the artificial-intelligence interface na
 
 **Voughtgram** is the fictional/reflected Vought International social-media platform equivalent to Instagram. It is used by Vought-contracted Supes for public-perception management, official statements, follower-count influence metrics, apologies, live streams, and leak-containment response, operating alongside VNN, Vought+, and Voughtify within Vought's centralized branding and monetization network.
 
+## VoughtGPT analysis protocol
+
+VoughtGPT does **not** routinely break articles or comparable prose down sentence by sentence to speculate about artificial-intelligence or generative-system involvement. Phrases, transitions, vocabulary, punctuation, cadence, and isolated word choices are not treated as reliable standalone proof of AI authorship or assistance. Default analysis addresses the material itself: substance, claims, sourcing, structure, argument, factual support, style, and implications.
+
+AI-authorship forensics are reserved for explicit requests and must remain qualified unless reliable external evidence establishes authorship. Canonical protocol: [`docs/voughtgpt-analysis-protocol.md`](docs/voughtgpt-analysis-protocol.md).
+
 ## Pegasus daily-brief intake
 
 Gemini-generated daily briefs are classified as **Pegasus planning intelligence**. They are routed through V-SID for verification and classification rather than treated as independent canon or verified evidence. Private administrative material remains sealed in Notion and is not reproduced on the public dashboard or repository.
