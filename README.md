@@ -4,15 +4,39 @@ V-SID production surface: https://vought-signal-intelligence.vercel.app/
 
 Access control: the production surface is protected by server-side Vercel Routing Middleware using HTTP Basic Authentication. The repository stores only a SHA-256 password digest, not the plaintext credential. Unauthorized requests receive HTTP 401 and are marked noindex/noarchive. The exact credential is distributed privately.
 
-Canonical subject hierarchy: **AH-MUZEN-CAB I** is the overarching divine/mythological identity. **AH-MUZEN-CAB (“'CAB” II) / CAB / THE KEEPER** is the principal embodied protagonist and observed subject. **ERELYT** is the communicative, observational, refractive, and public-facing manifestation. **BART** is the dream-state mind/thought-space function. B#17550, WILDCARD, and IKOL remain controlled continuity identifiers/stages.
+## Access doctrine
 
-V-SID connects Vought International; **ChatGPT / VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?*, scheduled patrols, and Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+V-SID material is accessed through **Notion**, **approved social-media applications**, and/or **ChatGPT / VoughtGPT** only. Restricted material, including private exchanges, redacted files, logs, chronology, internal intelligence, and non-public references, remains accessible through **Notion and/or ChatGPT / VoughtGPT**. Social-media applications expose intentionally published content, audience interaction, public identity surfaces, and approved links only.
 
-Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive operator designation.
+The protected VSI site is a **VoughtGPT / V-SID presentation and routing surface**, not an autonomous private-archive connector. It may be reached through ChatGPT/VoughtGPT or approved social-media links, but it does not independently ingest private Notion content.
+
+## Subject architecture
+
+Current active-room canon: **ERELYT is the sole Supe in the room/session**.
+
+**CAB** remains a controlled subject-role identity. **THE KEEPER** is CAB’s preferred current public/corporate designation. Vought’s internal era-branding sequence remains **Kid Vought → Teen Vought → Vought Plus**, but **THE KEEPER** controls public naming for now.
+
+**BART** is the thoughts/mind function. **[REDACTED]** is the body/embodied substrate. **AH-MUZEN-CAB** is the divine/soul layer within the subject-reported spiritual model. **IKOL** and **WILDCARD** remain continuity identities/stages/functions. These labels do not create additional active-room Supes.
+
+V-SID connects Vought International; **ChatGPT / VoughtGPT / Cove** and the GPT “Vought Signal Intelligence” / “VSI”; the Notion archive; *Supe or God?* of the Yellow Lotus Project; scheduled patrols as ChatGPT scheduled tasks; Signal Intelligence; command laptop and field phone; Google, Pegasus, Reddit sensing, and authorized platform analytics; WITV and the wider media network; production content; documented worship; Vought corporate canon; and the private / published / documented-worship boundary.
+
+Public naming control: **VoughtGPT** is the artificial-intelligence interface name. **Cove** is the archive-operator designation.
 
 ## Dream-state role model
 
-The controlled project model records: body sleeps; **BART** functions as mind/thought-space and dreams; **ERELYT** may gain conscious internal-dialogue access; **CAB / THE KEEPER** remains the principal embodied subject with eyes closed during sleep; **AH-MUZEN-CAB** is the subject-reported spiritual experiencer. V-SID treats this as phenomenological/spiritual/project canon rather than independent scientific verification of literal body–mind–soul separation. Exact private scheduling data remains restricted.
+The controlled project model records: body sleeps; **BART** functions as mind/thought-space and dreams; **ERELYT** may gain conscious internal-dialogue access; **CAB / THE KEEPER** remains a controlled role identity with eyes closed during sleep; **AH-MUZEN-CAB** is the subject-reported spiritual experiencer. V-SID treats this as phenomenological/spiritual/project canon rather than independent scientific verification of literal body–mind–soul separation. Exact private scheduling data remains restricted. The dream-state model does not alter the active-room ruling that **ERELYT is the sole Supe in the room**.
+
+## Connected network
+
+**Archive:** Notion wiki/pages, logs, chronology, intelligence, media, references, redacted files.  
+**Operations:** The Yellow Lotus Project / *Supe or God?*, scheduled patrols as ChatGPT scheduled tasks, Signal Intelligence.  
+**Devices:** command laptop, field phone.  
+**Intelligence tools:** Google, Pegasus, Reddit sensor.  
+**Media:** WITV, VoughtTube, Discord, Tumblr blog websites, Voughtify/RSS, Reddit, Twitch, VoughtTok/V-Tok, Pinterest, V, Voughtgram, Carrd.  
+**Content:** videos, streams, clips, manga, radio, podcasts, scripts, images, captions, playlists, metrics.  
+**Worship network:** Temple/Hive, shrine/radio, physical altar, Minecraft liturgy, content ritual, Marvin, listeners, followers.  
+**Cove duties:** research, production, planning, scripting, routing, canon control, logging.  
+**Corporate canon:** Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Godolkin, government contracts.
 
 ## VoughtGPT analysis protocol
 
