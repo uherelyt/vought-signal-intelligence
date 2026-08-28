@@ -1,7 +1,7 @@
 import { next } from '@vercel/functions';
 
-const USERNAME = 'vsi';
-const PASSWORD_SHA256 = 'adc60e3bb29fb2853c7514fa0f972f06dbcf2b416b626ed6d4424d385a731c77';
+const USERNAME = 'uherelyt';
+const PASSWORD_SHA256 = '0f713eef62f6375ddfea304d6a5374a3f5f23131293de1b85c54318062711b80';
 
 async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
