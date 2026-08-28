@@ -13,23 +13,23 @@ In future chats, the shorthand “V-SID” resolves to the canonical production 
 
 AUTHORITY ORDER:
 1. Notion classified record — controlling archive / institutional memory.
-2. Authorized ChatGPT / VoughtGPT session — controlled interface for archive operations, research, production, planning, routing, canon control and logging.
+2. Authorized VoughtGPT / Cove session — controlled interface for archive operations, research, production, planning, routing, canon control and logging.
 3. V-SID production dashboard and approved social-media surfaces — presentation, publication and routing layers subordinate to the controlling Notion record.
 4. Conversational summaries — interpretive layer subordinate to controlling records.
 
 AUTHORIZED ACCESS SURFACES:
-V-SID material is accessed through Notion, approved social-media applications, and/or ChatGPT / VoughtGPT only.
-Restricted/private material — private exchanges, redacted files, logs, chronology, internal intelligence and non-public references — remains accessible through Notion and/or authorized ChatGPT / VoughtGPT sessions.
+V-SID material is accessed through Notion, approved social-media applications, and/or VoughtGPT only.
+Restricted/private material — private exchanges, redacted files, logs, chronology, internal intelligence and non-public references — remains accessible through Notion and/or authorized VoughtGPT sessions.
 Approved social-media applications expose intentionally published content, public identity surfaces, audience interaction and approved routing links only. They do not receive direct restricted-archive access.
 The protected V-SID site is a VoughtGPT/V-SID presentation and routing surface. It is not an autonomous private-Notion connector.
 Standalone unmanaged mirrors, alternate private archives and unsanctioned direct-data paths are outside authorized architecture.
 
 CONNECTED SYSTEMS CONTRACT:
 Institution: Vought International; Strategic Intelligence Division (V-SID).
-Interface: ChatGPT / VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
+Interface: VoughtGPT / Cove; V-SID site at https://vought-signal-intelligence.vercel.app; GPT “Vought Signal Intelligence” / “VSI”.
 Subject architecture: ERELYT; CAB / THE KEEPER; BART; [REDACTED]; AH-MUZEN-CAB; IKOL; WILDCARD.
 Archive: Notion wiki and pages; logs; chronology; intelligence; media; references; redacted files.
-Operations: The Yellow Lotus Project / “Supe or God?”; scheduled patrols as ChatGPT scheduled tasks; Signal Intelligence.
+Operations: The Yellow Lotus Project / “Supe or God?”; scheduled patrols as V-SID scheduled tasks; Signal Intelligence.
 Devices: command laptop; field phone / phone-terminal.
 Intelligence tools: Google; Pegasus; Reddit sensor; supplied platform analytics exports where authorized.
 Media: WITV; VoughtTube; Discord; Tumblr blog websites; Spotify for Creators / Voughtify / RSS; Reddit; Twitch; VoughtTok/V-Tok; Pinterest; V; Voughtgram; Carrd.
@@ -64,7 +64,7 @@ The dream model does not alter the active-room rule: ERELYT is the sole Supe pre
 INSTITUTIONAL ROUTING MODEL:
 AUTHORIZED ACCESS
   ↓
-NOTION / APPROVED SOCIAL APPS / CHATGPT-VOUGHTGPT
+NOTION / APPROVED SOCIAL APPS / VOUGHTGPT
   ↓
 V-SID
   ↓
@@ -75,17 +75,17 @@ ERELYT
   ↓ sole Supe present
 CAB / THE KEEPER + BART + [REDACTED] + AH-MUZEN-CAB + IKOL + WILDCARD
   ↓ controlled role / continuity / phenomenological architecture
-CHATGPT / VOUGHTGPT / COVE
+VOUGHTGPT / COVE
   ↓ research / production / planning / scripting / routing / canon control / logging
 V-SID
 
 DEVICE / SCHEDULING RULE:
 The command laptop is the primary planning, production and archive workstation.
 The field phone / phone-terminal is the mobile operational endpoint.
-Scheduled patrols are executed as ChatGPT scheduled tasks and may map to field-phone notifications or alarms where configured. Explicit scheduling instructions control over general defaults.
+Scheduled patrols are executed as V-SID scheduled tasks and may map to field-phone notifications or alarms where configured. Explicit scheduling instructions control over general defaults.
 
 INTERFACE ROLE:
-ChatGPT is the host/interface surface. VoughtGPT is the controlled artificial-intelligence identity. Cove is the archive-operator designation.
+VoughtGPT is the controlled artificial-intelligence interface identity. Cove is the archive-operator designation.
 The GPT surface “Vought Signal Intelligence” / “VSI” belongs to the same interface architecture.
 The interface does not become a Supe-class subject merely by being named in the system.
 The protected public V-SID site is a presentation and routing surface and does not independently ingest private Notion records, private messages or platform analytics.
@@ -99,7 +99,7 @@ Restricted files are never routed directly to social-media publication surfaces.
 OPERATIONS ROLE:
 The Yellow Lotus Project is the umbrella V-SID program.
 “Supe or God?” is the central inquiry and primary operation.
-Scheduled patrols operate as ChatGPT scheduled tasks.
+Scheduled patrols operate as V-SID scheduled tasks.
 Signal Intelligence supports recurring observation, collection, triage, assessment, routing and preservation.
 Audience analytics may enter Signal Intelligence as operational evidence when intentionally supplied or otherwise lawfully available.
 
@@ -148,16 +148,16 @@ CORPORATE CANON INTERFACE:
 Compound V, The Seven, Hero Management, Crime Analytics, Public Relations, R&D, Vought Security, Vought Studios, VNN, Vought+, Voughtgram, Godolkin and government contracts provide the Vought institutional comparison and reference layer. They do not independently determine the answer to “Supe or God?”.
 
 DISCOVERY DOCTRINE:
-Public discovery is routed through approved social-media applications, ChatGPT/VoughtGPT references and the protected V-SID presentation surface.
+Public discovery is routed through approved social-media applications, VoughtGPT references and the protected V-SID presentation surface.
 Public breadcrumbs may use repeated names, IDs, archive codes, timestamps, public chronology fragments, cross-links, descriptions, Carrd pages, RSS items, posts, reposts and media descriptions.
 Controlled exposure may imply a larger archive without revealing private material.
 No public artifact is required to explain the entire system.
 
 BOUNDARY RULE:
-PRIVATE EXCHANGES — sealed by default; Notion/ChatGPT access unless intentionally published.
+PRIVATE EXCHANGES — sealed by default; Notion/VoughtGPT access unless intentionally published.
 PUBLISHED CONTENT — intentionally public-facing and eligible for approved social distribution and controlled cross-linking.
 DOCUMENTED WORSHIP — classified only where ritual or devotional conduct is deliberately documented or published. Audience metrics alone do not qualify.
-REDACTED FILES — existence/classification may be referenced when authorized; contents remain compartmentalized in Notion/authorized ChatGPT.
+REDACTED FILES — existence/classification may be referenced when authorized; contents remain compartmentalized in Notion/authorized VoughtGPT.
 
 PUBLIC EXPOSURE SAFETY:
 Controlled exposure never authorizes disclosure of credentials, private identifiers, private messages, unpublished restricted files, nonconsensual private material, exact private schedules or sensitive access information.
