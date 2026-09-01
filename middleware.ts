@@ -29,9 +29,9 @@ export default async function middleware(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
 
   // External automation sources cannot complete the dashboard's interactive
-  // Basic Auth challenge. The ingress function has its own bearer secret and
-  // Notion-write controls. No other route bypasses dashboard auth.
-  if (pathname === '/api/ingest') {
+  // Basic Auth challenge. These API routes enforce their own source-specific
+  // authorization/verification controls.
+  if (pathname === '/api/ingest' || pathname === '/api/webhooks/notion') {
     return next();
   }
 
