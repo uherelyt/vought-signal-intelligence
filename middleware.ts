@@ -55,9 +55,10 @@ export default async function middleware(request: Request): Promise<Response> {
 
     if (username === USERNAME && passwordHash === PASSWORD_SHA256) {
       // Canonical root: COVE is the writer/file keeper; V-SID stores and tracks.
-      // The prior full dashboard remains available at /index.html as a legacy view.
+      // With cleanUrls enabled, static HTML routes must use extensionless paths.
+      // The prior full dashboard remains available at /index as a legacy view.
       if (pathname === '/') {
-        return rewrite(new URL('/cove.html', request.url));
+        return rewrite(new URL('/cove', request.url));
       }
 
       return next();
