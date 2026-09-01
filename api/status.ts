@@ -12,11 +12,7 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-export default function handler(request: Request): Response {
-  if (request.method !== 'GET') {
-    return json({ status: 'V-SID // METHOD NOT AUTHORIZED' }, 405);
-  }
-
+export function GET(): Response {
   const ingressSecret = Boolean(process.env.VSID_INGEST_SECRET?.trim());
   const notionToken = Boolean((process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN)?.trim());
   const webhookVerification = Boolean(process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN?.trim());
