@@ -3,6 +3,18 @@ import { next, rewrite } from '@vercel/functions';
 const USERNAME = 'uherelyt';
 const PASSWORD_SHA256 = '0f713eef62f6375ddfea304d6a5374a3f5f23131293de1b85c54318062711b80';
 
+const PUBLIC_ROUTES = new Set([
+  '/',
+  '/cove',
+  '/cove.html',
+  '/robots.txt',
+  '/sitemap.xml',
+]);
+
+function isMachineRoute(pathname: string): boolean {
+  return pathname === '/api/ingest' || pathname === '/api/status' || pathname.startsWith('/api/webhooks/');
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -28,10 +40,19 @@ function unauthorized(): Response {
 export default async function middleware(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
 
-  // External automation sources cannot complete the dashboard's interactive
-  // Basic Auth challenge. These API routes enforce their own source-specific
-  // authorization/verification controls.
-  if (pathname === '/api/ingest' || pathname === '/api/webhooks/notion') {
+  // Machine endpoints are never placed behind the browser Basic Auth challenge.
+  // Each write endpoint enforces its own bearer/signature controls; /api/status
+  // exposes configuration state only and never returns credentials or archive data.
+  if (isMachineRoute(pathname)) {
+    return next();
+  }
+
+  // Public boundary: only explicitly sanitized surfaces are reachable without
+  // credentials. Everything else remains fail-closed by default.
+  if (PUBLIC_ROUTES.has(pathname)) {
+    if (pathname === '/') {
+      return rewrite(new URL('/cove', request.url));
+    }
     return next();
   }
 
@@ -54,13 +75,6 @@ export default async function middleware(request: Request): Promise<Response> {
     const passwordHash = await sha256Hex(password);
 
     if (username === USERNAME && passwordHash === PASSWORD_SHA256) {
-      // Canonical root: COVE is the writer/file keeper; V-SID stores and tracks.
-      // With cleanUrls enabled, static HTML routes must use extensionless paths.
-      // The prior full dashboard remains available at /index as a legacy view.
-      if (pathname === '/') {
-        return rewrite(new URL('/cove', request.url));
-      }
-
       return next();
     }
   } catch {

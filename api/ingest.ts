@@ -24,7 +24,7 @@ type IncomingSignal = {
 };
 
 type NormalizedSignal = {
-  schema_version: '1.0';
+  schema_version: '1.1';
   signal_id: string;
   source: string;
   source_type: SourceType;
@@ -43,8 +43,7 @@ type NormalizedSignal = {
   raw: unknown;
 };
 
-const NOTION_DATABASE_ID =
-  process.env.VSID_NOTION_DATABASE_ID || '0569f270-e70b-49f0-804c-f24767f88cae';
+const ACTIVE_NOTION_DATABASE_ID = '32349488-3b95-4630-bc24-adf3d4c22996';
 const NOTION_VERSION = process.env.VSID_NOTION_VERSION || '2022-06-28';
 const MAX_BODY_BYTES = 1_000_000;
 const MAX_BLOCKS = 20;
@@ -105,7 +104,7 @@ function normalize(input: IncomingSignal): NormalizedSignal {
   const subject = asString(input.subject || input.account, 'UNSPECIFIED');
 
   return {
-    schema_version: '1.0',
+    schema_version: '1.1',
     signal_id: signalId(source, externalId, observedAt),
     source,
     source_type: type,
@@ -128,10 +127,7 @@ function normalize(input: IncomingSignal): NormalizedSignal {
 
 function richText(value: string): Array<Record<string, unknown>> {
   const chunks = value.match(/[\s\S]{1,1800}/g) || [''];
-  return chunks.slice(0, 10).map((content) => ({
-    type: 'text',
-    text: { content },
-  }));
+  return chunks.slice(0, 10).map((content) => ({ type: 'text', text: { content } }));
 }
 
 function paragraph(value: string): Record<string, unknown> {
@@ -159,15 +155,18 @@ function recordBlocks(signal: NormalizedSignal): Array<Record<string, unknown>> 
   ];
 }
 
+function archiveCandidates(): string[] {
+  const configured = process.env.VSID_NOTION_DATABASE_ID?.trim();
+  return [...new Set([configured, ACTIVE_NOTION_DATABASE_ID].filter(Boolean) as string[])];
+}
+
 async function authorized(request: Request): Promise<boolean> {
   const expected = process.env.VSID_INGEST_SECRET || '';
   if (!expected) return false;
-
   const header = request.headers.get('authorization') || '';
   if (!header.startsWith('Bearer ')) return false;
   const supplied = header.slice(7);
   if (supplied.length !== expected.length) return false;
-
   const a = new TextEncoder().encode(supplied);
   const b = new TextEncoder().encode(expected);
   let mismatch = 0;
@@ -175,10 +174,43 @@ async function authorized(request: Request): Promise<boolean> {
   return mismatch === 0;
 }
 
-async function writeToNotion(signal: NormalizedSignal): Promise<{ id: string; url?: string }> {
-  const token = process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN;
-  if (!token) throw new Error('NOTION_TOKEN is not configured');
+function eventTitle(signal: NormalizedSignal): string {
+  return `${signal.source} signal // ${signal.external_id || signal.signal_id}`;
+}
 
+async function findExisting(
+  token: string,
+  databaseId: string,
+  title: string,
+): Promise<{ id: string; url?: string } | null> {
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      'notion-version': NOTION_VERSION,
+    },
+    body: JSON.stringify({
+      page_size: 1,
+      filter: { property: 'Event', title: { equals: title } },
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new Error(payload.message || `Notion query failed with HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as { results?: Array<{ id?: string; url?: string }> };
+  const hit = payload.results?.[0];
+  return hit?.id ? { id: hit.id, url: hit.url } : null;
+}
+
+async function createArchivePage(
+  token: string,
+  databaseId: string,
+  signal: NormalizedSignal,
+): Promise<{ id: string; url?: string }> {
   const evidence = [signal.url, signal.external_id && `External ID: ${signal.external_id}`]
     .filter(Boolean)
     .join(' | ');
@@ -191,26 +223,18 @@ async function writeToNotion(signal: NormalizedSignal): Promise<{ id: string; ur
       'notion-version': NOTION_VERSION,
     },
     body: JSON.stringify({
-      parent: { database_id: NOTION_DATABASE_ID },
+      parent: { database_id: databaseId },
       properties: {
-        Event: {
-          title: richText(`${signal.source} signal // ${signal.external_id || signal.signal_id}`),
-        },
+        Event: { title: richText(eventTitle(signal)) },
         Source: { rich_text: richText(`${signal.source} // ${signal.source_type}`) },
-        Assessment: {
-          rich_text: richText('Normalized and archived. No model inference has been applied at ingestion time.'),
-        },
+        Assessment: { rich_text: richText('Normalized and archived. No model inference has been applied at ingestion time.') },
         'Evidence / Record': { rich_text: richText(evidence || signal.signal_id) },
         Status: { select: { name: 'Logged' } },
         'Transcript / Source Text': { rich_text: richText(signal.content || '[No textual payload]') },
-        Type: { select: { name: 'Observation' } },
+        Type: { select: { name: signal.source === 'NOTION' ? 'Archive Change' : 'Observation' } },
         Risk: { select: { name: 'Routine' } },
-        'Action Taken': {
-          rich_text: richText('Accepted by authenticated V-SID ingress, normalized to schema 1.0, and written to the operational archive.'),
-        },
-        Destination: {
-          multi_select: [{ name: 'SYS:/MEDIA/' }, { name: 'SYS:/ARCHIVE/' }, { name: 'SYS:/LOGS/' }],
-        },
+        'Action Taken': { rich_text: richText('Accepted by authenticated V-SID ingress, normalized to schema 1.1, and written to the active operational archive.') },
+        Destination: { multi_select: [{ name: 'SYS:/ARCHIVE/' }, { name: 'SYS:/LOGS/' }] },
         'Subject / Asset': { rich_text: richText(signal.subject) },
         Timestamp: { date: { start: signal.observed_at } },
       },
@@ -218,11 +242,44 @@ async function writeToNotion(signal: NormalizedSignal): Promise<{ id: string; ur
     }),
   });
 
-  const payload = (await response.json()) as { id?: string; url?: string; message?: string };
+  const payload = (await response.json().catch(() => ({}))) as { id?: string; url?: string; message?: string };
   if (!response.ok || !payload.id) {
     throw new Error(payload.message || `Notion write failed with HTTP ${response.status}`);
   }
   return { id: payload.id, url: payload.url };
+}
+
+async function writeToNotion(signal: NormalizedSignal): Promise<{ id: string; url?: string; duplicate: boolean; archive: 'configured' | 'active-fallback' }> {
+  const token = process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN;
+  if (!token) throw new Error('NOTION_TOKEN is not configured');
+
+  const candidates = archiveCandidates();
+  const configured = process.env.VSID_NOTION_DATABASE_ID?.trim();
+  const errors: string[] = [];
+
+  for (const databaseId of candidates) {
+    try {
+      const existing = await findExisting(token, databaseId, eventTitle(signal));
+      if (existing) {
+        return {
+          ...existing,
+          duplicate: true,
+          archive: databaseId === configured ? 'configured' : 'active-fallback',
+        };
+      }
+
+      const created = await createArchivePage(token, databaseId, signal);
+      return {
+        ...created,
+        duplicate: false,
+        archive: databaseId === configured ? 'configured' : 'active-fallback',
+      };
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : 'Unknown Notion archive error');
+    }
+  }
+
+  throw new Error(`No active Notion archive accepted the signal: ${errors.join(' | ')}`);
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -232,12 +289,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!(await authorized(request))) {
     const configured = Boolean(process.env.VSID_INGEST_SECRET);
-    return jsonResponse(
-      {
-        status: configured ? 'V-SID // INGEST AUTHORIZATION REQUIRED' : 'V-SID // INGEST NOT CONFIGURED',
-      },
-      configured ? 401 : 503,
-    );
+    return jsonResponse({ status: configured ? 'V-SID // INGEST AUTHORIZATION REQUIRED' : 'V-SID // INGEST NOT CONFIGURED' }, configured ? 401 : 503);
   }
 
   const text = await request.text();
@@ -266,13 +318,14 @@ export default async function handler(request: Request): Promise<Response> {
   for (const signal of normalized) {
     try {
       const notion = await writeToNotion(signal);
-      results.push({ signal_id: signal.signal_id, status: 'ARCHIVED', notion });
-    } catch (error) {
       results.push({
         signal_id: signal.signal_id,
-        status: 'FAILED',
-        error: error instanceof Error ? error.message : 'Unknown ingestion failure',
+        status: notion.duplicate ? 'DUPLICATE' : 'ARCHIVED',
+        archive: notion.archive,
+        notion: { id: notion.id, url: notion.url },
       });
+    } catch (error) {
+      results.push({ signal_id: signal.signal_id, status: 'FAILED', error: error instanceof Error ? error.message : 'Unknown ingestion failure' });
     }
   }
 
@@ -280,7 +333,7 @@ export default async function handler(request: Request): Promise<Response> {
   return jsonResponse(
     {
       status: failed ? 'V-SID // PARTIAL FAILURE' : 'V-SID // ARCHIVE WRITE COMPLETE',
-      schema_version: '1.0',
+      schema_version: '1.1',
       results,
     },
     failed ? 502 : 201,
