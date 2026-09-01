@@ -10,15 +10,11 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method === 'GET') {
-    return json({ status: 'V-SID // NOTION WEBHOOK ONLINE' });
-  }
+export function GET(): Response {
+  return json({ status: 'V-SID // NOTION WEBHOOK ONLINE' });
+}
 
-  if (request.method !== 'POST') {
-    return json({ status: 'V-SID // METHOD NOT AUTHORIZED' }, 405);
-  }
-
+export async function POST(request: Request): Promise<Response> {
   let payload: Record<string, unknown>;
   try {
     payload = (await request.json()) as Record<string, unknown>;
