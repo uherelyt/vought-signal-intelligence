@@ -7,8 +7,6 @@ const PUBLIC_ROUTES = new Set([
   '/',
   '/cove',
   '/cove.html',
-  '/funding',
-  '/funding.html',
   '/robots.txt',
   '/sitemap.xml',
 ]);
