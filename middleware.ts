@@ -1,4 +1,4 @@
-import { next } from '@vercel/functions';
+import { next, rewrite } from '@vercel/functions';
 
 const USERNAME = 'uherelyt';
 const PASSWORD_SHA256 = '0f713eef62f6375ddfea304d6a5374a3f5f23131293de1b85c54318062711b80';
@@ -29,8 +29,8 @@ export default async function middleware(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
 
   // External automation sources cannot complete the dashboard's interactive
-  // Basic Auth challenge. The ingress function therefore has its own bearer
-  // secret and Notion-write controls. No other route bypasses dashboard auth.
+  // Basic Auth challenge. The ingress function has its own bearer secret and
+  // Notion-write controls. No other route bypasses dashboard auth.
   if (pathname === '/api/ingest') {
     return next();
   }
@@ -54,6 +54,12 @@ export default async function middleware(request: Request): Promise<Response> {
     const passwordHash = await sha256Hex(password);
 
     if (username === USERNAME && passwordHash === PASSWORD_SHA256) {
+      // Canonical root: COVE is the writer/file keeper; V-SID stores and tracks.
+      // The prior full dashboard remains available at /index.html as a legacy view.
+      if (pathname === '/') {
+        return rewrite(new URL('/cove.html', request.url));
+      }
+
       return next();
     }
   } catch {
