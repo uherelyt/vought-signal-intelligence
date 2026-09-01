@@ -13,8 +13,8 @@ function json(body: unknown, status = 200): Response {
 }
 
 function signaturesMatch(expected: string, received: string): boolean {
-  const expectedBuffer = Buffer.from(expected);
-  const receivedBuffer = Buffer.from(received);
+  const expectedBuffer = Buffer.from(expected, 'utf8');
+  const receivedBuffer = Buffer.from(received, 'utf8');
 
   return (
     expectedBuffer.length === receivedBuffer.length &&
@@ -40,7 +40,6 @@ export async function POST(request: Request): Promise<Response> {
   const verificationToken =
     typeof payload.verification_token === 'string' ? payload.verification_token : null;
 
-  // Notion's one-time subscription verification request precedes event signing.
   if (verificationToken) {
     console.log('NOTION_WEBHOOK_VERIFICATION_TOKEN', verificationToken);
     return json({
@@ -49,19 +48,19 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  const storedVerificationToken = process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN;
+  const storedVerificationToken = process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN?.trim();
   if (!storedVerificationToken) {
     console.error('NOTION_WEBHOOK_CONFIGURATION_ERROR missing verification token');
     return json({ status: 'V-SID // WEBHOOK CONFIGURATION ERROR' }, 503);
   }
 
-  const receivedSignature = request.headers.get('x-notion-signature');
+  const receivedSignature = request.headers.get('x-notion-signature')?.trim();
   if (!receivedSignature) {
     return json({ status: 'V-SID // SIGNATURE REQUIRED' }, 401);
   }
 
   const expectedSignature = `sha256=${createHmac('sha256', storedVerificationToken)
-    .update(rawBody)
+    .update(rawBody, 'utf8')
     .digest('hex')}`;
 
   if (!signaturesMatch(expectedSignature, receivedSignature)) {
