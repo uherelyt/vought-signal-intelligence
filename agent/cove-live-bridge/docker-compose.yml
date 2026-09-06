@@ -1,0 +1,27 @@
+services:
+  cove:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8787:8787"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/New_York
+      - TZ=America/New_York
+      - N8N_SECURE_COOKIE=false
+      - COVE_BRIDGE_SECRET=${COVE_BRIDGE_SECRET}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - cove
+
+volumes:
+  n8n_data:
