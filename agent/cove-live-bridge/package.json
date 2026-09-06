@@ -1,0 +1,18 @@
+{
+  "name": "cove-live-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local autonomous bridge between Discord, Notion, Ollama, n8n, and V-SID.",
+  "scripts": {
+    "start": "node src/index.mjs",
+    "check": "node --check src/index.mjs"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
