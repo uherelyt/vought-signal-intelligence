@@ -1,0 +1,68 @@
+{
+  "name": "COVE // V-SID Autonomous Operations",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {"interval": [{"field": "hours", "hoursInterval": 1}]}
+      },
+      "id": "hourly-trigger",
+      "name": "V-SID Autonomous Sync",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://cove:8787/sweep",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "X-Cove-Key", "value": "={{ $env.COVE_BRIDGE_SECRET }}"}]},
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"mode\":\"sync\"}",
+        "options": {}
+      },
+      "id": "hourly-sweep",
+      "name": "Run Hourly Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "rule": {"interval": [{"field": "cronExpression", "expression": "0 8 * * *"}]}
+      },
+      "id": "daily-trigger",
+      "name": "Vought Operations Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://cove:8787/sweep",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "X-Cove-Key", "value": "={{ $env.COVE_BRIDGE_SECRET }}"}]},
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"mode\":\"operations\"}",
+        "options": {}
+      },
+      "id": "daily-sweep",
+      "name": "Run Daily Operations Sweep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 180]
+    }
+  ],
+  "connections": {
+    "V-SID Autonomous Sync": {"main": [[{"node": "Run Hourly Sync", "type": "main", "index": 0}]]},
+    "Vought Operations Sweep": {"main": [[{"node": "Run Daily Operations Sweep", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"timezone": "America/New_York"},
+  "versionId": "cove-vsid-autonomous-operations-v1"
+}
