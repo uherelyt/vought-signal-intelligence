@@ -1,5 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 
+const COVE_DISCORD_EVENT_LOG_PAGE_ID = '3d6a8500-0edc-81d1-b9d5-c9512af49710';
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -79,12 +81,64 @@ async function forwardToIngress(
   return { ok: response.ok, status: response.status };
 }
 
+async function appendToNotionEventLog(args: {
+  observedAt: string;
+  eventType: string;
+  blogName: string;
+  postId: string;
+  title: string;
+  body: string;
+  postUrl: string;
+}): Promise<{ ok: boolean; status: number | null }> {
+  const token = (process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN)?.trim();
+  if (!token) return { ok: false, status: null };
+
+  const summary = compactText([args.title, args.body, args.postUrl].filter(Boolean).join(' | '), 1200);
+  const record = [
+    `[${args.observedAt}] TUMBLR_WEBHOOK`,
+    `source: Tumblr webhook relay`,
+    `blog: ${args.blogName}`,
+    args.postId ? `id: ${args.postId}` : '',
+    `event: ${args.eventType}`,
+    `summary: ${summary || 'Tumblr notification received'}`,
+    `status: observed`,
+  ].filter(Boolean).join('\n');
+
+  const response = await fetch(`https://api.notion.com/v1/blocks/${COVE_DISCORD_EVENT_LOG_PAGE_ID}/children`, {
+    method: 'PATCH',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      'notion-version': '2022-06-28',
+    },
+    body: JSON.stringify({
+      children: [
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                type: 'text',
+                text: { content: record.slice(0, 1900) },
+              },
+            ],
+          },
+        },
+      ],
+    }),
+  });
+
+  return { ok: response.ok, status: response.status };
+}
+
 export function GET(): Response {
   return json({
     status: 'V-SID // TUMBLR WEBHOOK RELAY ONLINE',
     secret_configured: Boolean(process.env.TUMBLR_WEBHOOK_SECRET),
     discord_configured: Boolean(process.env.DISCORD_WEBHOOK_URL),
     ingest_configured: Boolean(process.env.VSID_INGEST_SECRET),
+    notion_log_configured: Boolean(process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN),
   });
 }
 
@@ -144,22 +198,21 @@ export async function POST(request: Request): Promise<Response> {
     raw: payload,
   };
 
-  const [discord, ingest] = await Promise.all([
+  const [discord, ingest, notionLog] = await Promise.all([
     forwardToDiscord(message),
     forwardToIngress(request, signal),
+    appendToNotionEventLog({ observedAt, eventType, blogName, postId, title, body, postUrl }),
   ]);
 
-  if (!discord.ok && discord.status !== null) {
-    console.error('TUMBLR_WEBHOOK_DISCORD_FAILED', discord.status);
-  }
-  if (!ingest.ok && ingest.status !== null) {
-    console.error('TUMBLR_WEBHOOK_INGEST_FAILED', ingest.status);
-  }
+  if (!discord.ok && discord.status !== null) console.error('TUMBLR_WEBHOOK_DISCORD_FAILED', discord.status);
+  if (!ingest.ok && ingest.status !== null) console.error('TUMBLR_WEBHOOK_INGEST_FAILED', ingest.status);
+  if (!notionLog.ok && notionLog.status !== null) console.error('TUMBLR_WEBHOOK_NOTION_LOG_FAILED', notionLog.status);
 
-  const delivered = discord.ok || ingest.ok;
+  const delivered = discord.ok || ingest.ok || notionLog.ok;
   console.info('TUMBLR_WEBHOOK_RECEIVED', postId || 'no-id', eventType, {
     discord: discord.status,
     ingest: ingest.status,
+    notion_log: notionLog.status,
   });
 
   return json(
@@ -169,6 +222,7 @@ export async function POST(request: Request): Promise<Response> {
         : 'V-SID // TUMBLR NOTIFICATION OBSERVED; NO OUTPUT CONFIGURED',
       discord,
       ingest,
+      notion_log: notionLog,
     },
     delivered ? 200 : 503,
   );
