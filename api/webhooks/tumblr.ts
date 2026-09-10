@@ -61,26 +61,6 @@ async function forwardToDiscord(message: string): Promise<{ ok: boolean; status:
   return { ok: response.ok, status: response.status };
 }
 
-async function forwardToIngress(
-  request: Request,
-  signal: Record<string, unknown>,
-): Promise<{ ok: boolean; status: number | null }> {
-  const secret = process.env.VSID_INGEST_SECRET?.trim();
-  if (!secret) return { ok: false, status: null };
-
-  const ingressUrl = new URL('/api/ingest', request.url);
-  const response = await fetch(ingressUrl, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${secret}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(signal),
-  });
-
-  return { ok: response.ok, status: response.status };
-}
-
 async function appendToNotionEventLog(args: {
   observedAt: string;
   eventType: string;
@@ -96,12 +76,12 @@ async function appendToNotionEventLog(args: {
   const summary = compactText([args.title, args.body, args.postUrl].filter(Boolean).join(' | '), 1200);
   const record = [
     `[${args.observedAt}] TUMBLR_WEBHOOK`,
-    `source: Tumblr webhook relay`,
+    'source: Tumblr webhook relay',
     `blog: ${args.blogName}`,
     args.postId ? `id: ${args.postId}` : '',
     `event: ${args.eventType}`,
     `summary: ${summary || 'Tumblr notification received'}`,
-    `status: observed`,
+    'status: observed',
   ].filter(Boolean).join('\n');
 
   const response = await fetch(`https://api.notion.com/v1/blocks/${COVE_DISCORD_EVENT_LOG_PAGE_ID}/children`, {
@@ -137,7 +117,6 @@ export function GET(): Response {
     status: 'V-SID // TUMBLR WEBHOOK RELAY ONLINE',
     secret_configured: Boolean(process.env.TUMBLR_WEBHOOK_SECRET),
     discord_configured: Boolean(process.env.DISCORD_WEBHOOK_URL),
-    ingest_configured: Boolean(process.env.VSID_INGEST_SECRET),
     notion_log_configured: Boolean(process.env.NOTION_TOKEN || process.env.VSID_NOTION_TOKEN),
   });
 }
@@ -180,38 +159,17 @@ export async function POST(request: Request): Promise<Response> {
   ].filter(Boolean);
   const message = lines.join('\n');
 
-  const signal = {
-    source: 'TUMBLR',
-    source_type: 'webhook',
-    subject: blogName,
-    external_id: postId || undefined,
-    observed_at: observedAt,
-    content: JSON.stringify({
-      event_type: eventType,
-      title,
-      body,
-      post_url: postUrl || null,
-    }),
-    metrics: {},
-    context: 'Authorized Tumblr relay webhook received by Vought Signal Intelligence and routed to Discord/Cove.',
-    confidence: 'VERIFIED-SOURCE',
-    raw: payload,
-  };
-
-  const [discord, ingest, notionLog] = await Promise.all([
+  const [discord, notionLog] = await Promise.all([
     forwardToDiscord(message),
-    forwardToIngress(request, signal),
     appendToNotionEventLog({ observedAt, eventType, blogName, postId, title, body, postUrl }),
   ]);
 
   if (!discord.ok && discord.status !== null) console.error('TUMBLR_WEBHOOK_DISCORD_FAILED', discord.status);
-  if (!ingest.ok && ingest.status !== null) console.error('TUMBLR_WEBHOOK_INGEST_FAILED', ingest.status);
   if (!notionLog.ok && notionLog.status !== null) console.error('TUMBLR_WEBHOOK_NOTION_LOG_FAILED', notionLog.status);
 
-  const delivered = discord.ok || ingest.ok || notionLog.ok;
+  const delivered = discord.ok || notionLog.ok;
   console.info('TUMBLR_WEBHOOK_RECEIVED', postId || 'no-id', eventType, {
     discord: discord.status,
-    ingest: ingest.status,
     notion_log: notionLog.status,
   });
 
@@ -221,7 +179,6 @@ export async function POST(request: Request): Promise<Response> {
         ? 'V-SID // TUMBLR NOTIFICATION RELAYED'
         : 'V-SID // TUMBLR NOTIFICATION OBSERVED; NO OUTPUT CONFIGURED',
       discord,
-      ingest,
       notion_log: notionLog,
     },
     delivered ? 200 : 503,
