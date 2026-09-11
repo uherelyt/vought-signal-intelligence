@@ -1,4 +1,4 @@
 User-agent: *
-Allow: /
+Disallow: /
 
-Sitemap: https://vought-signal-intelligence.vercel.app/sitemap.xml
+# Canonical public discovery is via the VoughtTube “property of VSI” link.
