@@ -1,4 +1,4 @@
-import { next, rewrite } from '@vercel/functions';
+import { next } from '@vercel/functions';
 
 const USERNAME = 'uherelyt';
 const PASSWORD_SHA256 = '0f713eef62f6375ddfea304d6a5374a3f5f23131293de1b85c54318062711b80';
@@ -47,12 +47,10 @@ export default async function middleware(request: Request): Promise<Response> {
     return next();
   }
 
-  // Public boundary: only explicitly sanitized surfaces are reachable without
-  // credentials. Everything else remains fail-closed by default.
+  // Public boundary: explicitly sanitized surfaces are reachable without
+  // credentials. The root now serves index.html directly as the Erelyt
+  // Public Signal Interface; /cove remains available separately.
   if (PUBLIC_ROUTES.has(pathname)) {
-    if (pathname === '/') {
-      return rewrite(new URL('/cove', request.url));
-    }
     return next();
   }
 
