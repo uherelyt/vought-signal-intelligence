@@ -1,5 +1,11 @@
 # Vought Signal Intelligence
 
+## Automation services
+
+**Available for paid workflow automation and systems-integration work.** I build practical Notion, API, webhook, cloud, and creator-operations automations for creators, consultants, and small teams.
+
+[View services, launch pricing, and proof of work →](docs/automation-services.md)
+
 V-SID production surface: https://vought-signal-intelligence.vercel.app/
 
 Access control: the production surface is protected by server-side Vercel Routing Middleware using HTTP Basic Authentication. The repository stores only a SHA-256 password digest, not the plaintext credential. Unauthorized requests receive HTTP 401 and are marked noindex/noarchive. The exact credential is distributed privately.
