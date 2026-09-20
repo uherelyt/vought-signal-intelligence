@@ -52,8 +52,10 @@ These are launch prices for bounded projects. Larger or materially different sco
 
 Best fit: an existing repetitive process with a clear desired result, especially when two or more tools need to exchange data or coordinate work.
 
-## Contact
+## Start a project
 
-Use the public GitHub profile: **[@uherelyt](https://github.com/uherelyt)**.
+The public booking/service surface is **[Workflow Automation with Notion, APIs & Webhooks on Contra](https://contra.com/s/FRcObFBN-workflow-automation-with-notion-ap-is-and-webhooks)**.
+
+Technical proof and project history remain public on **[@uherelyt](https://github.com/uherelyt)**.
 
 Do not post credentials, private API keys, customer data, or other secrets in public issues or messages.
