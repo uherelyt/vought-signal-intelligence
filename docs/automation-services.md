@@ -52,6 +52,12 @@ These are launch prices for bounded projects. Larger or materially different sco
 
 Best fit: an existing repetitive process with a clear desired result, especially when two or more tools need to exchange data or coordinate work.
 
+## Make referral
+
+If you need a Make account for a workflow, you can use my **[Make affiliate registration link](https://www.make.com/en/register?pc=uherelyt)**.
+
+Disclosure: this is an affiliate link. I may earn a commission if you sign up through it, at no added cost to you. I only recommend Make when it fits the workflow.
+
 ## Start a project
 
 The public booking/service surface is **[Workflow Automation with Notion, APIs & Webhooks on Contra](https://contra.com/s/FRcObFBN-workflow-automation-with-notion-ap-is-and-webhooks)**.
