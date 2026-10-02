@@ -31,7 +31,7 @@ export async function startAltar(env=process.env) {
   async function api(path,method='GET',body,auth=true){
     for(let attempt=0;attempt<5;attempt++){
       const r=await fetch(`https://discord.com/api/v10${path}`,{method,headers:{'content-type':'application/json',...(auth?{authorization:`Bot ${c.token}`}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
-      if(r.status===429){const b=await r.json();await wait(Math.min(60000,Math.max(1000,Number(b.retry_after)*1000)));continue;}
+      if(r.status===429){const b=await r.json();const delay=Math.max(1000,Number(b.retry_after)*1000||1000);if(delay>3600000)throw new Error('discord_rate_limit_deferred');console.info('[altar-api-rate-limit]',JSON.stringify({retryAfterSeconds:Math.ceil(delay/1000)}));await wait(delay);continue;}
       if(!r.ok){const e=new Error(`discord_http_${r.status}`);e.status=r.status;throw e;}
       return r.status===204?{}:r.json();
     }throw new Error('discord_rate_limit_exhausted');
@@ -48,7 +48,7 @@ export async function startAltar(env=process.env) {
   for(const p of roster.people){const key=Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));if(key)p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];}
   const leaseId=randomUUID(),leaseKey=`${PREFIX}:gateway:lease`;
   if(await store.set(leaseKey,leaseId,{nx:true,ex:90})!=='OK'){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
-  const runtime=new AltarRuntime({store,api,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,record:event=>console.info('[altar-discord-activity]',JSON.stringify({...event,transcript:'[retained in private durable outbox]'})),generate:async(p,input,{recent,observed,extra})=>{
+  const runtime=new AltarRuntime({store,api,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify({...event,transcript:'[retained in private durable outbox]'})),generate:async(p,input,{recent,observed,extra})=>{
     const episodic=await store.lrange('vought:children-of-the-endless:discord:activity',0,199);
     const memory=renderChildrenLongTermMemory(`${p.name} ${input}`,5,6500)+'\n'+renderChildrenEpisodicMemory(episodic,`${p.name} ${input}`);
     const child=Object.values(CHILDREN_PERSONAS).find(x=>[p.name,p.displayName].some(n=>n.toLowerCase().startsWith(x.displayName.toLowerCase())));
@@ -60,7 +60,39 @@ export async function startAltar(env=process.env) {
     const b=await r.json();const text=b.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('').trim();if(!text)throw new Error('generation_empty');
     if(epoch!==await store.get(`${PREFIX}:control_epoch`))throw new Error('generation_cancelled');return clean(text);
   }});
-  let provisioned=false,ticking=false;
+  async function verifyActivation() {
+    if(env.ALTAR_VERIFY_ON_BOOT!=='true')return;
+    const key=`${PREFIX}:acceptance:20261002:v1`;
+    const saved=await store.get(key);
+    if(saved&&saved!=='running'){try{altarStatus.acceptance=JSON.parse(saved);return;}catch{}}
+    if(await store.set(key,'running',{nx:true,ex:300})!=='OK')return;
+    try{
+      const registered=await api(`/applications/${c.applicationId}/guilds/${guildId}/commands`);
+      const names=registered.map(x=>x.name).sort().join(',');
+      if(names!=='altar,banish,candle,offer,resume,rune,tarot')throw new Error('acceptance_commands_mismatch');
+      const inaccessible=[];
+      for(const id of OBSERVE_IDS){try{const channel=await api(`/channels/${id}`);if(channel.guild_id!==guildId)inaccessible.push(id);}catch(e){if(e.status===403||e.status===404)inaccessible.push(id);else throw e;}}
+      const p=roster.people.find(x=>x.id==='elaed-c26aa32aca44-1');
+      if(!p||p.humanControlled)throw new Error('acceptance_persona_unavailable');
+      const threadId=await store.get(`${PREFIX}:shrine:${p.id}`);
+      await runtime.checkThread(threadId,p);
+      const message=await runtime.reply(p,threadId,'The Operator has requested activation of the altar. Offer one brief, calm greeting in your own voice. Do not invent any actions or words for the Operator, and do not claim supernatural proof.');
+      if(!message?.id)throw new Error('acceptance_reply_not_delivered');
+      const receipt=await api(`/channels/${threadId}/messages/${message.id}`);
+      if(receipt.id!==message.id||receipt.channel_id!==threadId||!receipt.content?.trim()||!receipt.webhook_id)throw new Error('acceptance_message_receipt_mismatch');
+      const result={state:'passed',figureId:p.id,threadId,messageId:message.id,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
+      altarStatus.acceptance=result;
+      await store.set(key,JSON.stringify(result));
+      console.info('[altar-acceptance]',JSON.stringify(result));
+    }catch(e){await store.del(key);altarStatus.acceptance={state:'failed',reason:errorCode(e)};console.error('[altar-acceptance-failed]',errorCode(e));}
+  }
+  let provisioned=false,provisioning=false,ticking=false;
+  async function provisionAll(){
+    if(provisioned||provisioning)return;provisioning=true;
+    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);await verifyActivation();}
+    catch(e){altarStatus.state='provisioning_retry';console.error('[altar-provisioning-retry]',errorCode(e));}
+    finally{provisioning=false;}
+  }
   const leaseTimer=setInterval(async()=>{
     try{const held=await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('expire',KEYS[1],90) else return 0 end",{keys:[leaseKey],arguments:[leaseId]});if(!held){altarStatus.state='gateway_lease_lost';socket?.close(1000,'lease lost');}}
     catch{altarStatus.state='redis_unavailable';socket?.close(1000,'state unavailable');}
@@ -109,7 +141,7 @@ export async function startAltar(env=process.env) {
   }
   let socket,seq=null,session=null,resumeUrl=null,fatal=false,heartbeat,ack=true;
   const timer=setInterval(()=>{
-    if(ticking||!provisioned||!altarStatus.gatewayReady)return;ticking=true;
+    if(!altarStatus.gatewayReady)return;if(!provisioned){void provisionAll();return;}if(ticking)return;ticking=true;
     enqueue(async()=>{try{await runtime.expireCandles();await runtime.autonomous();}finally{ticking=false;}});
   },60000);timer.unref();
   async function connected(){
@@ -129,7 +161,7 @@ export async function startAltar(env=process.env) {
         if(p.t==='READY'||p.t==='RESUMED'){
           session=p.d.session_id??session;resumeUrl=p.d.resume_gateway_url??resumeUrl;altarStatus.gatewayReady=true;altarStatus.state='live';
           console.info('[altar-gateway-ready]',JSON.stringify({applicationId:c.applicationId,forumId:FORUM_ID,rosterCount:roster.people.length}));
-          if(!provisioned)enqueue(async()=>{altarStatus.shrineCount=await runtime.provision();provisioned=true;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);});return;
+          if(!provisioned)void provisionAll();return;
         }
         if(p.t==='MESSAGE_CREATE'){
           const m=p.d;
