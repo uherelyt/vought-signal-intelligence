@@ -3,6 +3,7 @@ import { gunzipSync } from 'node:zlib';
 
 export const FORUM_ID = '1555666568409653268';
 export const PREFIX = 'vought:elaed-altar';
+export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340514356625489','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
@@ -30,20 +31,9 @@ export function drawOracle(method, rng=randomInt) {
 export function clean(value,max=1800){return String(value??'').replace(/@everyone|@here/gi,'').trim().slice(0,max);}
 function outgoingKey(threadId,content){return `${PREFIX}:outgoing:${threadId}:${createHash('sha256').update(clean(content)).digest('hex')}`;}
 export function shrineTitle(p){return `${p.displayName} · ${p.id}`.slice(0,100);}
-export function shrineReference(p,doc) {
-  const rel=p.relationships.filter(r=>!((/Khaos|Demiurge/.test(p.name))&&r.kind==='Ex-partner'&&/Khaos|Demiurge/.test(r.targetName)));
-  const dossier=p.dossier;
-  const paths=(p.ancestorPath??[]).map(x=>`${x.kind}: ${x.targetName}`).join(' → ');
-  return clean(`🕯️ **${p.displayName}**
-${p.ancestor?'**Ancestor of Erelyt — combined lineage**\n'+paths+'\n':''}${p.childrenKey?'**Shared Children identity:** this shrine uses the existing Ah-Muzen-Cab persona, portrait and memory.\n':''}
-${dossier?`**Interests / concerns:** ${dossier.domains}\n**Voice direction (adaptation):** ${dossier.performanceDirection}\n${dossier.personalityBasis}\n${dossier.sourceStatus==='local continuity unresolved'?'Character-source continuity still requires an Operator ruling.\n':''}`:'Detailed characterization remains unspecified.'}
-**Recorded relationships**
-${rel.slice(0,4).map(r=>`${r.kind}: ${r.targetName}${r.ambiguous?' (identity unresolved)':''}`).join('\n')}
-**Sources**
-${dossier?.sources?.slice(0,2).map(s=>s.url).join('\n')??''}
-Local canon: ${p.canonSource}
-Godparents encode incarnation-source links. Leave a petition or offering; use /altar with a figure to invite a god or Child into this thread. Omens stay in the altar. /banish and /resume are Operator controls.
-Registry: ${p.id} | ${doc.policyVersion??doc.version}`,1950);
+export function shrineReference(p) {
+  // Discord requires starter content. Character dossiers stay in private generation/recall.
+  return `🕯️ Shrine of ${clean(p.displayName,100)}.`;
 }
 
 export class AltarRuntime {
@@ -81,7 +71,7 @@ export class AltarRuntime {
     const event={eventId:randomUUID(),timestamp:new Date(this.now()).toISOString(),speakers:p?[p.displayName]:['Operator'],channelId:threadId,parentForumId:FORUM_ID,location:`#altar — Dynasty Altar / ${p?.displayName??'control'} (${threadId})`,plane:'material',movementFrom:[],movementTo:[],transcript:clean(transcript,6000),discordMessageIds:ids,durableCanon:true,sourceKind:'elaed_altar',...extra};
     // Outbox precedes the rolling context window, so later V-Workspace ingestion can acknowledge every event.
     await this.store.lpush(`${PREFIX}:durable-outbox`,JSON.stringify(event));
-    if(!['shrine_provisioning','shrine_policy'].includes(extra.eventType)){
+    if(!['shrine_provisioning','shrine_policy','shrine_presentation','shrine_reactivation'].includes(extra.eventType)){
       await this.store.lpush(NETWORK_ACTIVITY,JSON.stringify(event));
       await this.store.ltrim(NETWORK_ACTIVITY,0,199);
     }
@@ -132,7 +122,7 @@ export class AltarRuntime {
       before=page.threads?.at(-1)?.thread_metadata?.archive_timestamp;
       if(more&&!before)throw new Error('archive_pagination_failed');
     }
-    let completed=0;
+    let completed=0;this.presentationVerifiedCount=0;
     for(const p of this.roster.people){
       const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
       if(p.shrineEligible===false){
@@ -176,6 +166,15 @@ export class AltarRuntime {
         await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
         await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
       }
+      if(await this.store.get(`${PREFIX}:presentation:${p.id}`)!==SHRINE_PRESENTATION_VERSION){
+        const body={content:shrineReference(p),embeds:[],attachments:[],allowed_mentions:{parse:[]}};
+        await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',body);
+        const receipt=await this.api(`/channels/${thread.id}/messages/${thread.id}`);
+        if(receipt.id!==thread.id||receipt.channel_id!==thread.id||receipt.content!==body.content||receipt.embeds?.length||receipt.attachments?.length)throw new Error('shrine_presentation_receipt_mismatch');
+        await this.store.set(`${PREFIX}:presentation:${p.id}`,SHRINE_PRESENTATION_VERSION);
+        await this.activity(p,thread.id,'Minimal introduction verified; dossiers retained in private memory.',[thread.id],{eventType:'shrine_presentation',presentationVersion:SHRINE_PRESENTATION_VERSION,starterCharacters:body.content.length});
+      }
+      this.presentationVerifiedCount++;
       await this.store.set(`${PREFIX}:provisioned:${p.id}`,new Date(this.now()).toISOString());
       if(!found&&!stored)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
       this.progress(++completed);
