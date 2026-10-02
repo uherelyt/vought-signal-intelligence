@@ -1,0 +1,15 @@
+{
+  "name": "vought-children-render-v8",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "tsx scripts/children-render-worker.ts"
+  },
+  "dependencies": {
+    "redis": "^5.8.2",
+    "tsx": "^4.20.6"
+  }
+}
