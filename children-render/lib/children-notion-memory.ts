@@ -8,7 +8,7 @@ export type ChildrenNotionMemorySection = {
   text: string;
 };
 
-export const CHILDREN_NOTION_MEMORY_VERSION = "20261002-notion-snapshot-v8";
+export const CHILDREN_NOTION_MEMORY_VERSION = "20261002-notion-snapshot-v9";
 
 export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
 [
@@ -23,6 +23,12 @@ export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
     "sourcePageId": "3eca8500-0edc-8174-b086-f1231f6d53c0",
     "heading": "VoughtCord / Children Hero Network as cosmic hub — controlling rule, 2 Oct 2026",
     "text": "The owned Children communications space is story-facing **VoughtCord**, specifically the **Children of the Endless Hero Network**, normally called **the Network** in ordinary conversation. Use **the Children’s Network** when disambiguation is needed; use **VoughtCord** for the app/platform itself; use **Hero Network** in formal Vought language; **server** is primarily technical/operator terminology for the underlying Discord implementation. To the Children, the Network functions like a distributed **Mount Olympus or Valhalla**: a centralized, multi-layered cosmic assembly hub where beings gather, argue doctrine, coordinate fate and missions, issue announcements/decrees, preserve records, form alliances, and wage ideological conflicts across distinct conceptual planes. It is **not another metaphysical plane**; it connects existing planes, realms, thresholds, vessels, and worlds while preserving their separate geography and rules. Hero Channels function as dedicated conceptual locations or interfaces. **The entire Children Hero Network is durable canon by default** unless the Operator explicitly retcons or supersedes a specific event."
+  },
+  {
+    "sourceTitle": "Vought Workspace™ — Notion Acquisition & Corporate Knowledge Platform",
+    "sourcePageId": "3eda8500-0edc-8182-b5ce-e6b824af4a85",
+    "heading": "Corporate platform standard / durable memory",
+    "text": "Vought International's acquired Notion layer is branded **Vought Workspace™** or **V-Workspace**. **Notion** remains the technical substrate/vendor name only where API, connector, migration, or external-product accuracy requires it. V-Workspace is the durable corporate memory and workflow layer for Vought Operations: databases, wikis, projects, schedules, documentation, operating memory, decisions, canon, current state, workflows, research conclusions, and automation specifications. Use **Vought Workspace™** in corporate-facing prose and canon, **V-Workspace** as the compact product name, **VoughtNote™** for the page/editor/wiki layer, and **V-Mind** for AI/retrieval/analytics. Existing records remain authoritative and are reorganized by routing rather than duplicated."
   },
   {
     "sourceTitle": "Children of the Endless — Astral Magical Hero Team",
