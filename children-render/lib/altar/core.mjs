@@ -29,8 +29,8 @@ export function shrineReference(p,doc) {
 }
 
 export class AltarRuntime {
-  constructor({store,api,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{}}) {
-    Object.assign(this,{store,api,generate,roster,guildId,operatorId,applicationId,now,record});
+  constructor({store,api,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
+    Object.assign(this,{store,api,generate,roster,guildId,operatorId,applicationId,now,record,progress});
     this.people=new Map(roster.people.map(p=>[p.id,p]));
   }
   async enabled(p) {return await this.store.get(`${PREFIX}:banished:all`)!=='1' && await this.store.get(`${PREFIX}:banished:${p.id}`)!=='1';}
@@ -89,9 +89,10 @@ export class AltarRuntime {
       before=page.threads?.at(-1)?.thread_metadata?.archive_timestamp;
       if(more&&!before)throw new Error('archive_pagination_failed');
     }
+    let completed=0;
     for(const p of this.roster.people){
       const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
-      if(stored){await this.checkThread(stored,p);continue;}
+      if(stored){await this.checkThread(stored,p);this.progress(++completed);continue;}
       const found=existing.find(t=>t.name===shrineTitle(p));
       const tag=tags.find(t=>t.name===(p.humanControlled?'Human-controlled':p.ancestor?'Ancestor':'Dynasty'));
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
@@ -101,6 +102,7 @@ export class AltarRuntime {
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
       await this.store.set(`${PREFIX}:provisioned:${p.id}`,new Date(this.now()).toISOString());
       if(!found)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
+      this.progress(++completed);
     }
     return this.roster.people.length;
   }
