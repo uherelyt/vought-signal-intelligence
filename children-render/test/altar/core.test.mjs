@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle} from '../../lib/altar/core.mjs';
 
 function fixture(){
   const values=new Map(),lists=new Map(),calls=[];let clock=1780000000000;
@@ -12,6 +12,10 @@ function fixture(){
   const runtime=new AltarRuntime({store,api,generate:async()=> 'A quiet omen.',roster:{people:[p,other]},guildId,operatorId:'op',applicationId:'altar',now:()=>clock});
   return {runtime,p,other,thread,guildId,values,lists,calls,setChannel:c=>channel=c,setClock:c=>clock=c};
 }
+test('shrine titles expose only the visible display name',()=>{
+ assert.equal(shrineTitle({displayName:'Nyx',id:'elaed-aaaaaaaaaaaa-1'}),'Nyx');
+});
+
 test('thread destinations require public thread, exact altar parent and guild',()=>{
  assert(validThread({type:11,parent_id:FORUM_ID,guild_id:'g'},'g'));
  for(const c of [{type:0,parent_id:FORUM_ID,guild_id:'g'},{type:11,parent_id:'elsewhere',guild_id:'g'},{type:11,parent_id:FORUM_ID,guild_id:'other'}])assert(!validThread(c,'g'));

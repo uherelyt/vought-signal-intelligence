@@ -2,10 +2,13 @@ import { randomInt, randomUUID, createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 
 export const FORUM_ID = '1555666568409653268';
+export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
+export const PERSES_STATION_NAME = 'Perses';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
+export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v1';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
-export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340514356625489','1555340558270996561','1555340597546459198']);
+export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
 export const RUNES = ['Fehu','Uruz','Thurisaz','Ansuz','Raidho','Kenaz','Gebo','Wunjo','Hagalaz','Nauthiz','Isa','Jera','Eihwaz','Perthro','Algiz','Sowilo','Tiwaz','Berkano','Ehwaz','Mannaz','Laguz','Ingwaz','Dagaz','Othala'];
 
@@ -30,7 +33,7 @@ export function drawOracle(method, rng=randomInt) {
 }
 export function clean(value,max=1800){return String(value??'').replace(/@everyone|@here/gi,'').trim().slice(0,max);}
 function outgoingKey(threadId,content){return `${PREFIX}:outgoing:${threadId}:${createHash('sha256').update(clean(content)).digest('hex')}`;}
-export function shrineTitle(p){return `${p.displayName} · ${p.id}`.slice(0,100);}
+export function shrineTitle(p){return clean(p.displayName,100);}
 export function shrineReference(p) {
   // Discord requires starter content. Character dossiers stay in private generation/recall.
   return `🕯️ Shrine of ${clean(p.displayName,100)}.`;
@@ -49,6 +52,11 @@ export class AltarRuntime {
     if(!/^\d{15,22}$/.test(threadId))throw new Error('invalid_thread');
     const c=await this.api(`/channels/${threadId}`);
     if(!validThread(c,this.guildId)) throw new Error('outside_altar');
+    const resident=await this.store.get(`${PREFIX}:resident-thread:${threadId}`);
+    if(resident){
+      if(resident==='perses'&&(!p||p.childrenKey))return c;
+      throw new Error('resident_station_mismatch');
+    }
     const owner=await this.store.get(`${PREFIX}:thread:${threadId}`);
     if(!this.people.has(owner))throw new Error('inactive_or_unregistered_shrine');
     if(p&&!this.people.has(p.id)&&!this.visitors.has(p.id))throw new Error('ineligible_figure');
@@ -68,7 +76,9 @@ export class AltarRuntime {
     return `${disabled?'Silenced':'Resumed'} ${target==='all'?'the altar':(this.people.get(target)??this.visitors.get(target)).displayName}.`;
   }
   async activity(p,threadId,transcript,ids=[],extra={}) {
-    const event={eventId:randomUUID(),timestamp:new Date(this.now()).toISOString(),speakers:p?[p.displayName]:['Operator'],channelId:threadId,parentForumId:FORUM_ID,location:`#altar — Dynasty Altar / ${p?.displayName??'control'} (${threadId})`,plane:'material',movementFrom:[],movementTo:[],transcript:clean(transcript,6000),discordMessageIds:ids,durableCanon:true,sourceKind:'elaed_altar',...extra};
+    const resident=await this.store.get(`${PREFIX}:resident-thread:${threadId}`);
+    const label=resident==='perses'?'Perses':(p?.displayName??'control');
+    const event={eventId:randomUUID(),timestamp:new Date(this.now()).toISOString(),speakers:p?[p.displayName]:['Operator'],channelId:threadId,parentForumId:FORUM_ID,location:`#altar — Ritual Chamber / ${label} (${threadId})`,plane:'astral',movementFrom:[],movementTo:[],transcript:clean(transcript,6000),discordMessageIds:ids,durableCanon:true,sourceKind:resident==='perses'?'children_ritual_station':'elaed_altar',...extra};
     // Outbox precedes the rolling context window, so later V-Workspace ingestion can acknowledge every event.
     await this.store.lpush(`${PREFIX}:durable-outbox`,JSON.stringify(event));
     if(!['shrine_provisioning','shrine_policy','shrine_presentation','shrine_reactivation'].includes(extra.eventType)){
@@ -137,7 +147,10 @@ export class AltarRuntime {
         }
         continue;
       }
-      const found=existing.find(t=>t.name===shrineTitle(p));
+      const visibleTitle=shrineTitle(p);
+      const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
+      const visibleTitleUnique=this.roster.people.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
+      const found=existing.find(t=>t.name===legacyTitle)??(visibleTitleUnique?existing.find(t=>t.name===visibleTitle):null);
       const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
       const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
@@ -166,6 +179,10 @@ export class AltarRuntime {
         await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
         await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
       }
+      if(thread.name!==shrineTitle(p)){
+        const renamed=await this.api(`/channels/${thread.id}`,'PATCH',{name:shrineTitle(p)});
+        thread={...thread,...renamed};
+      }
       if(await this.store.get(`${PREFIX}:presentation:${p.id}`)!==SHRINE_PRESENTATION_VERSION){
         const body={content:shrineReference(p),embeds:[],attachments:[],allowed_mentions:{parse:[]}};
         await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',body);
@@ -178,6 +195,33 @@ export class AltarRuntime {
       await this.store.set(`${PREFIX}:provisioned:${p.id}`,new Date(this.now()).toISOString());
       if(!found&&!stored)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
       this.progress(++completed);
+    }
+    const perses=[...this.visitors.values()].find(p=>p.childrenKey==='perses');
+    if(perses){
+      const bridgeTag=tags.find(t=>t.name==='Children bridge');
+      if((forum.flags&16)&&!bridgeTag)throw new Error('children_bridge_tag_unavailable');
+      const stored=await this.store.get(`${PREFIX}:resident:perses`);
+      let station=stored?await this.api(`/channels/${stored}`):existing.find(t=>t.name===PERSES_STATION_NAME&&!t.thread_metadata?.locked&&!t.thread_metadata?.archived);
+      if(!station||!validThread(station,this.guildId)){
+        station=await this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:PERSES_STATION_NAME,auto_archive_duration:10080,applied_tags:bridgeTag?[bridgeTag.id]:[],message:{content:'⚔️ Perses.',allowed_mentions:{parse:[]}}});
+      }
+      const stationTags=bridgeTag?[bridgeTag.id]:[];
+      if(station.name!==PERSES_STATION_NAME||station.thread_metadata?.locked||station.thread_metadata?.archived||stationTags.some(id=>!station.applied_tags?.includes(id))){
+        const changed=await this.api(`/channels/${station.id}`,'PATCH',{name:PERSES_STATION_NAME,applied_tags:stationTags,locked:false,archived:false});
+        station={...station,...changed};
+      }
+      await this.store.set(`${PREFIX}:resident:perses`,station.id);
+      await this.store.set(`${PREFIX}:resident-thread:${station.id}`,'perses');
+      const stationPresentation=RITUAL_ROOM_VERSION;
+      if(await this.store.get(`${PREFIX}:resident-presentation:perses`)!==stationPresentation){
+        const body={content:'⚔️ Perses.',embeds:[],attachments:[],allowed_mentions:{parse:[]}};
+        await this.api(`/channels/${station.id}/messages/${station.id}`,'PATCH',body);
+        const receipt=await this.api(`/channels/${station.id}/messages/${station.id}`);
+        if(receipt.id!==station.id||receipt.channel_id!==station.id||receipt.content!==body.content)throw new Error('perses_station_receipt_mismatch');
+        await this.store.set(`${PREFIX}:resident-presentation:perses`,stationPresentation);
+        await this.activity(perses,station.id,'Perses resident station verified inside the Ritual Chamber.',[station.id],{eventType:'resident_station',shrine:false});
+      }
+      this.persesStationId=station.id;
     }
     return this.people.size;
   }
@@ -201,10 +245,14 @@ export class AltarRuntime {
       await this.store.ltrim(`${PREFIX}:observed`,0,39);return;
     }
     if(!validThread(c,this.guildId))return;
-    const id=await this.store.get(`${PREFIX}:thread:${m.channel_id}`),p=this.people.get(id);
+    const resident=await this.store.get(`${PREFIX}:resident-thread:${m.channel_id}`);
+    const id=await this.store.get(`${PREFIX}:thread:${m.channel_id}`);
+    const p=resident==='perses'
+      ?[...this.visitors.values()].find(person=>person.childrenKey==='perses')
+      :this.people.get(id);
     if(!p)return;
     const claimed=await this.store.set(`${PREFIX}:message:${m.id}`,'1',{nx:true,ex:172800});if(claimed!=='OK')return;
-    await this.activity(p,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{speakers:[m.author?.username??'Human'],eventType:'petition'});
+    await this.activity(p,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{speakers:[m.author?.username??'Human'],eventType:resident?'ritual_room_message':'petition'});
     if(m.author.id!==this.operatorId&&!child)return;
     const cooldown=await this.store.set(`${PREFIX}:reply-cooldown:${p.id}`,'1',{nx:true,ex:15});if(cooldown!=='OK')return;
     await this.reply(p,m.channel_id,m.content);
@@ -240,7 +288,7 @@ export class AltarRuntime {
     const entries=await this.store.lrange(`${PREFIX}:candles`,0,-1);
     // LREM each processed item preserves candles appended while reconciliation is running.
     for(const raw of entries){const c=JSON.parse(raw);if(c.expires>this.now())continue;
-      const p=this.people.get(c.figureId);if(!p)continue;
+      const p=this.people.get(c.figureId)??this.visitors.get(c.figureId);if(!p)continue;
       await this.checkThread(c.threadId,p);
       try{await this.api(`/channels/${c.threadId}/messages/${c.messageId}/reactions/${encodeURIComponent('🕯️')}/@me`,'DELETE');}
       catch(e){if(![404].includes(e.status))throw e;}
