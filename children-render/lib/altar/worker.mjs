@@ -36,9 +36,13 @@ export async function startAltar(env=process.env) {
       return r.status===204?{}:r.json();
     }throw new Error('discord_rate_limit_exhausted');
   }
+  altarStatus.startupPhase='verify_application';
+  const user=await api('/users/@me');if(user.id!==c.applicationId)throw new Error('altar_token_application_mismatch');
+  altarStatus.applicationVerified=true;
+  altarStatus.startupPhase='verify_forum_access';
   const forum=await api(`/channels/${FORUM_ID}`);
   if(forum.type!==15||!forum.guild_id)throw new Error('forum_type_or_access_required');
-  const user=await api('/users/@me');if(user.id!==c.applicationId)throw new Error('altar_token_application_mismatch');
+  altarStatus.startupPhase='register_commands';
   const guildId=forum.guild_id;
   const portraitMatches={john:'John ',thanatos:'Thanatos',orpheus:'Orpheus',perses:'Perses',rose:'Rose Walker',distress:'Distress ',ah_muzen_cab:'Ah-Muzen-Cab "Honey',asclepius:'Asclepius',cab:'Ah-Muzen-Cab "\'Cab'};
   for(const p of roster.people){const key=Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));if(key)p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];}
