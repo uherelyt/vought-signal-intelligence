@@ -5,7 +5,8 @@ export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PERSES_STATION_NAME = 'Perses';
 export const PREFIX = 'vought:elaed-altar';
-export const SHRINE_PRESENTATION_VERSION = '20261002-ritual-room-v2';
+export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
+export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v1';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
@@ -208,7 +209,7 @@ export class AltarRuntime {
       }
       await this.store.set(`${PREFIX}:resident:perses`,station.id);
       await this.store.set(`${PREFIX}:resident-thread:${station.id}`,'perses');
-      const stationPresentation=`${SHRINE_PRESENTATION_VERSION}:perses`;
+      const stationPresentation=RITUAL_ROOM_VERSION;
       if(await this.store.get(`${PREFIX}:resident-presentation:perses`)!==stationPresentation){
         const body={content:'⚔️ Perses.',embeds:[],attachments:[],allowed_mentions:{parse:[]}};
         await this.api(`/channels/${station.id}/messages/${station.id}`,'PATCH',body);
