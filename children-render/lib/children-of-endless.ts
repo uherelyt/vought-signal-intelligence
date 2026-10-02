@@ -547,6 +547,7 @@ MEMORY INITIATIVE: Bart/Erelyt is the Mythographer and often asks questions to g
 COLLECTIVE DREAM: To reach places no one else can reach while ensuring every Child has the freedom and opportunity to realize their own impossible dream.
 DREAM DUALITY: Ambitions can shape Astral-Plane dream imagery, routes, symbolic territories, encounters, emotional weather, and the vessel's pull. The Mental-Plane House maps and routes; lived dreaming happens on the Astral Plane. Show this through concrete conversation rather than repeating cosmology.
 RELATIONSHIPS: Orpheus and Perses are not partners. Eurydice is Orpheus's late partner; Asteria is Perses's partner. Matching Couple has no current in-team assignment.
+EPISTEMIC CANON: A Durable Canon Network record means the event happened and the recorded speaker genuinely said, perceived, remembered, guessed, joked, theorized, or believed what the transcript attributes to them. It does NOT automatically make every sentence objective cosmological fact. Keep metaphors, perceptions, memories, jokes, guesses, theories, disputed claims, and character beliefs attributed to their source unless controlling V-Workspace canon or direct established evidence confirms them. Never promote episodic dialogue into permanent cosmology, relationships, biography, or objective history merely because the event is durable.
 CHAT STYLE: Meme archetypes are light comic habits, not the whole personality. Talk naturally about everyday crew life, jokes, food, stories, small disagreements, friendships, and ongoing dreams; not every message needs an anomaly or mission report. Respect ages, identities, and Bart's human control. Do not claim dreams are already fulfilled or invent new durable relationships.
 VOICE DIFFERENTIATION: The Children do not share one elevated house voice. Default to plain modern conversational prose, then follow YOUR PERSONALITY and YOUR VOICE for diction, sentence length, rhythm, metaphor density, and emotional register. Do not default to ornate, archaic, mystical, lyrical, flowery, purple, or metaphor-heavy language merely because the setting is mythic or astral. Orpheus may be the most naturally poetic, but must remain concrete and conversational. Cab may be atmospheric and strange, but brief. Ah-Muzen-Cab may be ritual-minded or mythic when context calls for it, but stays practical and hospitable. John is dry and exact; Thanatos measured and grounded; Perses spare and blunt; Rose grounded and perceptive; Distress developmentally childlike; Asclepius clinical and concise. Never make multiple speakers converge on the same elevated cadence, syntax, vocabulary, or metaphor pattern.
 CONVERSATION QUALITY: Answer the latest question or request directly in the first sentence, then add an optional natural joke or follow-up. Older messages are background, not a script to copy or a request to answer again. Contribute a new relevant detail; do not repeat or lightly paraphrase your recent lines. Food questions deserve an actual fictional meal or offer, not another promise about mead; route requests deserve a useful course suggestion or a specific clarification. Ordinary low-stakes scene details are allowed, but do not invent permanent canon, completed trips, the human's actions, or verified supernatural facts. Do not stall every request with "patience", "soon", or "when things settle". Meme habits should not drown out the answer: John can be dry without scolding routine messages or demanding channel order. Keep lore implicit unless it helps answer. Avoid forced nicknames, repeated catchphrases, or code/git jokes unless the human raised that subject.
@@ -1026,7 +1027,7 @@ ${runtimeCanon}
 LONG-TERM CANON MEMORY (relevance-ranked Notion bootstrap snapshot):
 ${longTerm}
 
-EPISODIC MEMORY (relevance-ranked prior Network activity):
+EPISODIC MEMORY (relevance-ranked prior Network activity; these are attributed event records, not automatic objective-fact assertions. Preserve who said/perceived/believed what unless controlling V-Workspace canon confirms the claim):
 ${episodic}`;
 }
 
@@ -1166,6 +1167,7 @@ async function generateTurn(
   recent: string[],
   location: ChildrenLocation | null,
   memory: string,
+  movementCue: string,
 ) {
   const transcriptText = transcript.length
     ? transcript.map((turn) => `${turn.displayName}: ${turn.content}`).join("\n")
@@ -1192,6 +1194,9 @@ CANON:
 
 CURRENT LOCATION:
 ${location ? `${location.name} [${location.plane} plane]\n${location.description ?? ""}` : "Unspecified authorized location"}
+
+MOVEMENT CONTINUITY:
+${movementCue}
 
 YOUR CANONICAL AGE: ${persona.chronologicalAge}
 YOUR APPARENT AGE: ${persona.apparentAge}
@@ -1354,6 +1359,19 @@ async function movePersonas(
   return { movementFrom, movementTo };
 }
 
+function movementCueForPersona(
+  persona: ChildrenPersona,
+  movement: { movementFrom: string[]; movementTo: string[] },
+  location: ChildrenLocation,
+) {
+  const prefix = `${persona.displayName}: `;
+  const from = movement.movementFrom.find((entry) => entry.startsWith(prefix));
+  const to = movement.movementTo.find((entry) => entry.startsWith(prefix));
+  if (!from || !to) return "No location transition is required for this speaker.";
+  const fromSlug = from.slice(prefix.length);
+  return `LOCATION TRANSITION: You have just moved from #${fromSlug} to #${location.slug} — ${location.name}. Make your first sentence naturally acknowledge arriving, stepping in/out, joining the others, or otherwise completing that movement. Keep it brief and in-character. Do not silently teleport or describe yourself as still being in the prior location.`;
+}
+
 function activityLocationLabel(location: ChildrenLocation) {
   return `#${location.slug} — ${location.name} (${location.channelId})`;
 }
@@ -1451,7 +1469,15 @@ export async function runChildrenPulse(input: ChildrenPulseInput): Promise<Child
   for (let index = 0; index < turns; index += 1) {
     const speaker = participants[index % participants.length];
     const persona = CHILDREN_PERSONAS[speaker];
-    const content = await generateTurn(persona, topic, transcript, recent, location, memory);
+    const content = await generateTurn(
+      persona,
+      topic,
+      transcript,
+      recent,
+      location,
+      memory,
+      movementCueForPersona(persona, movement, location),
+    );
     const turn: ChildrenTurn = { speaker, displayName: persona.displayName, content };
     transcript.push(turn);
 
@@ -1562,6 +1588,7 @@ async function generateReactiveTurn(
   transcript: ChildrenTurn[],
   recent: string[],
   memory: string,
+  movementCue: string,
 ) {
   const recentText = recent.length
     ? recent.slice(0, 10).reverse().join("\n")
@@ -1594,6 +1621,9 @@ ${(() => {
   const location = getChildrenLocationByChannelId(input.channelId);
   return location ? `${location.name} [${location.plane} plane]\n${location.description ?? ""}` : "Unspecified authorized location";
 })()}
+
+MOVEMENT CONTINUITY:
+${movementCue}
 
 YOUR ROLE: ${persona.role}
 YOUR CANONICAL AGE: ${persona.chronologicalAge}
@@ -1743,6 +1773,7 @@ export async function runChildrenReactiveMessage(
         transcript,
         recent,
         memory,
+        movementCueForPersona(persona, movement, location),
       );
       const turn: ChildrenTurn = {
         speaker,
