@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
-import { randomUUID } from 'node:crypto';
-import { AltarRuntime,decodeRoster,FORUM_ID,PREFIX,validThread,clean,OBSERVE_IDS } from './core.mjs';
+import { randomUUID,createHash } from 'node:crypto';
+import { AltarRuntime,decodeRoster,FORUM_ID,PREFIX,validThread,clean,OBSERVE_IDS,SHRINE_PRESENTATION_VERSION } from './core.mjs';
 import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../children-memory.ts';
 import { CHILDREN_PERSONAS,generateFreshChildrenMessage } from '../children-of-endless.ts';
 import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
@@ -50,6 +50,25 @@ export async function startAltar(env=process.env) {
   for(const p of [...roster.people,...roster.visitors??[]]){
     const key=p.childrenKey??Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));
     if(key){p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];p.senderName=CHILDREN_PERSONAS[key]?.displayName;}
+  }
+  const portraitKeys=[...new Set([...roster.people,...roster.visitors??[]].filter(p=>p.avatarData).map(p=>p.childrenKey))].filter(Boolean);
+  altarStatus.portraitCount=portraitKeys.length;
+  async function verifyPortraits(runtime){
+    const fingerprint=createHash('sha256').update(portraitKeys.map(key=>`${key}:${CHILDREN_AVATAR_DATA_URIS[key]}`).join('\n')).digest('hex');
+    const receiptKey=`${PREFIX}:portraits:${fingerprint}`;
+    const saved=await store.get(receiptKey);
+    if(saved){const receipt=JSON.parse(saved);if(receipt.keys?.length===portraitKeys.length){altarStatus.portraitsVerified=true;return;}}
+    const webhook=await runtime.webhook(true);
+    const receipts=[];
+    // Verify the established portraits directly with Discord without adding shrine chatter.
+    for(const key of portraitKeys){
+      const result=await childApi(`/webhooks/${webhook.id}`,'PATCH',{avatar:CHILDREN_AVATAR_DATA_URIS[key]});
+      if(result.id!==webhook.id||result.application_id!==env.CHILDREN_DISCORD_APPLICATION_ID||!result.avatar)throw new Error('portrait_application_receipt_mismatch');
+      receipts.push({key,avatar:result.avatar});
+    }
+    await store.set(receiptKey,JSON.stringify({keys:portraitKeys,receipts,verifiedAt:new Date().toISOString()}));
+    altarStatus.portraitsVerified=true;
+    console.info('[altar-portraits-verified]',JSON.stringify({count:receipts.length,keys:portraitKeys}));
   }
   altarStatus.expectedShrines=roster.expectedShrines??roster.people.length;
   altarStatus.ancestorCount=roster.people.filter(p=>p.ancestor).length;
@@ -134,7 +153,7 @@ export async function startAltar(env=process.env) {
   let provisioned=false,provisioning=false,ticking=false;
   async function provisionAll(){
     if(provisioned||provisioning)return;provisioning=true;
-    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);await runtime.webhook(true);await verifyActivation();}
+    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();await verifyPortraits(runtime);provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';altarStatus.presentationVersion=SHRINE_PRESENTATION_VERSION;altarStatus.presentationVerifiedCount=runtime.presentationVerifiedCount;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);console.info('[altar-presentation-verified]',JSON.stringify({version:SHRINE_PRESENTATION_VERSION,count:runtime.presentationVerifiedCount,portraitCount:portraitKeys.length}));await runtime.webhook(true);await verifyActivation();}
     catch(e){altarStatus.state='provisioning_retry';console.error('[altar-provisioning-retry]',errorCode(e));}
     finally{provisioning=false;}
   }
