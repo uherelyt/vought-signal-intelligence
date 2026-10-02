@@ -165,12 +165,20 @@ export async function startAltar(env=process.env) {
       if(legacy.guild_id!==guildId||legacy.type!==0||String(legacy.name??'').toLowerCase()!=='ritual')throw new Error('legacy_ritual_identity_mismatch');
       const forumBefore=await childApi(`/channels/${FORUM_ID}`);
       if(forumBefore.guild_id!==guildId||forumBefore.type!==15)throw new Error('altar_forum_identity_mismatch');
+      const mutate=async(path,method,body)=>{
+        try{return await childApi(path,method,body);}
+        catch(error){
+          if(error?.status!==403)throw error;
+          console.warn('[altar-channel-mutation-child-forbidden]',JSON.stringify({path,method}));
+          return api(path,method,body);
+        }
+      };
       if(legacy.parent_id&&forumBefore.parent_id!==legacy.parent_id){
-        const moved=await childApi(`/channels/${FORUM_ID}`,'PATCH',{parent_id:legacy.parent_id,position:legacy.position});
+        const moved=await mutate(`/channels/${FORUM_ID}`,'PATCH',{parent_id:legacy.parent_id,position:legacy.position});
         if(moved.parent_id!==legacy.parent_id)throw new Error('altar_forum_move_receipt_mismatch');
         altarStatus.ritualRoomCategoryId=legacy.parent_id;
       }else altarStatus.ritualRoomCategoryId=forumBefore.parent_id??legacy.parent_id;
-      await childApi(`/channels/${LEGACY_RITUAL_CHANNEL_ID}`,'DELETE');
+      await mutate(`/channels/${LEGACY_RITUAL_CHANNEL_ID}`,'DELETE');
       await store.set(receiptKey,'done');
       altarStatus.legacyRitualRetired=true;
       console.info('[altar-legacy-ritual-retired]',JSON.stringify({channelId:LEGACY_RITUAL_CHANNEL_ID}));
