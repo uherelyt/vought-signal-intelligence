@@ -1,6 +1,7 @@
 import { Redis } from "../lib/render-redis.ts";
 import { createServer } from "node:http";
 import { runChildrenDiscordGatewayPersistent } from "../lib/children-discord-gateway.ts";
+import { runChildrenPulse } from "../lib/children-of-endless.ts";
 import { CHILDREN_NOTION_MEMORY_VERSION } from "../lib/children-memory.ts";
 
 const STATE_PREFIX = "vought:children-of-the-endless";
@@ -51,6 +52,46 @@ async function verifyGeminiCredential() {
   console.info("[children-gemini-credential-ok]", model);
 }
 
+async function runAcceptancePulse() {
+  if (process.env.CHILDREN_RENDER_ACCEPTANCE_PULSE?.trim().toLowerCase() !== "true") return;
+
+  const redis = redisClient();
+  if (!redis) throw new Error("Redis is not configured");
+
+  const lockKey = `${STATE_PREFIX}:acceptance:render-v8:20261002`;
+  const lock = await redis.set(lockKey, new Date().toISOString(), { nx: true, ex: 60 * 60 });
+  if (lock !== "OK") {
+    console.info("[children-render-acceptance-pulse-skipped]", "already_claimed");
+    return;
+  }
+
+  try {
+    const pulse = await runChildrenPulse({
+      mode: "manual",
+      force: true,
+      turns: 1,
+      participants: ["rose"],
+      location: "astral",
+      topic:
+        "A quiet silver shimmer passes through the outer dream-shallows. Rose notices something subtle in it and says what she observes while remaining in the off-vessel Astral field. Do not mention software, terminals, browsers, keyboards, channels, or implementation details.",
+    });
+
+    if (!pulse.ok || pulse.skipped || !pulse.posted) {
+      await redis.del(lockKey);
+      throw new Error(`Render acceptance pulse did not post: ${pulse.reason ?? "unknown"}`);
+    }
+
+    console.info("[children-render-acceptance-pulse]", JSON.stringify({
+      ok: pulse.ok,
+      posted: pulse.posted,
+      participants: pulse.participants,
+    }));
+  } catch (error) {
+    await redis.del(lockKey);
+    throw error;
+  }
+}
+
 async function seedRuntimeCanon() {
   const redis = redisClient();
   if (!redis) throw new Error("Redis is not configured");
@@ -98,6 +139,7 @@ console.info("[children-render-worker-boot]", JSON.stringify({
 
 await seedRuntimeCanon();
 await verifyGeminiCredential();
+await runAcceptancePulse();
 
 const result = await runChildrenDiscordGatewayPersistent({ forceTakeover: true });
 
