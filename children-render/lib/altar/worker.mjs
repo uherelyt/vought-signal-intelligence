@@ -54,6 +54,11 @@ export async function startAltar(env=process.env) {
   altarStatus.expectedShrines=roster.expectedShrines??roster.people.length;
   altarStatus.ancestorCount=roster.people.filter(p=>p.ancestor).length;
   altarStatus.visitorCount=roster.visitors?.length??0;
+  if(roster.policyVersion){
+    const recall=renderChildrenLongTermMemory('Erelyt ancestors lineage altar',5,6500);
+    if(!recall.includes('combined lineage has 28 named ancestors')||!recall.includes('Current private altar canon'))throw new Error('private_altar_canon_recall_unavailable');
+    altarStatus.canonRecallVerified=true;altarStatus.canonRecallVersion=roster.policyVersion;
+  }
   if(roster.visitors?.length){
     const childUser=await childApi('/users/@me');
     if(childUser.id!==env.CHILDREN_DISCORD_APPLICATION_ID)throw new Error('children_bridge_application_mismatch');
