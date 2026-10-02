@@ -62,3 +62,42 @@ test('provisioning retries adopt an existing thread rather than create a duplica
  f.runtime.api=async(path,method='GET')=>{if(method==='POST')creates++;if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
  await f.runtime.provision();await f.runtime.provision();assert.equal(creates,0);assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),f.thread);
 });
+test('a god may visit another registered shrine but never an unregistered altar thread',async()=>{
+ const f=fixture(),second='1555666568409653555';
+ f.values.set(`${PREFIX}:thread:${second}`,f.p.id);f.setChannel({id:second,type:11,parent_id:FORUM_ID,guild_id:f.guildId});
+ const receipt=await f.runtime.deliver(f.p,second,'A visit.','0');assert(receipt);
+ f.values.delete(`${PREFIX}:thread:${second}`);
+ await assert.rejects(f.runtime.deliver(f.p,second,'Unregistered.','0'),/inactive_or_unregistered/);
+});
+test('retired Children and nondivine references are excluded from active routing',async()=>{
+ const f=fixture();const retired={...f.other,humanControlled:false,shrineEligible:false,childrenKey:'rose'};
+ const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,generate:f.runtime.generate,roster:{people:[f.p,retired]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+ assert(!runtime.people.has(retired.id));await assert.rejects(runtime.deliver(retired,f.thread,'No shrine.','0'),/ineligible_figure/);
+});
+test('a Child visit uses the Children application and its known portrait, then stops after three turns',async()=>{
+ const f=fixture(),child={id:'child:orpheus',childrenKey:'orpheus',name:'Orpheus',displayName:'Orpheus',humanControlled:false,avatarData:'portrait'};
+ f.runtime.visitors.set(child.id,child);f.runtime.childrenApplicationId='children';let childSends=0;
+ f.runtime.childApi=async(path,method='GET',body)=>{
+   if(path.endsWith('/webhooks'))return [{id:'childhook',token:'secret',application_id:'children'}];
+   if(method==='POST'){childSends++;return {id:'1555666568409653999',content:body.content};}return {};
+ };
+ f.runtime.api=async(path,method='GET',body)=>{
+   if(path.endsWith('/webhooks'))return [{id:'altarhook',token:'secret',application_id:'altar'}];
+   if(method==='POST')return {id:'1555666568409653888',content:body.content};
+   return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId};
+ };
+ let generations=0;f.runtime.generate=async p=>{generations++;return `${p.name} turn ${generations}`;};
+ await f.runtime.converseWithChild(child,f.thread,'Ask the host');assert.equal(childSends,2);assert.equal(generations,3);
+ const before=generations;await f.runtime.message({id:'1555666568409653999',channel_id:f.thread,guild_id:f.guildId,webhook_id:'childhook',author:{id:'childhook',username:'Orpheus',bot:true},content:'Orpheus turn 3'});assert.equal(generations,before);
+});
+test('Children webhook payload is suppressed even when the Gateway arrives before REST receipt',async()=>{
+ const f=fixture(),child={...f.p,id:'child:orpheus',childrenKey:'orpheus',displayName:'Orpheus'};
+ f.runtime.visitors.set(child.id,child);f.runtime.childrenApplicationId='children';let generated=0;f.runtime.generate=async()=>{generated++;return 'new';};
+ f.runtime.childApi=async(path,method='GET',body)=>{
+  if(path.endsWith('/webhooks'))return [{id:'childhook',token:'secret',application_id:'children'}];
+  if(method==='POST'){
+   await f.runtime.message({id:'1555666568409653999',channel_id:f.thread,guild_id:f.guildId,webhook_id:'childhook',author:{id:'childhook',username:'Orpheus',bot:true},content:body.content});return {id:'1555666568409653999',content:body.content};
+  }return {};
+ };
+ await f.runtime.deliver(child,f.thread,'Hello from Orpheus','0');assert.equal(generated,0);
+});
