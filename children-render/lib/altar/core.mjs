@@ -288,7 +288,7 @@ export class AltarRuntime {
     const entries=await this.store.lrange(`${PREFIX}:candles`,0,-1);
     // LREM each processed item preserves candles appended while reconciliation is running.
     for(const raw of entries){const c=JSON.parse(raw);if(c.expires>this.now())continue;
-      const p=this.people.get(c.figureId);if(!p)continue;
+      const p=this.people.get(c.figureId)??this.visitors.get(c.figureId);if(!p)continue;
       await this.checkThread(c.threadId,p);
       try{await this.api(`/channels/${c.threadId}/messages/${c.messageId}/reactions/${encodeURIComponent('🕯️')}/@me`,'DELETE');}
       catch(e){if(![404].includes(e.status))throw e;}
