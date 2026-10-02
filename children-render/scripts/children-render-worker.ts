@@ -23,6 +23,34 @@ function redisClient() {
   return new Redis(url);
 }
 
+async function verifyGeminiCredential() {
+  if (process.env.CHILDREN_VERIFY_GEMINI_ON_BOOT?.trim().toLowerCase() !== "true") return;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) throw new Error("Gemini generation is not configured");
+  const model = process.env.CHILDREN_MODEL?.trim() || "gemini-3.5-flash-lite";
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "Reply exactly OK." }] }],
+        generationConfig: { temperature: 0, maxOutputTokens: 8 },
+      }),
+      signal: AbortSignal.timeout(20_000),
+    },
+  );
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const body = await response.json() as { error?: { message?: string } };
+      detail = body.error?.message?.trim().slice(0, 240) ?? "";
+    } catch {}
+    throw new Error(`Gemini credential check returned ${response.status}${detail ? `: ${detail}` : ""}`);
+  }
+  console.info("[children-gemini-credential-ok]", model);
+}
+
 async function seedRuntimeCanon() {
   const redis = redisClient();
   if (!redis) throw new Error("Redis is not configured");
@@ -69,6 +97,7 @@ console.info("[children-render-worker-boot]", JSON.stringify({
 }));
 
 await seedRuntimeCanon();
+await verifyGeminiCredential();
 
 const result = await runChildrenDiscordGatewayPersistent({ forceTakeover: true });
 
