@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from 'node:crypto';
+import { randomInt, randomUUID, createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 
 export const FORUM_ID = '1555666568409653268';
@@ -12,6 +12,12 @@ export function decodeRoster(value) {
   const doc=JSON.parse(gunzipSync(Buffer.from(value,'base64'), {maxOutputLength:2_000_000}).toString('utf8'));
   if (!Array.isArray(doc.people) || doc.people.length!==239 || new Set(doc.people.map(p=>p.id)).size!==239) throw new Error('roster_count_or_identity_mismatch');
   for(const p of doc.people) if(!/^elaed-[a-f0-9]{12}-\d+$/.test(p.id)||typeof p.name!=='string'||!Array.isArray(p.relationships)) throw new Error('invalid_roster');
+  if(doc.policyVersion){
+    if(doc.people.filter(p=>p.shrineEligible).length!==doc.expectedShrines)throw new Error('shrine_eligibility_count_mismatch');
+    if(doc.people.filter(p=>p.ancestor).length!==doc.requestedAncestorCount||doc.ancestorDesignationPending)throw new Error('ancestor_count_mismatch');
+    if(doc.people.some(p=>p.shrineEligible&&p.childrenKey&&p.childrenKey!=='ah_muzen_cab'))throw new Error('children_dedicated_shrine_forbidden');
+    if(!Array.isArray(doc.visitors)||doc.visitors.some(p=>!p.childrenKey||p.shrineEligible!==false||p.humanControlled)||new Set(doc.visitors.map(p=>p.id)).size!==doc.visitors.length)throw new Error('invalid_children_visitors');
+  }
   return doc;
 }
 export function validThread(channel, guildId) {return channel?.type===11 && channel.parent_id===FORUM_ID && channel.guild_id===guildId;}
@@ -22,61 +28,98 @@ export function drawOracle(method, rng=randomInt) {
   return {method,index,symbol:pool[index],orientation:method==='tarot'?(rng(2)?'reversed':'upright'):null,source:method==='tarot'?'78-card Rider–Waite–Smith naming':'24 Elder Futhark names',interpretationStatus:'symbolic'};
 }
 export function clean(value,max=1800){return String(value??'').replace(/@everyone|@here/gi,'').trim().slice(0,max);}
+function outgoingKey(threadId,content){return `${PREFIX}:outgoing:${threadId}:${createHash('sha256').update(clean(content)).digest('hex')}`;}
 export function shrineTitle(p){return `${p.displayName} · ${p.id}`.slice(0,100);}
 export function shrineReference(p,doc) {
   const rel=p.relationships.filter(r=>!((/Khaos|Demiurge/.test(p.name))&&r.kind==='Ex-partner'&&/Khaos|Demiurge/.test(r.targetName)));
-  return clean(`🕯️ **${p.displayName}**\nELAED shrine | ${doc.version}\n${p.humanControlled?'Human-controlled identity: this application will not speak for this person.':'Quiet dynasty presence; address this shrine to invoke its figure.'}\n\n**Recorded relationships**\n${rel.slice(0,12).map(r=>`${r.kind}: ${r.targetName}${r.ambiguous?' (same-name identity unresolved)':''}`).join('\n')||'No explicit relationships supplied.'}\n\nCanon: ${p.canonSource}\nGodparent fields mean manifestation-source links. Do not infer biological ancestry from them.\n\nLeave gratitude, a petition, dream recall, or an offering here. /offer, /candle, /tarot and /rune operate in this shrine. Omens remain symbolic. /banish and /resume are Operator controls.\nPortraits, domain detail, correspondences, hymns, cherished objects and offering preferences await sourced dossier entries where absent. No invented heirlooms or personal memories.\n\nRegistry: ${p.id}`,1950);
+  const dossier=p.dossier;
+  const paths=(p.ancestorPath??[]).map(x=>`${x.kind}: ${x.targetName}`).join(' → ');
+  return clean(`🕯️ **${p.displayName}**
+${p.ancestor?'**Ancestor of Erelyt — combined lineage**\n'+paths+'\n':''}${p.childrenKey?'**Shared Children identity:** this shrine uses the existing Ah-Muzen-Cab persona, portrait and memory.\n':''}
+${dossier?`**Interests / concerns:** ${dossier.domains}\n**Voice direction (adaptation):** ${dossier.performanceDirection}\n${dossier.personalityBasis}\n${dossier.sourceStatus==='local continuity unresolved'?'Character-source continuity still requires an Operator ruling.\n':''}`:'Detailed characterization remains unspecified.'}
+**Recorded relationships**
+${rel.slice(0,4).map(r=>`${r.kind}: ${r.targetName}${r.ambiguous?' (identity unresolved)':''}`).join('\n')}
+**Sources**
+${dossier?.sources?.slice(0,2).map(s=>s.url).join('\n')??''}
+Local canon: ${p.canonSource}
+Godparents encode incarnation-source links. Leave a petition or offering; use /altar with a figure to invite a god or Child into this thread. Omens stay in the altar. /banish and /resume are Operator controls.
+Registry: ${p.id} | ${doc.policyVersion??doc.version}`,1950);
 }
 
 export class AltarRuntime {
-  constructor({store,api,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
-    Object.assign(this,{store,api,generate,roster,guildId,operatorId,applicationId,now,record,progress});
-    this.people=new Map(roster.people.map(p=>[p.id,p]));
+  constructor({store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
+    Object.assign(this,{store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now,record,progress});
+    this.people=new Map(roster.people.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
+    this.visitors=new Map((roster.visitors??[]).map(p=>[p.id,p]));
+    this.trustedChildHooks=new Set();
+    this.deliveryLane=Promise.resolve();
   }
   async enabled(p) {return await this.store.get(`${PREFIX}:banished:all`)!=='1' && await this.store.get(`${PREFIX}:banished:${p.id}`)!=='1';}
   async checkThread(threadId,p) {
     if(!/^\d{15,22}$/.test(threadId))throw new Error('invalid_thread');
     const c=await this.api(`/channels/${threadId}`);
     if(!validThread(c,this.guildId)) throw new Error('outside_altar');
-    if(p && await this.store.get(`${PREFIX}:shrine:${p.id}`)!==threadId)throw new Error('shrine_identity_mismatch');
+    const owner=await this.store.get(`${PREFIX}:thread:${threadId}`);
+    if(!this.people.has(owner))throw new Error('inactive_or_unregistered_shrine');
+    if(p&&!this.people.has(p.id)&&!this.visitors.has(p.id))throw new Error('ineligible_figure');
+    return c;
+  }
+  async checkOwnThread(threadId,p){
+    const c=await this.api(`/channels/${threadId}`);
+    if(!validThread(c,this.guildId))throw new Error('outside_altar');
+    if(await this.store.get(`${PREFIX}:shrine:${p.id}`)!==threadId)throw new Error('shrine_identity_mismatch');
     return c;
   }
   async control(authorId,target,disabled) {
     if(authorId!==this.operatorId)throw new Error('operator_only');
-    if(target!=='all'&&!this.people.has(target))throw new Error('unknown_figure');
+    if(target!=='all'&&!this.people.has(target)&&!this.visitors.has(target))throw new Error('unknown_figure');
     await this.store.set(`${PREFIX}:banished:${target}`,disabled?'1':'0');
     await this.store.incr(`${PREFIX}:control_epoch`);
-    return `${disabled?'Silenced':'Resumed'} ${target==='all'?'the altar':this.people.get(target).displayName}.`;
+    return `${disabled?'Silenced':'Resumed'} ${target==='all'?'the altar':(this.people.get(target)??this.visitors.get(target)).displayName}.`;
   }
   async activity(p,threadId,transcript,ids=[],extra={}) {
     const event={eventId:randomUUID(),timestamp:new Date(this.now()).toISOString(),speakers:p?[p.displayName]:['Operator'],channelId:threadId,parentForumId:FORUM_ID,location:`#altar — Dynasty Altar / ${p?.displayName??'control'} (${threadId})`,plane:'material',movementFrom:[],movementTo:[],transcript:clean(transcript,6000),discordMessageIds:ids,durableCanon:true,sourceKind:'elaed_altar',...extra};
     // Outbox precedes the rolling context window, so later V-Workspace ingestion can acknowledge every event.
     await this.store.lpush(`${PREFIX}:durable-outbox`,JSON.stringify(event));
-    await this.store.lpush(NETWORK_ACTIVITY,JSON.stringify(event));
-    await this.store.ltrim(NETWORK_ACTIVITY,0,199);
+    if(!['shrine_provisioning','shrine_policy'].includes(extra.eventType)){
+      await this.store.lpush(NETWORK_ACTIVITY,JSON.stringify(event));
+      await this.store.ltrim(NETWORK_ACTIVITY,0,199);
+    }
     await this.store.lpush(`${PREFIX}:recent:${threadId}`,JSON.stringify(event));
     await this.store.ltrim(`${PREFIX}:recent:${threadId}`,0,19);
     this.record(event);return event;
   }
   async deliver(p,threadId,content,epoch) {
+    const send=()=>this.deliverUnlocked(p,threadId,content,epoch);
+    const result=this.deliveryLane.then(send);this.deliveryLane=result.catch(()=>{});return result;
+  }
+  async deliverUnlocked(p,threadId,content,epoch) {
     await this.checkThread(threadId,p);
     if(p.humanControlled||!await this.enabled(p)||String(await this.store.get(`${PREFIX}:control_epoch`)??'0')!==epoch)return null;
-    const webhook=await this.webhook();
-    if(p.avatarData)await this.api(`/webhooks/${webhook.id}`,'PATCH',{avatar:p.avatarData});
+    const api=p.childrenKey?this.childApi:this.api;
+    if(!api)throw new Error('children_bridge_unavailable');
+    const webhook=await this.webhook(p.childrenKey?true:false);
+    await api(`/webhooks/${webhook.id}`,'PATCH',{avatar:p.avatarData??null});
     // Recheck control after webhook discovery, immediately before the outbound request.
     if(!await this.enabled(p)||String(await this.store.get(`${PREFIX}:control_epoch`)??'0')!==epoch)return null;
-    const m=await this.api(`/webhooks/${webhook.id}/${webhook.token}?wait=true&thread_id=${threadId}`,'POST',{content:clean(content),username:clean(p.displayName,80),allowed_mentions:{parse:[]}},false);
-    await this.activity(p,threadId,`${p.displayName}: ${clean(content)}`,[m.id]);return m;
+    // Gateway may dispatch MESSAGE_CREATE before the REST response returns. Reserve the payload first.
+    await this.store.set(outgoingKey(threadId,content),'1',{ex:60});
+    const m=await api(`/webhooks/${webhook.id}/${webhook.token}?wait=true&thread_id=${threadId}`,'POST',{content:clean(content),username:clean(p.senderName??p.displayName,80),allowed_mentions:{parse:[]}},false);
+    await this.store.set(`${PREFIX}:message:${m.id}`,'1',{ex:172800});
+    await this.activity(p,threadId,`${p.senderName??p.displayName}: ${clean(content)}`,[m.id],{speakers:[p.senderName??p.displayName],childrenKey:p.childrenKey,deliveryApplicationId:p.childrenKey?this.childrenApplicationId:this.applicationId});return m;
   }
-  async webhook() {
-    const hooks=await this.api(`/channels/${FORUM_ID}/webhooks`);
-    return hooks.find(h=>h.application_id===this.applicationId && h.token)||await this.api(`/channels/${FORUM_ID}/webhooks`,'POST',{name:'ELAED Dynasty Altar'});
+  async webhook(child=false) {
+    const api=child?this.childApi:this.api,id=child?this.childrenApplicationId:this.applicationId;
+    const hooks=await api(`/channels/${FORUM_ID}/webhooks`);
+    const h=hooks.find(h=>h.application_id===id && h.token)||await api(`/channels/${FORUM_ID}/webhooks`,'POST',{name:child?'Children of the Endless':'ELAED Dynasty Altar'});
+    if(h.application_id!==id)throw new Error('webhook_application_mismatch');
+    if(child)this.trustedChildHooks.add(h.id);return h;
   }
   async provision() {
     const forum=await this.api(`/channels/${FORUM_ID}`);
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
-    const wanted=['Dynasty','Ancestor','Human-controlled'];
+    const wanted=['Dynasty','Ancestor','Children bridge'];
     if(wanted.some(n=>!tags.some(t=>t.name===n))&&tags.length<18){
       const changed=await this.api(`/channels/${FORUM_ID}`,'PATCH',{available_tags:[...tags.map(t=>({id:t.id,name:t.name,moderated:t.moderated,emoji_id:t.emoji_id,emoji_name:t.emoji_name})),...wanted.filter(n=>!tags.some(t=>t.name===n)).map(name=>({name}))]});tags=changed.available_tags??tags;
     }
@@ -92,19 +135,37 @@ export class AltarRuntime {
     let completed=0;
     for(const p of this.roster.people){
       const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
-      if(stored){await this.checkThread(stored,p);this.progress(++completed);continue;}
+      if(p.shrineEligible===false){
+        if(stored){
+          await this.checkOwnThread(stored,p);
+          if(await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
+            await this.api(`/channels/${stored}`,'PATCH',{archived:true,locked:true});
+            await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
+            await this.activity(p,stored,'Reference retained; dedicated shrine retired under current membership policy.',[],{eventType:'shrine_policy',shrineEligible:false});
+          }
+          await this.store.del(`${PREFIX}:thread:${stored}`);
+        }
+        continue;
+      }
       const found=existing.find(t=>t.name===shrineTitle(p));
-      const tag=tags.find(t=>t.name===(p.humanControlled?'Human-controlled':p.ancestor?'Ancestor':'Dynasty'));
+      const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
-      const thread=found??await this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
+      const thread=stored?await this.checkOwnThread(stored,p):found??await this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
       await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
+      if(this.roster.policyVersion&&await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
+        const applied=[tag?.id,p.childrenKey?tags.find(t=>t.name==='Children bridge')?.id:null].filter(Boolean);
+        await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+        await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}});
+        await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
+        await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
+      }
       await this.store.set(`${PREFIX}:provisioned:${p.id}`,new Date(this.now()).toISOString());
-      if(!found)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
+      if(!found&&!stored)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
       this.progress(++completed);
     }
-    return this.roster.people.length;
+    return this.people.size;
   }
   async reply(p,threadId,input,extra={}) {
     if(p.humanControlled||!await this.enabled(p))return null;
@@ -115,7 +176,11 @@ export class AltarRuntime {
     return this.deliver(p,threadId,content,epoch);
   }
   async message(m) {
-    if(m.guild_id!==this.guildId||m.author?.bot||m.webhook_id||!m.content?.trim())return;
+    if(m.guild_id!==this.guildId||!m.content?.trim())return;
+    const child=m.webhook_id&&this.trustedChildHooks.has(m.webhook_id)?[...this.people.values(),...this.visitors.values()].find(p=>p.childrenKey&&(p.senderName??p.displayName)===m.author?.username):null;
+    if((m.author?.bot||m.webhook_id)&&!child)return;
+    if(child&&await this.store.get(outgoingKey(m.channel_id,m.content)))return;
+    if(await this.store.get(`${PREFIX}:message:${m.id}`))return;
     const c=await this.api(`/channels/${m.channel_id}`);
     if(OBSERVE_IDS.has(m.channel_id)){
       await this.store.lpush(`${PREFIX}:observed`,JSON.stringify({messageId:m.id,channelId:m.channel_id,author:m.author?.username,text:clean(m.content,1200),at:new Date(this.now()).toISOString()}));
@@ -126,9 +191,20 @@ export class AltarRuntime {
     if(!p)return;
     const claimed=await this.store.set(`${PREFIX}:message:${m.id}`,'1',{nx:true,ex:172800});if(claimed!=='OK')return;
     await this.activity(p,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{speakers:[m.author?.username??'Human'],eventType:'petition'});
-    if(m.author.id!==this.operatorId)return;
+    if(m.author.id!==this.operatorId&&!child)return;
     const cooldown=await this.store.set(`${PREFIX}:reply-cooldown:${p.id}`,'1',{nx:true,ex:15});if(cooldown!=='OK')return;
     await this.reply(p,m.channel_id,m.content);
+  }
+  async converseWithChild(child,threadId,input){
+    await this.checkThread(threadId,child);
+    if(!child.childrenKey)throw new Error('not_a_child');
+    const first=await this.reply(child,threadId,input,{visit:true});
+    const owner=this.people.get(await this.store.get(`${PREFIX}:thread:${threadId}`));
+    if(first?.content&&owner&&!owner.childrenKey){
+      const answer=await this.reply(owner,threadId,`${child.displayName} says: ${first.content}. Respond briefly to this visitor.`,{visit:true});
+      if(answer?.content)await this.reply(child,threadId,`${owner.displayName} replied: ${answer.content}. Give one brief closing response; do not start a new exchange.`,{visit:true});
+    }
+    return first;
   }
   async ritual(p,threadId,method,value,messageId) {
     await this.checkThread(threadId,p);if(p.humanControlled||!await this.enabled(p))throw new Error('figure_silent');
@@ -167,9 +243,9 @@ export class AltarRuntime {
     if(!observed.length)return; // Silence, not canned activity, without observed context.
     const text=observed.join(' ').toLowerCase();
     const eligible=[];
-    for(const p of this.roster.people){
-      if(p.humanControlled||!await this.enabled(p)||now-Number(await this.store.get(`${PREFIX}:auto:${p.id}`)||0)<604800000)continue;
-      const terms=p.name.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(t=>t.length>=5&&!['endless','father','mother','other'].includes(t));
+    for(const p of this.people.values()){
+      if(p.humanControlled||p.autonomyEligible===false||!await this.enabled(p)||now-Number(await this.store.get(`${PREFIX}:auto:${p.id}`)||0)<604800000)continue;
+      const terms=[p.name.split('"')[0].trim().toLowerCase(),...(p.relevanceTerms??[]).map(x=>x.toLowerCase())].filter(t=>t.length>=4);
       const score=terms.filter(t=>text.includes(t)).length;
       if(score)eligible.push({p,score});
     }
