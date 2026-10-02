@@ -9,10 +9,11 @@ const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
 const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
 const DISCORD_ACTIVITY_KEY = `${STATE_PREFIX}:discord:activity`;
-const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v10";
+const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v11";
 const LEGACY_RETCON_VERSION_KEY = `${STATE_PREFIX}:retcon:material-interface:v10`;
 
 const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
+- The altar is a Material-plane devotional connection: Children may converse there with gods and Erelyt’s combined-lineage ancestors. A devotional visit does not silently relocate a Child from a recorded ship station. Children have no dedicated altar shrines, except the explicitly requested Ah-Muzen-Cab I shrine linked to his existing team identity. Gods may visit other altar threads; ordinary Hero Channels remain observation-only for the altar application.
 - The entire Children of the Endless Hero Network is durable canon. Every Network event is canonical unless the Operator explicitly retcons or supersedes it.
 - Story-facing terminology: VoughtCord is the platform; Hero Network is the formal server-equivalent; the Children normally call their own Hero Network "the Network"; "the Children's Network" is the disambiguated conversational form; Hero Channels are rooms/channels. "Discord server" is technical/operator language.
 - The Children's Network functions like a distributed Mount Olympus or Valhalla: a centralized, multi-layered cosmic assembly hub connecting distinct planes and realms without becoming another metaphysical plane.
