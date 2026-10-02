@@ -47,7 +47,12 @@ export async function startAltar(env=process.env) {
   const portraitMatches={john:'John ',thanatos:'Thanatos',orpheus:'Orpheus',perses:'Perses',rose:'Rose Walker',distress:'Distress ',ah_muzen_cab:'Ah-Muzen-Cab "Honey',asclepius:'Asclepius',cab:'Ah-Muzen-Cab "\'Cab'};
   for(const p of roster.people){const key=Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));if(key)p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];}
   const leaseId=randomUUID(),leaseKey=`${PREFIX}:gateway:lease`;
-  if(await store.set(leaseKey,leaseId,{nx:true,ex:90})!=='OK'){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
+  let leaseAcquired=false;
+  for(let attempt=0;attempt<18;attempt++){
+    if(await store.set(leaseKey,leaseId,{nx:true,ex:90})==='OK'){leaseAcquired=true;break;}
+    altarStatus.state='gateway_lease_wait';await wait(10000);
+  }
+  if(!leaseAcquired){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
   const runtime=new AltarRuntime({store,api,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify({...event,transcript:'[retained in private durable outbox]'})),generate:async(p,input,{recent,observed,extra})=>{
     const episodic=await store.lrange('vought:children-of-the-endless:discord:activity',0,199);
     const memory=renderChildrenLongTermMemory(`${p.name} ${input}`,5,6500)+'\n'+renderChildrenEpisodicMemory(episodic,`${p.name} ${input}`);
