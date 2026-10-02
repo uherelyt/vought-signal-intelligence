@@ -58,17 +58,20 @@ export async function startAltar(env=process.env) {
     const receiptKey=`${PREFIX}:portraits:${fingerprint}`;
     const saved=await store.get(receiptKey);
     if(saved){const receipt=JSON.parse(saved);if(receipt.keys?.length===portraitKeys.length){altarStatus.portraitsVerified=true;return;}}
-    const webhook=await runtime.webhook(true);
-    const receipts=[];
-    // Verify the established portraits directly with Discord without adding shrine chatter.
-    for(const key of portraitKeys){
-      const result=await childApi(`/webhooks/${webhook.id}`,'PATCH',{avatar:CHILDREN_AVATAR_DATA_URIS[key]});
-      if(result.id!==webhook.id||result.application_id!==env.CHILDREN_DISCORD_APPLICATION_ID||!result.avatar)throw new Error('portrait_application_receipt_mismatch');
-      receipts.push({key,avatar:result.avatar});
-    }
-    await store.set(receiptKey,JSON.stringify({keys:portraitKeys,receipts,verifiedAt:new Date().toISOString()}));
-    altarStatus.portraitsVerified=true;
-    console.info('[altar-portraits-verified]',JSON.stringify({count:receipts.length,keys:portraitKeys}));
+    const upload=async()=>{
+      const webhook=await runtime.webhook(true);
+      const receipts=[];
+      // Share the delivery lane so a live Child reply cannot race an avatar change.
+      for(const key of portraitKeys){
+        const result=await childApi(`/webhooks/${webhook.id}`,'PATCH',{avatar:CHILDREN_AVATAR_DATA_URIS[key]});
+        if(result.id!==webhook.id||result.application_id!==env.CHILDREN_DISCORD_APPLICATION_ID||!result.avatar)throw new Error('portrait_application_receipt_mismatch');
+        receipts.push({key,avatar:result.avatar});
+      }
+      await store.set(receiptKey,JSON.stringify({keys:portraitKeys,receipts,verifiedAt:new Date().toISOString()}));
+      altarStatus.portraitsVerified=true;
+      console.info('[altar-portraits-verified]',JSON.stringify({count:receipts.length,keys:portraitKeys}));
+    };
+    const result=runtime.deliveryLane.then(upload);runtime.deliveryLane=result.catch(()=>{});await result;
   }
   altarStatus.expectedShrines=roster.expectedShrines??roster.people.length;
   altarStatus.ancestorCount=roster.people.filter(p=>p.ancestor).length;
