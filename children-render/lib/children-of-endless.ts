@@ -96,6 +96,8 @@ export type ChildrenLocation = {
   description?: string;
 };
 
+const LEGACY_RITUAL_CHANNEL_ID = "1555340514356625489";
+
 export const VESSEL_ROOMS: ChildrenLocation[] = [
   { channelId: "1555340240867172353", slug: "command", name: "Command Deck", plane: "astral", description: "Orpheus oversees the vessel and crew here: leadership, mission briefings, strategy, and crew coordination." },
   { channelId: "1555340274023010494", slug: "nav", name: "Navigation Room", plane: "astral", description: "John charts routes between realms: maps, courses, destinations, and navigation." },
@@ -104,22 +106,27 @@ export const VESSEL_ROOMS: ChildrenLocation[] = [
   { channelId: "1555340406185656350", slug: "archive", name: "Archive / Story Room", plane: "astral", description: "Records, lore, memories, and storytelling. Bart/Erelyt is the human-controlled chronicler; never invent his contributions." },
   { channelId: "1555340450573852722", slug: "quarters", name: "Crew Quarters", plane: "astral", description: "Personal rooms aboard the vessel: belongings, bedtime, and everyday personal life. This Discord channel is public, not private." },
   { channelId: "1555340490570731590", slug: "observation", name: "Observation Deck", plane: "astral", description: "Watch distant realms, stars, the Astral Sea, and emotional weather from aboard the vessel." },
-  { channelId: "1555340514356625489", slug: "ritual", name: "Ritual Chamber", plane: "astral", description: "Magic, spells, ceremonies, and ritual gatherings aboard the vessel." },
   { channelId: "1555340558270996561", slug: "garden", name: "Garden Deck", plane: "astral", description: "Plants, quiet rest, reflection, and lived dreaming aboard the astral vessel." },
   { channelId: "1555340597546459198", slug: "engine", name: "Engine / Core", plane: "astral", description: "Cab's vessel spirit and the crew's shared will: ship systems, core, hull, propulsion, and vessel integrity." },
 ];
 
 export type ChildrenUsualStation = {
   primary: string;
+  canonicalPrimary?: string;
   secondary?: string[];
   note?: string;
 };
 
 export const CHILDREN_USUAL_STATIONS: Record<PersonaId, ChildrenUsualStation> = {
   john: { primary: "nav" },
-  thanatos: { primary: "garden", secondary: ["ritual"] },
+  thanatos: { primary: "garden", note: "Ritual Chamber visits now use the #altar forum when relevant." },
   orpheus: { primary: "command" },
-  perses: { primary: "ritual", secondary: ["command"] },
+  perses: {
+    primary: "command",
+    canonicalPrimary: "Ritual Chamber / #altar — Perses",
+    secondary: ["command"],
+    note: "The named Perses forum post is his canonical usual station. Command Deck is only the ordinary text-channel fallback for scheduled Children routing.",
+  },
   rose: { primary: "observation" },
   distress: {
     primary: "quarters",
@@ -141,8 +148,9 @@ export const HUMAN_USUAL_STATION = {
 export const RECOMMENDED_DISCORD_CHANNEL_MODEL = [
   { slug: "house", name: "House of Mirrors", plane: "mental", discordType: "text", purpose: "Mental-Plane mind-realm, blueprints, staging, and ordinary House conversation." },
   { slug: "mirror", name: "Mirror Gate", plane: "threshold", discordType: "text", purpose: "The gate and transit between the Mental and Astral Planes." },
-  { slug: "vessel", name: "Astral Mirror-Vessel", plane: "astral", discordType: "category", purpose: "The formed Astral vessel; conversations belong in its ten room text channels." },
+  { slug: "vessel", name: "Astral Mirror-Vessel", plane: "astral", discordType: "category", purpose: "The formed Astral vessel; ordinary conversations use nine room text channels while the Ritual Chamber is represented by the #altar forum." },
   ...VESSEL_ROOMS.map(({ slug, name, plane, description }) => ({ slug, name, plane, discordType: "text", category: "vessel", purpose: description })),
+  { slug: "altar", name: "Ritual Chamber", plane: "astral", discordType: "forum", category: "vessel", purpose: "The vessel's Ritual Chamber. Named dynasty posts are shrines; the Perses post is his non-shrine resident station and the general Children ritual/warding home." },
   { slug: "astral", name: "Astral Plane", plane: "astral", discordType: "text", purpose: "Off-vessel field missions, combat, investigation, and Astral Sea activity." },
 ];
 
@@ -225,8 +233,12 @@ export function getChildrenLocationRegistry() {
           .map(normalizeLocation)
           .filter((value): value is ChildrenLocation => Boolean(value));
         const legacyVessel = locations.some((row) => row.slug === "vessel" || row.channelId === "1555070913752338498");
-        const migrated = locations.filter((row) => row.slug !== "vessel" && row.channelId !== "1555070913752338498")
-          .map((row) => {
+        const migrated = locations.filter((row) =>
+          row.slug !== "vessel" &&
+          row.channelId !== "1555070913752338498" &&
+          row.slug !== "ritual" &&
+          row.channelId !== LEGACY_RITUAL_CHANNEL_ID
+        ).map((row) => {
             const canonical = DEFAULT_LOCATION_REGISTRY.find((candidate) => candidate.slug === row.slug);
             return canonical ? { ...row, plane: canonical.plane, description: canonical.description } : row;
           });
@@ -281,7 +293,7 @@ const LOCATION_TOPICS: Array<[string, RegExp]> = [
   ["engine", /\b(engine|core|hull|propulsion|ship systems?|vessel integrity|shared will|ectoplasmic pressure)\b/i],
   ["infirmary", /\b(infirmary|heal(?:ing)?|injur(?:y|ies|ed)|wounds?|medical|recovery|medicine|sick|first aid)\b/i],
   ["galley", /\b(galley|bar|food|cook(?:ing)?|meals?|dinner|breakfast|lunch|drinks?|recipes?|bartend(?:er|ing)?|music)\b/i],
-  ["ritual", /\b(rituals?|ceremon(?:y|ies)|spells?|enchantments?|magic|summon(?:ing)?)\b/i],
+  // Ritual/magic subjects use the #altar forum bridge rather than an ordinary text-room destination.
   ["archive", /\b(archive|stories|storytelling|story room|records?|chronicle|lore|history|story)\b/i],
   ["quarters", /\b(quarters|bed(?:room|time)?|bunks?|belongings|personal room|room decor)\b/i],
   ["garden", /\b(garden|plants?|flowers?|quiet rest|meditation|reflect(?:ing|ion)|dream imagery)\b/i],
@@ -316,7 +328,7 @@ export function getChildrenUsualLocation(id: PersonaId) {
 export function childrenUsualStationText(id: PersonaId) {
   const station = CHILDREN_USUAL_STATIONS[id];
   if (!station) return "No fixed shipboard station.";
-  const primary = getChildrenLocationBySlug(station.primary)?.name ?? station.primary;
+  const primary = station.canonicalPrimary ?? getChildrenLocationBySlug(station.primary)?.name ?? station.primary;
   const secondary = (station.secondary ?? [])
     .map((slug) => getChildrenLocationBySlug(slug)?.name ?? slug);
   return [
@@ -933,19 +945,20 @@ export function getChildrenStatus(now = new Date()) {
     discord_location_count: locations.length,
     discord_channel_model: {
       recommended: RECOMMENDED_DISCORD_CHANNEL_MODEL,
-      forum_channels: 0,
-      routing: "topic_first_with_habitual_room_bias_for_autonomous_ambient_activity_and_source_fallback",
+      forum_channels: 1,
+      routing: "topic_first_with_habitual_room_bias_for_autonomous_ambient_activity_and_source_fallback; ritual_room_via_altar_forum",
       vessel_room_channels: VESSEL_ROOMS.map((row) => row.slug),
-      communications_surface: "material_plane",
+      vessel_forum_rooms: ["altar"],
+      communications_surface: "material_plane_interface_to_remote_locations",
       rationale:
-        "Text channels are material-plane terminals representing canonical Mental/Astral/Threshold locations. Durable scene/case archival belongs in the Notion Discord Activity Ledger rather than a duplicate Discord forum.",
+        "Ordinary text channels are Material-plane terminals representing canonical Mental/Astral/Threshold locations. The #altar forum is the Material-plane interface for the Astral Ritual Chamber and replaces the retired #ritual text room.",
     },
     state_configured: Boolean(redisClient()),
     model: process.env.CHILDREN_MODEL?.trim() || DEFAULT_MODEL,
     generation_provider: "google_gemini_direct",
     generation_configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
     timezone: process.env.CHILDREN_TIMEZONE?.trim() || DEFAULT_TIMEZONE,
-    persona_canon_version: "20261002-slash-image-persistence-v11",
+    persona_canon_version: "20261002-altar-ritual-room-v12",
     discord_image_input: {
       enabled: true,
       ordinary_messages: true,
