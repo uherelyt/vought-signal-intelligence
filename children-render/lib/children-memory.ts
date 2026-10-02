@@ -3,6 +3,7 @@ import {
   CHILDREN_NOTION_MEMORY_VERSION,
   type ChildrenNotionMemorySection,
 } from "./children-notion-memory.ts";
+import { renderAltarCanonMemory } from "./altar/memory.mjs";
 
 export { CHILDREN_NOTION_MEMORY_VERSION };
 
@@ -93,9 +94,11 @@ function compiledVillainIndex() {
 export function renderChildrenLongTermMemory(query: string, limit = 5, maxChars = 6500) {
   const chosen = selectChildrenLongTermMemory(query, limit);
   const broadVillainQuery = /villain|adversar|enemies|enemy|who.{0,30}fought|fought.{0,30}who/i.test(query);
+  const altarCanon = renderAltarCanonMemory(query);
   let out = broadVillainQuery
     ? `[Compiled villain encounter index from synchronized Notion canon]\n${compiledVillainIndex()}`
     : "";
+  if (altarCanon) out = (out ? out + "\n\n" : "") + altarCanon.slice(0, maxChars);
   if (!chosen.length && !out) return "No relevant long-term canon memory was retrieved.";
   for (const section of chosen) {
     const block = `[${section.sourceTitle} → ${section.heading}]\n${section.text}`;
