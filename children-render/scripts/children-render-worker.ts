@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { runChildrenDiscordGatewayPersistent } from "../lib/children-discord-gateway.ts";
 import { runChildrenPulse } from "../lib/children-of-endless.ts";
 import { CHILDREN_NOTION_MEMORY_VERSION } from "../lib/children-memory.ts";
+import { startAltar, altarStatus } from "../lib/altar/worker.mjs";
 
 const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
@@ -186,6 +187,7 @@ const httpServer = createServer((request, response) => {
       service: "children-voughtcord",
       runtimeHost: process.env.CHILDREN_RUNTIME_HOST,
       snapshot: CHILDREN_NOTION_MEMORY_VERSION,
+      altar: altarStatus,
     }));
     return;
   }
@@ -204,6 +206,12 @@ await seedRuntimeCanon();
 await retconLegacyMaterialInterfaceActivity();
 await verifyGeminiCredential();
 await runAcceptancePulse();
+
+// Separate Discord application; isolated failure/activation never replaces the Children identity.
+void startAltar().catch(() => {
+  altarStatus.state = "startup_failed_check_configuration";
+  console.error("[altar-startup-failed]", altarStatus.state);
+});
 
 const result = await runChildrenDiscordGatewayPersistent({ forceTakeover: true });
 
