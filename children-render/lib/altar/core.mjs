@@ -147,7 +147,10 @@ export class AltarRuntime {
         }
         continue;
       }
-      const found=existing.find(t=>t.name===shrineTitle(p));
+      const visibleTitle=shrineTitle(p);
+      const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
+      const visibleTitleUnique=this.roster.people.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
+      const found=existing.find(t=>t.name===legacyTitle)??(visibleTitleUnique?existing.find(t=>t.name===visibleTitle):null);
       const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
       const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
