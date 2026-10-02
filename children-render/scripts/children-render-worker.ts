@@ -7,6 +7,9 @@ import { CHILDREN_NOTION_MEMORY_VERSION } from "../lib/children-memory.ts";
 const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
 const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
+const DISCORD_ACTIVITY_KEY = `${STATE_PREFIX}:discord:activity`;
+const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v10";
+const LEGACY_RETCON_VERSION_KEY = `${STATE_PREFIX}:retcon:material-interface:v10`;
 
 const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
 - The entire Children of the Endless Hero Network is durable canon. Every Network event is canonical unless the Operator explicitly retcons or supersedes it.
@@ -16,7 +19,10 @@ const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
 - Distress of the Endless is a boy and uses he/him pronouns. Never use she/her for Distress.
 - #astral is off-vessel Astral Plane field space. Characters speaking there experience the Astral scene itself. Never make them act as though they can see a browser, keyboard, terminal, tabs, channel controls, or the Discord/VoughtCord UI unless the Operator explicitly asks about the interface.
 - Character location continuity is authoritative. A speaker may not casually appear aboard the vessel, in the galley, infirmary, archive, or another room while recorded in #astral without an explicit movement transition.
-- Activity records must preserve the Hero Channel identity (#slug, canonical location name, and channel ID) rather than collapsing the location to a generic plane name.`;
+- When runtime routing changes a Child's canonical location for an event, that Child's first reply must naturally acknowledge arriving, stepping in/out, joining the others, or otherwise completing the move. Movement fields and narrated scene must agree.
+- Durable Canon means the recorded event happened and the speaker genuinely expressed the attributed statement, perception, memory, joke, guess, or theory. It does not make every statement objective setting fact. Controlling V-Workspace canon and established event facts outrank character interpretation.
+- Activity records must preserve the Hero Channel identity (#slug, canonical location name, and channel ID) rather than collapsing the location to a generic plane name.
+- Historical Material-interface leakage is retconned to scene-native wording while preserving event IDs, timestamps, participants, Bart/Erelyt-authored lines, and plot meaning.`;
 
 function redisClient() {
   const url = process.env.REDIS_URL?.trim();
@@ -97,18 +103,75 @@ async function seedRuntimeCanon() {
   if (!redis) throw new Error("Redis is not configured");
   const currentVersion = await redis.get(RUNTIME_CANON_VERSION_KEY);
   const current = typeof currentVersion === "string" ? currentVersion : "";
-  if (!current || current.startsWith("bootstrap:")) {
+  if (current !== RUNTIME_CANON_TARGET_VERSION) {
     await Promise.all([
       redis.set(RUNTIME_CANON_OVERRIDE_KEY, RUNTIME_CANON_BOOTSTRAP),
-      redis.set(
-        RUNTIME_CANON_VERSION_KEY,
-        `bootstrap:${CHILDREN_NOTION_MEMORY_VERSION}`,
-      ),
+      redis.set(RUNTIME_CANON_VERSION_KEY, RUNTIME_CANON_TARGET_VERSION),
     ]);
-    console.info("[children-runtime-canon-seeded]", CHILDREN_NOTION_MEMORY_VERSION);
+    console.info("[children-runtime-canon-seeded]", RUNTIME_CANON_TARGET_VERSION);
   } else {
     console.info("[children-runtime-canon-preserved]", current);
   }
+}
+
+async function retconLegacyMaterialInterfaceActivity() {
+  const redis = redisClient();
+  if (!redis) throw new Error("Redis is not configured");
+  const done = await redis.get(LEGACY_RETCON_VERSION_KEY);
+  if (done === "done") {
+    console.info("[children-legacy-retcon-preserved]", RUNTIME_CANON_TARGET_VERSION);
+    return;
+  }
+
+  const targetIds = new Set([
+    "173c17ed-e294-49bb-a00c-0d1238c8f3f5",
+    "2c956921-9dbb-4199-845a-07acca79e14c",
+    "8818b295-fd2e-478b-8438-97dbe56a2de0",
+    "0d1440f2-a31b-4010-bf51-508045c49a13",
+    "356e712e-2758-41de-87c1-6b87c50c92cb",
+    "fd2456f2-e766-4066-876b-68db4eba17e7",
+  ]);
+  const raw = await redis.lrange(DISCORD_ACTIVITY_KEY, 0, 199);
+  const rewritten: string[] = [];
+  let changed = 0;
+
+  for (const item of raw) {
+    const text = String(item);
+    try {
+      const record = JSON.parse(text) as {
+        eventId?: string;
+        transcript?: string;
+        location?: string;
+      };
+      if (record.eventId && targetIds.has(record.eventId) && typeof record.transcript === "string") {
+        const before = record.transcript;
+        record.transcript = record.transcript
+          .replace(/channel security/gi, "route exposure")
+          .replace(/screens finally give you a headache/gi, "silver glare finally give you a headache")
+          .replace(/staring at glowing pixels/gi, "staring into mirror-light")
+          .replace(/screen light/gi, "mirror glare")
+          .replace(/return to your terminal so you don't coat your custom keycaps in pastry crumbs/gi, "return to the chart table so you don't get pastry crumbs all over the maps")
+          .replace(/infirmary monitors running/gi, "infirmary wards set");
+        if (record.eventId === "173c17ed-e294-49bb-a00c-0d1238c8f3f5") {
+          record.location = "#astral — Astral Plane (1555308123873616022)";
+        }
+        if (record.transcript !== before || record.location !== JSON.parse(text).location) changed += 1;
+        rewritten.push(JSON.stringify(record));
+        continue;
+      }
+    } catch {}
+    rewritten.push(text);
+  }
+
+  if (changed > 0) {
+    await redis.del(DISCORD_ACTIVITY_KEY);
+    for (let index = rewritten.length - 1; index >= 0; index -= 1) {
+      await redis.lpush(DISCORD_ACTIVITY_KEY, rewritten[index]);
+    }
+    await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 199);
+  }
+  await redis.set(LEGACY_RETCON_VERSION_KEY, "done");
+  console.info("[children-legacy-retcon-applied]", JSON.stringify({ changed }));
 }
 
 process.env.CHILDREN_RUNTIME_HOST ||= "render";
@@ -138,6 +201,7 @@ console.info("[children-render-worker-boot]", JSON.stringify({
 }));
 
 await seedRuntimeCanon();
+await retconLegacyMaterialInterfaceActivity();
 await verifyGeminiCredential();
 await runAcceptancePulse();
 
