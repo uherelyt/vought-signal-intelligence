@@ -56,7 +56,7 @@ export async function startAltar(env=process.env) {
   altarStatus.visitorCount=roster.visitors?.length??0;
   if(roster.policyVersion){
     const recall=renderChildrenLongTermMemory('Erelyt ancestors lineage altar',5,6500);
-    if(!recall.includes('combined lineage has 28 named ancestors')||!recall.includes('Current private altar canon'))throw new Error('private_altar_canon_recall_unavailable');
+    if(!recall.includes(`combined lineage has ${roster.requestedAncestorCount} named ancestors`)||!recall.includes('Current private altar canon'))throw new Error('private_altar_canon_recall_unavailable');
     altarStatus.canonRecallVerified=true;altarStatus.canonRecallVersion=roster.policyVersion;
   }
   if(roster.visitors?.length){
@@ -109,7 +109,7 @@ export async function startAltar(env=process.env) {
       if(receipt.id!==message.id||receipt.channel_id!==threadId||!receipt.content?.trim()||!receipt.webhook_id)throw new Error('acceptance_message_receipt_mismatch');
       let childReceipt;
       if(roster.policyVersion){
-        if(runtime.people.size!==roster.expectedShrines||roster.people.filter(p=>p.ancestor).length!==28)throw new Error('acceptance_membership_mismatch');
+        if(runtime.people.size!==roster.expectedShrines||roster.people.filter(p=>p.ancestor).length!==roster.requestedAncestorCount)throw new Error('acceptance_membership_mismatch');
         const child=runtime.visitors.get('child:orpheus');
         const visit=await runtime.converseWithChild(child,threadId,'The Operator has opened the altar to the Children. Ask Zeus one brief, respectful question about leadership; this is a devotional visit, not a relocation from your current station.');
         childReceipt=await childApi(`/channels/${threadId}/messages/${visit.id}`);
