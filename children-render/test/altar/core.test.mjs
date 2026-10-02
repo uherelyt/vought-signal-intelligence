@@ -69,6 +69,28 @@ test('a god may visit another registered shrine but never an unregistered altar 
  f.values.delete(`${PREFIX}:thread:${second}`);
  await assert.rejects(f.runtime.deliver(f.p,second,'Unregistered.','0'),/inactive_or_unregistered/);
 });
+test('a locked retired ancestor gets one active replacement, with history preserved and retry adoption',async()=>{
+ const f=fixture();f.runtime.roster={people:[f.p],policyVersion:'v3'};
+ const {shrineTitle}=await import('../../lib/altar/core.mjs');
+ const old={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p),thread_metadata:{archived:true,locked:true}};
+ const fresh={...old,id:'1555666568409653777',thread_metadata:{archived:false,locked:false}};
+ let creates=0,failSave=true;
+ const set=f.runtime.store.set;
+ f.runtime.store.set=async(k,v,o)=>{if(k===`${PREFIX}:shrine:${f.p.id}`&&v===fresh.id&&failSave){failSave=false;throw new Error('transient_store_failure');}return set(k,v,o);};
+ f.runtime.api=async(path,method='GET')=>{
+  if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge'].map((name,i)=>({name,id:String(i)}))};
+  if(path.includes('/threads/active'))return {threads:creates?[fresh]:[]};
+  if(path.includes('/archived/'))return {threads:[old],has_more:false};
+  if(path===`/channels/${FORUM_ID}/threads`&&method==='POST'){creates++;return fresh;}
+  if(path===`/channels/${old.id}`&&method==='PATCH')throw Object.assign(new Error('discord_http_403'),{status:403});
+  return path===`/channels/${old.id}`?old:fresh;
+ };
+ await assert.rejects(f.runtime.provision(),/transient_store_failure/);
+ await f.runtime.provision();await f.runtime.provision();
+ assert.equal(creates,1);assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),fresh.id);
+ assert(!f.values.has(`${PREFIX}:thread:${old.id}`));assert.equal(f.values.get(`${PREFIX}:thread:${fresh.id}`),f.p.id);
+ assert.deepEqual(old.thread_metadata,{archived:true,locked:true});
+});
 test('retired Children and nondivine references are excluded from active routing',async()=>{
  const f=fixture();const retired={...f.other,humanControlled:false,shrineEligible:false,childrenKey:'rose'};
  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,generate:f.runtime.generate,roster:{people:[f.p,retired]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
