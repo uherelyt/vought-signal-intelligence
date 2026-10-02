@@ -208,8 +208,11 @@ await verifyGeminiCredential();
 await runAcceptancePulse();
 
 // Separate Discord application; isolated failure/activation never replaces the Children identity.
-void startAltar().catch(() => {
-  altarStatus.state = "startup_failed_check_configuration";
+void startAltar().catch((error) => {
+  const status = Number(error?.status);
+  altarStatus.state = Number.isInteger(status) && status >= 400 && status <= 599
+    ? `startup_discord_http_${status}`
+    : "startup_failed_check_configuration";
   console.error("[altar-startup-failed]", altarStatus.state);
 });
 
