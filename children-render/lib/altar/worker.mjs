@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 import { randomUUID,createHash } from 'node:crypto';
-import { AltarRuntime,decodeRoster,FORUM_ID,LEGACY_RITUAL_CHANNEL_ID,PREFIX,validThread,clean,OBSERVE_IDS,SHRINE_PRESENTATION_VERSION } from './core.mjs';
+import { AltarRuntime,decodeRoster,FORUM_ID,LEGACY_RITUAL_CHANNEL_ID,PREFIX,validThread,clean,OBSERVE_IDS,SHRINE_PRESENTATION_VERSION,RITUAL_ROOM_VERSION } from './core.mjs';
 import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../children-memory.ts';
 import { CHILDREN_PERSONAS,generateFreshChildrenMessage } from '../children-of-endless.ts';
 import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
@@ -110,7 +110,7 @@ export async function startAltar(env=process.env) {
   }});
   async function verifyActivation() {
     if(env.ALTAR_VERIFY_ON_BOOT!=='true')return;
-    const key=`${PREFIX}:acceptance:${roster.policyVersion??'20261002:v1'}`;
+    const key=`${PREFIX}:acceptance:${roster.policyVersion??'20261002:v1'}:${RITUAL_ROOM_VERSION}`;
     const saved=await store.get(key);
     if(saved&&saved!=='running'){try{altarStatus.acceptance=JSON.parse(saved);return;}catch{}}
     if(await store.set(key,'running',{nx:true,ex:300})!=='OK')return;
@@ -120,6 +120,10 @@ export async function startAltar(env=process.env) {
       if(names!=='altar,banish,candle,offer,resume,rune,tarot')throw new Error('acceptance_commands_mismatch');
       const inaccessible=[];
       for(const id of OBSERVE_IDS){try{const channel=await api(`/channels/${id}`);if(channel.guild_id!==guildId)inaccessible.push(id);}catch(e){if(e.status===403||e.status===404)inaccessible.push(id);else throw e;}}
+      if(!runtime.persesStationId)throw new Error('perses_station_missing');
+      const persesChannel=await childApi(`/channels/${runtime.persesStationId}`);
+      if(!validThread(persesChannel,guildId)||persesChannel.name!=='Perses'||await store.get(`${PREFIX}:thread:${runtime.persesStationId}`))throw new Error('perses_station_identity_mismatch');
+      if(altarStatus.legacyRitualRetired!==true)throw new Error('legacy_ritual_not_retired');
       const p=roster.people.find(x=>x.id==='elaed-c26aa32aca44-1');
       if(!p||p.humanControlled)throw new Error('acceptance_persona_unavailable');
       const host=roster.policyVersion?roster.people.find(x=>x.name==='Zeus'&&x.shrineEligible):p;
@@ -147,7 +151,7 @@ export async function startAltar(env=process.env) {
           if(id&&await store.get(`${PREFIX}:thread:${id}`))throw new Error('acceptance_retired_shrine_routable');
         }
       }
-      const result={state:'passed',policyVersion:roster.policyVersion,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
+      const result={state:'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesStationId:runtime.persesStationId,legacyRitualRetired:altarStatus.legacyRitualRetired,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
       altarStatus.acceptance=result;
       await store.set(key,JSON.stringify(result));
       console.info('[altar-acceptance]',JSON.stringify(result));
@@ -159,6 +163,13 @@ export async function startAltar(env=process.env) {
     try{
       const legacy=await childApi(`/channels/${LEGACY_RITUAL_CHANNEL_ID}`);
       if(legacy.guild_id!==guildId||legacy.type!==0||String(legacy.name??'').toLowerCase()!=='ritual')throw new Error('legacy_ritual_identity_mismatch');
+      const forumBefore=await childApi(`/channels/${FORUM_ID}`);
+      if(forumBefore.guild_id!==guildId||forumBefore.type!==15)throw new Error('altar_forum_identity_mismatch');
+      if(legacy.parent_id&&forumBefore.parent_id!==legacy.parent_id){
+        const moved=await childApi(`/channels/${FORUM_ID}`,'PATCH',{parent_id:legacy.parent_id,position:legacy.position});
+        if(moved.parent_id!==legacy.parent_id)throw new Error('altar_forum_move_receipt_mismatch');
+        altarStatus.ritualRoomCategoryId=legacy.parent_id;
+      }else altarStatus.ritualRoomCategoryId=forumBefore.parent_id??legacy.parent_id;
       await childApi(`/channels/${LEGACY_RITUAL_CHANNEL_ID}`,'DELETE');
       await store.set(receiptKey,'done');
       altarStatus.legacyRitualRetired=true;
