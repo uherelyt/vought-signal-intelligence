@@ -25,4 +25,6 @@ The raw roster, contacts, birth dates, bio notes and credentials are not checked
 
 Boot verification is keyed by the private policy version. It checks membership, the 28-lineage count, retired routing, the Ah-Muzen-Cab bridge tag, cross-shrine god delivery, a bounded Child visit with a read-back receipt owned by the Children application, seven guild commands and access to the 13 observation channels.
 
-Run tests: `node --test test/altar/*.test.mjs`.
+Relevant Children conversations also retrieve the private altar's current policy, ancestor registry and sourced character dossiers through `altar/memory.mjs`; this supplements the existing Notion snapshot without publishing the private roster in source. Health exposes `canonRecallVerified` and `canonRecallVersion` only after actual Children recall recognizes the current combined lineage.
+
+Run tests: `node --test test/altar/*.test.mjs` (20 checks).
