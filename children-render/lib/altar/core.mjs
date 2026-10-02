@@ -150,13 +150,28 @@ export class AltarRuntime {
       const found=existing.find(t=>t.name===shrineTitle(p));
       const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
-      const thread=stored?await this.checkOwnThread(stored,p):found??await this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
+      const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
+      let thread=stored?await this.checkOwnThread(stored,p):found??await create();
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
       await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
       if(this.roster.policyVersion&&await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
         const applied=[tag?.id,p.childrenKey?tags.find(t=>t.name==='Children bridge')?.id:null].filter(Boolean);
-        await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+        try {
+          await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+        } catch(error) {
+          // A bot can own a retired thread without permission to unlock it. Keep that history;
+          // adopt a previously created active replacement before creating a new shrine.
+          if(error.status!==403||!thread.thread_metadata?.archived||!thread.thread_metadata?.locked)throw error;
+          const retiredId=thread.id;
+          thread=existing.find(t=>t.id!==retiredId&&t.name===shrineTitle(p)&&!t.thread_metadata?.archived&&!t.thread_metadata?.locked)??await create();
+          if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
+          await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
+          await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
+          await this.store.del(`${PREFIX}:thread:${retiredId}`);
+          await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          await this.activity(p,thread.id,`Active shrine replaces locked reference ${retiredId}; its history remains archived.`,[],{eventType:'shrine_reactivation',previousThreadId:retiredId,shrineEligible:true});
+        }
         await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}});
         await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
         await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
