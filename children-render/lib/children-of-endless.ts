@@ -85,6 +85,7 @@ const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
 const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
 const DISCORD_WEBHOOK_NAME = "Children of the Endless";
 const MAX_DISCORD_CONTENT = 1800;
+export const VOUGHT_MATERIAL_CHANNEL_ID = "1556062516470358126";
 const AVATAR_CACHE_VERSION = "20261002-railway-1";
 
 const CHILDREN_NATIVE_LANGUAGE_RULES: Partial<Record<PersonaId, { language: string; script: string }>> = {
@@ -105,7 +106,7 @@ export function childrenHistoricalLanguageRule(persona: ChildrenPersona) {
   return "";
 }
 
-export type ChildrenPlane = "mental" | "astral" | "threshold";
+export type ChildrenPlane = "mental" | "astral" | "threshold" | "material";
 
 export type ChildrenLocation = {
   channelId: string;
@@ -165,6 +166,7 @@ export const HUMAN_USUAL_STATION = {
 } as const;
 
 export const RECOMMENDED_DISCORD_CHANNEL_MODEL = [
+  { slug: "material", name: "Vought International / Material Plane", plane: "material", discordType: "text", purpose: "Shared Network surface owned by Vought International. Children may visit and speak here as independent people; it is not a Children-owned room." },
   { slug: "house", name: "House of Mirrors", plane: "mental", discordType: "text", purpose: "Mental-Plane mind-realm, blueprints, staging, and ordinary House conversation." },
   { slug: "mirror", name: "Mirror Gate", plane: "threshold", discordType: "text", purpose: "The gate and transit between the Mental and Astral Planes." },
   { slug: "vessel", name: "Astral Mirror-Vessel", plane: "astral", discordType: "category", purpose: "The formed Astral vessel; ordinary conversations use nine room text channels while the Ritual Chamber is represented by the #altar forum." },
@@ -188,6 +190,14 @@ export type ChildrenDiscordActivity = {
 };
 
 const DEFAULT_LOCATION_REGISTRY: ChildrenLocation[] = [
+  {
+    channelId: VOUGHT_MATERIAL_CHANNEL_ID,
+    slug: "material",
+    name: "Vought International / Material Plane",
+    plane: "material",
+    description:
+      "Vought International's sole dedicated Network channel on the Material Plane. Children may interact with the institution here in their own voices without becoming corporate spokespeople.",
+  },
   {
     channelId: "1555308025525440584",
     slug: "house",
@@ -228,7 +238,7 @@ function normalizeLocation(value: unknown): ChildrenLocation | null {
     : "";
   const name = typeof row.name === "string" ? row.name.trim().slice(0, 100) : "";
   const plane = row.plane;
-  if (!slug || !name || !["mental", "astral", "threshold"].includes(String(plane))) {
+  if (!slug || !name || !["mental", "astral", "threshold", "material"].includes(String(plane))) {
     return null;
   }
   const description =
@@ -262,6 +272,10 @@ export function getChildrenLocationRegistry() {
             return canonical ? { ...row, plane: canonical.plane, description: canonical.description } : row;
           });
         if (legacyVessel) migrated.push(...VESSEL_ROOMS);
+        if (!migrated.some((row) => row.slug === "material" || row.channelId === VOUGHT_MATERIAL_CHANNEL_ID)) {
+          const material = DEFAULT_LOCATION_REGISTRY.find((row) => row.slug === "material");
+          if (material) migrated.unshift(material);
+        }
         const unique = migrated.filter(
           (location, index) =>
             migrated.findIndex(
@@ -1564,6 +1578,8 @@ export async function runChildrenPulse(input: ChildrenPulseInput): Promise<Child
 
 export type ChildrenReactiveInput = {
   messageId: string;
+  sourceKind?: "human" | "vought";
+  forceSourceLocation?: boolean;
   channelId: string;
   authorId: string;
   authorName: string;
