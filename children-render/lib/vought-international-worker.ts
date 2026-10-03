@@ -11,10 +11,14 @@ import {
 } from "discord.js";
 import { Redis } from "./render-redis.ts";
 import { consolidateVoughtChannels } from "./vought-material-consolidation.ts";
-import { runChildrenReactiveMessage } from "./children-of-endless.ts";
+import { getChildrenLocationRegistry, runChildrenReactiveMessage } from "./children-of-endless.ts";
 
 const ANCHOR = "1555308025525440584";
 const PRIMARY_MATERIAL_CHANNEL = "1556062516470358126";
+const ALTAR_FORUM_ID = "1555666568409653268";
+const LEGACY_RITUAL_CHANNEL_ID = "1555340514356625489";
+const NETWORK_MEMBER_ROLE = "Network Member";
+const NETWORK_GUEST_ROLE = "Network Guest";
 const STATE_KEY = "vought:cove-network:state:v1";
 const redisUrl = process.env.REDIS_URL?.trim() || "";
 const redis = redisUrl ? new Redis(redisUrl) : null;
@@ -130,6 +134,99 @@ async function role(guild:any,name:string) {
   if (!r) r=await guild.roles.create({name,reason:"Vought International Network bootstrap"});
   return r;
 }
+function memberHasRoleName(member:any,guild:any,name:string) {
+  const r=guild?.roles?.cache?.find((x:any)=>x.name===name);
+  if(!r||!member)return false;
+  if(member.roles?.cache?.has) return member.roles.cache.has(r.id);
+  if(Array.isArray(member.roles)) return member.roles.includes(r.id);
+  return false;
+}
+function isNetworkGuest(member:any,guild:any) {
+  return memberHasRoleName(member,guild,NETWORK_GUEST_ROLE);
+}
+async function ensureNetworkGuestBoundary(guild:any) {
+  const guest=await role(guild,NETWORK_GUEST_ROLE);
+  const memberRole=await role(guild,NETWORK_MEMBER_ROLE);
+  const internalIds=[...new Set([
+    guild.ownerId,
+    process.env.COVE_DISCORD_APPLICATION_ID?.trim(),
+    process.env.CHILDREN_DISCORD_APPLICATION_ID?.trim(),
+    process.env.ALTAR_DISCORD_APPLICATION_ID?.trim(),
+    process.env.CHILDREN_DISCORD_OPERATOR_USER_ID?.trim(),
+    process.env.ALTAR_DISCORD_OPERATOR_USER_ID?.trim()
+  ].filter((id):id is string=>Boolean(id&&/^\d{15,22}$/.test(id))))];
+
+  const restrictedIds=new Set([
+    ...getChildrenLocationRegistry().map((location:any)=>location.channelId),
+    LEGACY_RITUAL_CHANNEL_ID
+  ]);
+
+  async function preserveInternalAccess(channel:any) {
+    await channel.permissionOverwrites.edit(memberRole,{ViewChannel:true},"Network core member access").catch(()=>{});
+    for(const id of internalIds){
+      const principal=await guild.members.fetch(id).catch(()=>null);
+      if(principal) await channel.permissionOverwrites.edit(principal,{ViewChannel:true},"Network internal principal access").catch(()=>{});
+    }
+  }
+
+  let denied=0;
+  for(const channelId of restrictedIds){
+    if(channelId===ALTAR_FORUM_ID) continue;
+    const channel=guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(()=>null);
+    if(!channel?.permissionOverwrites?.edit) continue;
+
+    await preserveInternalAccess(channel);
+    await channel.permissionOverwrites.edit(guild.roles.everyone,{
+      ViewChannel:false
+    },"Network core is private by default").catch(()=>{});
+    await channel.permissionOverwrites.edit(guest,{
+      ViewChannel:false,
+      SendMessages:false,
+      SendMessagesInThreads:false,
+      ReadMessageHistory:false,
+      AddReactions:false,
+      AttachFiles:false,
+      EmbedLinks:false,
+      UseApplicationCommands:false,
+      CreatePublicThreads:false,
+      CreatePrivateThreads:false
+    },"Network Guest boundary: Ritual Chamber/shrines only").catch(()=>{});
+    denied++;
+  }
+
+  const altar=guild.channels.cache.get(ALTAR_FORUM_ID) || await guild.channels.fetch(ALTAR_FORUM_ID).catch(()=>null);
+  let altarAllowed=false;
+  if(altar?.permissionOverwrites?.edit){
+    await preserveInternalAccess(altar);
+    await altar.permissionOverwrites.edit(guild.roles.everyone,{
+      ViewChannel:false
+    },"Ritual Chamber is invitation-only").catch(()=>{});
+    await altar.permissionOverwrites.edit(guest,{
+      ViewChannel:true,
+      ReadMessageHistory:true,
+      SendMessagesInThreads:true,
+      AddReactions:true,
+      AttachFiles:true,
+      EmbedLinks:true,
+      UseApplicationCommands:true,
+      CreatePublicThreads:false,
+      CreatePrivateThreads:false
+    },"Network Guest access: Ritual Chamber and existing shrines only").catch(()=>{});
+    altarAllowed=true;
+  }
+
+  console.info("[vought-network-guest-boundary]",JSON.stringify({
+    guildId:guild.id,
+    roleId:guest.id,
+    memberRoleId:memberRole.id,
+    restrictedChannels:denied,
+    altarForumId:ALTAR_FORUM_ID,
+    altarAllowed,
+    internalPrincipals:internalIds.length,
+    privateByDefault:true
+  }));
+  return guest;
+}
 function chan(guild:any,_key:keyof typeof channelNames) {
   return guild.channels.cache.get(PRIMARY_MATERIAL_CHANNEL) || guild.channels.cache.find((c:any)=>c.name==="material");
 }
@@ -139,7 +236,8 @@ async function log(guild:any,line:string) {
 async function bootstrap(guild:any) {
   if (!isNetworkGuild(guild)) return;
   await consolidateVoughtChannels(guild);
-  for(const name of ["Network Member",...Object.values(optRoles)]) await role(guild,name);
+  for(const name of [NETWORK_MEMBER_ROLE,NETWORK_GUEST_ROLE,...Object.values(optRoles)]) await role(guild,name);
+  await ensureNetworkGuestBoundary(guild);
 }
 function isAdmin(i:any){return i.memberPermissions?.has(PermissionsBitField.Flags.ManageGuild)||i.guild?.ownerId===i.user.id;}
 function isMod(i:any){return i.memberPermissions?.has(PermissionsBitField.Flags.ModerateMembers)||i.memberPermissions?.has(PermissionsBitField.Flags.ManageMessages)||isAdmin(i);}
@@ -272,6 +370,7 @@ async function updateStats(guild:any) {
 async function handleCommand(i:any) {
   if(!i.isChatInputCommand()||i.commandName!=="cove"||i.options.getSubcommandGroup(false)!=="network") return;
   if(!isNetworkGuild(i.guild)){await i.reply({content:"Vought Network utilities are not enabled here.",ephemeral:true});return;}
+  if(isNetworkGuest(i.member,i.guild)){await i.reply({content:"Network Guest access is limited to the Ritual Chamber and shrines. Vought Network utilities are not available to guest members.",ephemeral:true});return;}
   state.activity.commands++; const cmd=i.options.getSubcommand(); await log(i.guild,"COMMAND /cove network "+cmd+" by <@"+i.user.id+">");
   if(cmd==="leaderboard"){await i.reply(rows().map(r=>(r.rank?"#"+r.rank:"Unranked")+" "+r.name+" — "+r.score+" Network Supe Score — "+r.tier+(r.tier==="Unranked"?"":"-Rank")+" — "+r.credits+" VC").join("\n"));return;}
   if(cmd==="profile"){const id=i.options.getString("child",true);const r=rows().find(x=>x.id===id);if(!r){await i.reply({content:"Child not found.",ephemeral:true});return;}const p=state.ratings[id];await i.reply(["VOUGHT PROFILE — "+r.name,"Network Supe Score: "+r.score,"Vought Network Rank: "+(r.rank?"#"+r.rank:"Unranked"),"Tier: "+r.tier,"Vought Credits: "+r.credits+" VC","Rated messages: "+p.messages,"Rated voice minutes: "+p.voiceMinutes].join("\n"));return;}
@@ -317,9 +416,10 @@ export async function startVoughtInternational() {
   const client=new Client({intents,partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember]});
   client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);await updateStoreSurface(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
   client.on(Events.InteractionCreate,i=>handleCommand(i).catch(async e=>{console.error("[vought-network-command-error]",e?.message||e);if(i.isRepliable()){const p={content:"Vought Network command failed.",ephemeral:true};if(i.replied||i.deferred)await i.followUp(p).catch(()=>{});else await i.reply(p).catch(()=>{});}}));
-  client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;state.activity.messages++;if(!m.author.bot){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,"Network Member").catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
+  client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;const guest=isNetworkGuest(m.member,m.guild);if(!guest)state.activity.messages++;if(!m.author.bot&&!guest){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,NETWORK_MEMBER_ROLE).catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=guest?null:childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
   client.on(Events.MessageReactionAdd,async (r,user)=>{if(user.bot)return;if(r.partial)try{await r.fetch();}catch{return;}if(!isNetworkGuild(r.message.guild))return;const g=state.giveaways[r.message.id];if(g&&!g.closed&&r.emoji.name==="🎟️"&&!g.entrants.includes(user.id))g.entrants.push(user.id);if(r.emoji.name==="⭐"&&r.count>=3&&!state.starboarded[r.message.id]){const c=chan(r.message.guild,"starboard");if(c?.isTextBased()){state.starboarded[r.message.id]=true;await c.send("⭐ "+r.count+" — #"+r.message.channel.name+"\n"+r.message.author+": "+(r.message.content||"[attachment]")+"\n"+r.message.url).catch(()=>{});}}await saveState();});
-  client.on(Events.GuildMemberAdd,async m=>{if(!isNetworkGuild(m.guild))return;state.activity.joins++;const r=await role(m.guild,"Network Member").catch(()=>null);if(r)await m.roles.add(r).catch(()=>{});const hq=chan(m.guild,"hq");if(hq?.isTextBased())await hq.send("Welcome <@"+m.id+"> to the Network. Vought International has completed intake.").catch(()=>{});await log(m.guild,"MEMBER JOIN <@"+m.id+">");await saveState();});
+  client.on(Events.GuildMemberAdd,async m=>{if(!isNetworkGuild(m.guild))return;state.activity.joins++;const guest=await role(m.guild,NETWORK_GUEST_ROLE).catch(()=>null);if(guest)await m.roles.add(guest).catch(()=>{});await log(m.guild,"GUEST JOIN <@"+m.id+"> — Ritual Chamber/shrines only");await saveState();});
+  client.on(Events.GuildMemberUpdate,async (_oldM,newM)=>{if(!isNetworkGuild(newM.guild))return;const guestRole=newM.guild.roles.cache.find((r:any)=>r.name===NETWORK_GUEST_ROLE),memberRole=newM.guild.roles.cache.find((r:any)=>r.name===NETWORK_MEMBER_ROLE);if(guestRole&&memberRole&&newM.roles.cache.has(guestRole.id)&&newM.roles.cache.has(memberRole.id)){await newM.roles.remove(guestRole,"Promoted from Network Guest to Network Member").catch(()=>{});await log(newM.guild,"GUEST PROMOTED <@"+newM.id+">");}});
   client.on(Events.GuildMemberRemove,async m=>{if(!isNetworkGuild(m.guild))return;state.activity.leaves++;await log(m.guild,"MEMBER LEAVE "+(m.user?.tag||m.id));await saveState();});
   client.on(Events.VoiceStateUpdate,async (oldS,newS)=>{const guild=newS.guild||oldS.guild;if(!isNetworkGuild(guild))return;const id=newS.id||oldS.id;if(!oldS.channelId&&newS.channelId){state.voiceSessions[id]={startedAt:Date.now(),guildId:guild.id,name:newS.member?.displayName||""};await saveState();return;}if(oldS.channelId&&!newS.channelId){const ses=state.voiceSessions[id];if(!ses)return;const mins=Math.max(0,Math.floor((Date.now()-ses.startedAt)/60000));state.activity.voiceMinutes+=mins;awardUser(id,Math.floor(mins/5));const child=childFrom(oldS.member,oldS.member?.user);if(child){const pts=Math.min(12,Math.floor(mins/10));if(pts){awardChild(child.id,pts,pts*2);state.ratings[child.id].voiceMinutes+=mins;}}delete state.voiceSessions[id];await saveState();}});
   setInterval(()=>timers(client).catch(e=>console.error("[vought-network-timer-error]",e?.message||e)),30000);
