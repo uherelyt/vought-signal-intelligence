@@ -1319,7 +1319,6 @@ YOUR ROLE: ${persona.role}
 YOUR USUAL SHIPBOARD STATION: ${childrenUsualStationText(persona.id)}
 YOUR VOICE: ${persona.voice}
 ${childrenDreamAndDiscordContext(persona)}
-${voughtRelationship}
 ${persona.constraints ? `SPECIAL LIMIT: ${persona.constraints}` : ""}
 
 HUMAN PARTICIPANT CONTEXT:
@@ -1776,6 +1775,7 @@ YOUR APPARENT AGE: ${persona.apparentAge}
 YOUR PERSONALITY: ${persona.personality}
 YOUR VOICE: ${persona.voice}
 ${childrenDreamAndDiscordContext(persona)}
+${voughtRelationship}
 ${persona.constraints ? `SPECIAL LIMIT: ${persona.constraints}` : ""}
 
 MEMORY CONTEXT:
