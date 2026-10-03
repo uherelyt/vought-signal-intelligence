@@ -5,7 +5,7 @@ export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
-export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v2';
+export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v3';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
@@ -127,8 +127,12 @@ export class AltarRuntime {
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
     const wanted=['Dynasty','Ancestor','Children bridge','Sacred Hive'];
-    if(wanted.some(n=>!tags.some(t=>t.name===n))&&tags.length<18){
-      const changed=await this.api(`/channels/${FORUM_ID}`,'PATCH',{available_tags:[...tags.map(t=>({id:t.id,name:t.name,moderated:t.moderated,emoji_id:t.emoji_id,emoji_name:t.emoji_name})),...wanted.filter(n=>!tags.some(t=>t.name===n)).map(name=>({name}))]});tags=changed.available_tags??tags;
+    const missingWanted=wanted.filter(n=>!tags.some(t=>t.name===n));
+    if(missingWanted.length){
+      if(tags.length+missingWanted.length>20)throw new Error('forum_tag_capacity_exceeded');
+      const changed=await this.api(`/channels/${FORUM_ID}`,'PATCH',{available_tags:[...tags.map(t=>({id:t.id,name:t.name,moderated:t.moderated,emoji_id:t.emoji_id,emoji_name:t.emoji_name})),...missingWanted.map(name=>({name}))]});
+      tags=changed.available_tags??tags;
+      if(wanted.some(n=>!tags.some(t=>t.name===n)))throw new Error('forum_tag_provision_failed');
     }
     const active=await this.api(`/guilds/${this.guildId}/threads/active`);
     const existing=(active.threads??[]).filter(t=>t.parent_id===FORUM_ID);
