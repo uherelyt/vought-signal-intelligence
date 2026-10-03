@@ -4,6 +4,7 @@ import { AltarRuntime,decodeRoster,FORUM_ID,LEGACY_RITUAL_CHANNEL_ID,PREFIX,vali
 import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../children-memory.ts';
 import { CHILDREN_PERSONAS,generateFreshChildrenMessage } from '../children-of-endless.ts';
 import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
+import { ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI,applyElaedFallbackAvatar } from './ancestral-seal-avatar.mjs';
 
 export const altarStatus={state:'not_started',forumId:FORUM_ID,rosterCount:0,shrineCount:0,gatewayReady:false,ritualRoom:'altar_forum'};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -51,6 +52,8 @@ export async function startAltar(env=process.env) {
     const key=p.childrenKey??Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));
     if(key){p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];p.senderName=CHILDREN_PERSONAS[key]?.displayName;}
   }
+  const fallbackIconCount=applyElaedFallbackAvatar(roster.people.filter(p=>p.shrineEligible!==false&&!p.childrenKey&&!p.humanControlled));
+  altarStatus.fallbackIconCount=fallbackIconCount;
   const portraitKeys=[...new Set([...roster.people,...roster.visitors??[]].filter(p=>p.avatarData).map(p=>p.childrenKey))].filter(Boolean);
   altarStatus.portraitCount=portraitKeys.length;
   async function verifyPortraits(runtime){
@@ -70,6 +73,24 @@ export async function startAltar(env=process.env) {
       await store.set(receiptKey,JSON.stringify({keys:portraitKeys,receipts,verifiedAt:new Date().toISOString()}));
       altarStatus.portraitsVerified=true;
       console.info('[altar-portraits-verified]',JSON.stringify({count:receipts.length,keys:portraitKeys}));
+    };
+    const result=runtime.deliveryLane.then(upload);runtime.deliveryLane=result.catch(()=>{});await result;
+  }
+  async function verifyFallbackIcon(runtime){
+    const fingerprint=createHash('sha256').update(ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI).digest('hex');
+    const receiptKey=`${PREFIX}:fallback-icon:${fingerprint}`;
+    const saved=await store.get(receiptKey);
+    if(saved){
+      const receipt=JSON.parse(saved);
+      if(receipt?.verified===true&&receipt.count===fallbackIconCount){altarStatus.fallbackIconVerified=true;return;}
+    }
+    const upload=async()=>{
+      const webhook=await runtime.webhook(false);
+      const result=await api(`/webhooks/${webhook.id}`,'PATCH',{avatar:ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI});
+      if(result.id!==webhook.id||result.application_id!==c.applicationId||!result.avatar)throw new Error('fallback_icon_application_receipt_mismatch');
+      await store.set(receiptKey,JSON.stringify({verified:true,avatar:result.avatar,count:fallbackIconCount,verifiedAt:new Date().toISOString()}));
+      altarStatus.fallbackIconVerified=true;
+      console.info('[altar-fallback-icon-verified]',JSON.stringify({count:fallbackIconCount}));
     };
     const result=runtime.deliveryLane.then(upload);runtime.deliveryLane=result.catch(()=>{});await result;
   }
@@ -195,7 +216,7 @@ export async function startAltar(env=process.env) {
   let provisioned=false,provisioning=false,ticking=false;
   async function provisionAll(){
     if(provisioned||provisioning)return;provisioning=true;
-    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();altarStatus.persesStationId=runtime.persesStationId;await verifyPortraits(runtime);await retireLegacyRitualChannel();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';altarStatus.presentationVersion=SHRINE_PRESENTATION_VERSION;altarStatus.presentationVerifiedCount=runtime.presentationVerifiedCount;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);console.info('[altar-presentation-verified]',JSON.stringify({version:SHRINE_PRESENTATION_VERSION,count:runtime.presentationVerifiedCount,portraitCount:portraitKeys.length,persesStationId:runtime.persesStationId,legacyRitualRetired:altarStatus.legacyRitualRetired}));await runtime.webhook(true);await verifyActivation();}
+    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();altarStatus.persesStationId=runtime.persesStationId;await verifyFallbackIcon(runtime);await verifyPortraits(runtime);await retireLegacyRitualChannel();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';altarStatus.presentationVersion=SHRINE_PRESENTATION_VERSION;altarStatus.presentationVerifiedCount=runtime.presentationVerifiedCount;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);console.info('[altar-presentation-verified]',JSON.stringify({version:SHRINE_PRESENTATION_VERSION,count:runtime.presentationVerifiedCount,portraitCount:portraitKeys.length,fallbackIconCount,fallbackIconVerified:altarStatus.fallbackIconVerified===true,persesStationId:runtime.persesStationId,legacyRitualRetired:altarStatus.legacyRitualRetired}));await runtime.webhook(true);await verifyActivation();}
     catch(e){altarStatus.state='provisioning_retry';console.error('[altar-provisioning-retry]',errorCode(e));}
     finally{provisioning=false;}
   }
