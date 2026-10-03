@@ -7,6 +7,16 @@ import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
 import { ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI,applyElaedFallbackAvatar } from './ancestral-seal-avatar.mjs';
 
 export const altarStatus={state:'not_started',forumId:FORUM_ID,rosterCount:0,shrineCount:0,gatewayReady:false,ritualRoom:'altar_forum'};
+const VOUTTUBE_OFFERING_RECIPIENTS=[
+  {id:'elaed-5744ee101e27-1',role:'primary content offering',dedication:'The finished content is offered to Ah-Muzen-Cab I as New God of Content.'},
+  {id:'elaed-4c0d5a0f8de3-1',role:'circulation offering',dedication:'Its circulation, audience attention, feeds and social spread are offered to New Media.'},
+  {id:'elaed-9320fa08467d-1',role:'infrastructure offering',dedication:'Its technical publication, network path and internet infrastructure are offered to Technical Boy.'},
+];
+let voughttubeOfferingBridge=null;
+export async function postVoughtTubeOffering(input){
+  if(!voughttubeOfferingBridge)throw new Error('altar_offering_bridge_not_ready');
+  return voughttubeOfferingBridge(input);
+}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function errorCode(e){return e?.status?`http_${e.status}`:String(e?.message??'unavailable').replace(/https?:\/\/\S+/g,'[endpoint]').slice(0,100);}
 const ALTAR_GREEK_NATIVE_LANGUAGE = new Set([
@@ -257,6 +267,57 @@ export async function startAltar(env=process.env) {
     catch(e){altarStatus.state='provisioning_retry';console.error('[altar-provisioning-retry]',errorCode(e));}
     finally{provisioning=false;}
   }
+  voughttubeOfferingBridge=async input=>{
+    if(!provisioned){await provisionAll();if(!provisioned)throw new Error('altar_not_provisioned');}
+    const videoId=String(input?.video_id??'').trim();
+    const approvalId=String(input?.approval_id??'').trim();
+    const title=clean(String(input?.title??''),180);
+    const publishAt=String(input?.publish_at??'').trim();
+    if(!/^[A-Za-z0-9_-]{6,32}$/.test(videoId)||!/^[A-Za-z0-9._:-]{8,128}$/.test(approvalId)||!title||Number.isNaN(Date.parse(publishAt)))throw new Error('invalid_voughttube_offering');
+    const unix=Math.floor(Date.parse(publishAt)/1000);
+    const url=`https://youtu.be/${videoId}`;
+    const results=[];
+    for(const target of VOUTTUBE_OFFERING_RECIPIENTS){
+      const p=runtime.people.get(target.id);
+      if(!p||p.shrineEligible===false)throw new Error(`offering_figure_unavailable:${target.id}`);
+      const threadId=await store.get(`${PREFIX}:shrine:${p.id}`);
+      if(!threadId)throw new Error(`offering_shrine_unavailable:${p.id}`);
+      const receiptKey=`${PREFIX}:voughttube-offering:${videoId}:${p.id}`;
+      const existing=await store.get(receiptKey);
+      if(existing&&existing!=='processing'){try{results.push({...JSON.parse(existing),duplicate:true});continue;}catch{}}
+      const claimed=await store.set(receiptKey,'processing',{nx:true,ex:300});
+      if(claimed!=='OK'){
+        const retryExisting=await store.get(receiptKey);
+        if(retryExisting&&retryExisting!=='processing'){try{results.push({...JSON.parse(retryExisting),duplicate:true});continue;}catch{}}
+        throw new Error(`offering_in_progress:${p.id}`);
+      }
+      try{
+        const channel=await runtime.checkOwnThread(threadId,p);
+        if(channel.thread_metadata?.archived&&!channel.thread_metadata?.locked)await api(`/channels/${threadId}`,'PATCH',{archived:false});
+        const offeringText=`📺 **VoughtTube offering**\n**${title}**\nScheduled <t:${unix}:F> · ${url}\n${target.dedication}`;
+        const posted=await api(`/channels/${threadId}/messages`,'POST',{content:offeringText,allowed_mentions:{parse:[]}});
+        let acknowledgementId=null,acknowledgementError=null;
+        try{
+          const ack=await runtime.ritual(p,threadId,'offer',`${target.dedication} VoughtTube release: "${title}" (${url}), scheduled ${publishAt}.`,posted.id);
+          acknowledgementId=ack?.id??null;
+        }catch(e){
+          acknowledgementError=errorCode(e);
+          console.warn('[altar-voughttube-offering-ack-failed]',JSON.stringify({videoId,figureId:p.id,reason:acknowledgementError}));
+        }
+        const receipt={videoId,approvalId,figureId:p.id,figure:p.displayName,threadId,offeringMessageId:posted.id,acknowledgementId,acknowledgementError,role:target.role,publishAt,recordedAt:new Date().toISOString()};
+        await store.set(receiptKey,JSON.stringify(receipt));
+        results.push(receipt);
+      }catch(e){
+        await store.del(receiptKey);
+        throw e;
+      }
+    }
+    const summary={videoId,approvalId,publishAt,recipients:results};
+    altarStatus.lastVoughtTubeOffering={videoId,publishAt,recipientCount:results.length,recordedAt:new Date().toISOString()};
+    console.info('[altar-voughttube-offering]',JSON.stringify(summary));
+    return summary;
+  };
+  altarStatus.offeringBridgeReady=true;
   const leaseTimer=setInterval(async()=>{
     try{const held=await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('expire',KEYS[1],90) else return 0 end",{keys:[leaseKey],arguments:[leaseId]});if(!held){altarStatus.state='gateway_lease_lost';socket?.close(1000,'lease lost');}}
     catch{altarStatus.state='redis_unavailable';socket?.close(1000,'state unavailable');}
