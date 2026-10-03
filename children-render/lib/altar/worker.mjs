@@ -192,7 +192,8 @@ export async function startAltar(env=process.env) {
   }
   const rosterPerses=roster.people.find(p=>p.childrenKey==='perses')??roster.people.find(p=>String(p.name??'').trim().toLowerCase()==='perses');
   const visitorPerses=(roster.visitors??[]).find(p=>p.childrenKey==='perses');
-  const persesPromotion=(rosterPerses??visitorPerses)&&!(rosterPerses?.shrineEligible!==false)?1:0;
+  const persesAlreadyActive=Boolean(rosterPerses&&rosterPerses.shrineEligible!==false);
+  const persesPromotion=(rosterPerses??visitorPerses)&&!persesAlreadyActive?1:0;
   altarStatus.expectedShrines=(roster.expectedShrines??roster.people.length)+persesPromotion;
   altarStatus.ancestorCount=roster.people.filter(p=>p.ancestor).length;
   altarStatus.visitorCount=(roster.visitors??[]).filter(p=>p.childrenKey!=='perses').length;
