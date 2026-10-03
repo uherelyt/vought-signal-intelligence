@@ -10,6 +10,7 @@ import {
   Routes
 } from "discord.js";
 import { Redis } from "./render-redis.ts";
+import { consolidateVoughtChannels } from "./vought-material-consolidation.ts";
 
 const ANCHOR = "1555308025525440584";
 const PRIMARY_MATERIAL_CHANNEL = "1556062516470358126";
@@ -49,8 +50,8 @@ const store = [
 ] as const;
 
 const channelNames = {
-  hq:"material",store:"vought-store",support:"vought-support",logs:"vought-logs",
-  starboard:"vought-starboard",suggestions:"vought-suggestions"
+  hq:"material",store:"material",support:"material",logs:"material",
+  starboard:"material",suggestions:"material"
 };
 const optRoles = {
   announcements:"Vought Announcements",events:"Vought Events",giveaways:"Vought Giveaways"
@@ -59,11 +60,12 @@ const optRoles = {
 type Rating = {score:number;messages:number;voiceMinutes:number;lastAward:number};
 type Reminder = {id:string;guildId:string;channelId:string;userId:string;dueAt:number;text:string;repeatEveryMs:number|null;remaining:number};
 type Giveaway = {guildId:string;channelId:string;messageId:string;itemId:string;winnerCount:number;endsAt:number;entrants:string[];closed:boolean};
+type Ticket = {id:string;guildId:string;userId:string;subject:string;openedAt:string;closedAt?:string;status:"open"|"closed"};
 type State = {
   ratings:Record<string,Rating>;childBalances:Record<string,number>;userBalances:Record<string,number>;
   inventories:Record<string,string[]>;dailyCredits:Record<string,number>;cooldowns:Record<string,number>;
   activity:{messages:number;voiceMinutes:number;joins:number;leaves:number;commands:number};
-  warnings:Record<string,unknown[]>;reminders:Reminder[];giveaways:Record<string,Giveaway>;
+  warnings:Record<string,unknown[]>;reminders:Reminder[];giveaways:Record<string,Giveaway>;tickets:Record<string,Ticket>;
   tags:Record<string,string>;triggers:Record<string,string>;starboarded:Record<string,boolean>;
   voiceSessions:Record<string,{startedAt:number;guildId:string;name:string}>;welcomed:Record<string,boolean>;
   statsMessageIds:Record<string,string>;
@@ -72,7 +74,7 @@ type State = {
 const blankState = ():State => ({
   ratings:{},childBalances:{},userBalances:{},inventories:{},dailyCredits:{},cooldowns:{},
   activity:{messages:0,voiceMinutes:0,joins:0,leaves:0,commands:0},warnings:{},reminders:[],
-  giveaways:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{}
+  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{}
 });
 
 let state = blankState();
@@ -127,17 +129,15 @@ async function role(guild:any,name:string) {
   if (!r) r=await guild.roles.create({name,reason:"Vought International Network bootstrap"});
   return r;
 }
-function chan(guild:any,key:keyof typeof channelNames) {
-  if (key === "hq") return guild.channels.cache.get(PRIMARY_MATERIAL_CHANNEL) || guild.channels.cache.find((c:any)=>c.name===channelNames[key]);
-  return guild.channels.cache.find((c:any)=>c.name===channelNames[key]);
+function chan(guild:any,_key:keyof typeof channelNames) {
+  return guild.channels.cache.get(PRIMARY_MATERIAL_CHANNEL) || guild.channels.cache.find((c:any)=>c.name==="material");
 }
-async function log(guild:any,line:string) { const c=chan(guild,"logs"); if(c?.isTextBased()) await c.send("[Vought International] "+line).catch(()=>{}); }
+async function log(guild:any,line:string) {
+  console.info("[vought-network-audit]", JSON.stringify({guildId:guild?.id ?? null,line}));
+}
 async function bootstrap(guild:any) {
   if (!isNetworkGuild(guild)) return;
-  let cat=guild.channels.cache.find((c:any)=>c.type===ChannelType.GuildCategory && c.name==="VOUGHT INTERNATIONAL");
-  if(!cat) cat=await guild.channels.create({name:"VOUGHT INTERNATIONAL",type:ChannelType.GuildCategory,reason:"Vought International Network bootstrap"});
-  for(const name of Object.values(channelNames)) if(!guild.channels.cache.find((c:any)=>c.name===name))
-    await guild.channels.create({name,type:ChannelType.GuildText,parent:cat.id,reason:"Vought International Network bootstrap"});
+  await consolidateVoughtChannels(guild);
   for(const name of ["Network Member",...Object.values(optRoles)]) await role(guild,name);
 }
 function isAdmin(i:any){return i.memberPermissions?.has(PermissionsBitField.Flags.ManageGuild)||i.guild?.ownerId===i.user.id;}
@@ -207,8 +207,8 @@ async function handleCommand(i:any) {
   if(cmd==="poll"){const q=i.options.getString("question",true),opts=i.options.getString("options",true).split("|").map((x:string)=>x.trim()).filter(Boolean).slice(0,5),em=["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"];if(opts.length<2){await i.reply({content:"Provide at least two options separated by |.",ephemeral:true});return;}await i.reply("POLL — "+q+"\n"+opts.map((x:string,j:number)=>em[j]+" "+x).join("\n"));const m=await i.fetchReply();for(let j=0;j<opts.length;j++)await m.react(em[j]).catch(()=>{});return;}
   if(cmd==="suggest"){const c=chan(i.guild,"suggestions")||i.channel,m=await c.send("VOUGHT SUGGESTION — <@"+i.user.id+">\n"+i.options.getString("text",true));await m.react("👍").catch(()=>{});await m.react("👎").catch(()=>{});await i.reply({content:"Suggestion filed.",ephemeral:true});return;}
   if(cmd==="remind"){const mins=i.options.getInteger("minutes",true),repeat=i.options.getInteger("repeat_minutes"),count=i.options.getInteger("repeat_count")||1;state.reminders.push({id:"rem-"+Date.now(),guildId:i.guildId,channelId:i.channelId,userId:i.user.id,dueAt:Date.now()+mins*60000,text:i.options.getString("text",true),repeatEveryMs:repeat?repeat*60000:null,remaining:repeat?count:1});await saveState();await i.reply({content:"Reminder scheduled.",ephemeral:true});return;}
-  if(cmd==="ticket-open"){const subject=i.options.getString("subject",true),support=chan(i.guild,"support");const safe=i.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"-").slice(0,40);const c=await i.guild.channels.create({name:"ticket-"+safe,type:ChannelType.GuildText,parent:support?.parentId||undefined,permissionOverwrites:[{id:i.guild.roles.everyone.id,deny:[PermissionsBitField.Flags.ViewChannel]},{id:i.user.id,allow:[PermissionsBitField.Flags.ViewChannel,PermissionsBitField.Flags.SendMessages,PermissionsBitField.Flags.ReadMessageHistory]},{id:i.client.user.id,allow:[PermissionsBitField.Flags.ViewChannel,PermissionsBitField.Flags.SendMessages,PermissionsBitField.Flags.ManageChannels,PermissionsBitField.Flags.ReadMessageHistory]}]});await c.send("Vought Support Ticket for <@"+i.user.id+">\nSubject: "+subject+"\nUse /cove network ticket-close when resolved.");await i.reply({content:"Ticket opened: <#"+c.id+">.",ephemeral:true});return;}
-  if(cmd==="ticket-close"){const c=i.channel;if(!c?.name?.startsWith("ticket-")){await i.reply({content:"This is not a Vought support ticket.",ephemeral:true});return;}const msgs=await c.messages.fetch({limit:100}),txt=[...msgs.values()].reverse().map((m:any)=>"["+m.createdAt.toISOString()+"] "+m.author.tag+": "+m.content).join("\n");const l=chan(i.guild,"logs");if(l?.isTextBased())await l.send({content:"Ticket transcript: #"+c.name,files:[new AttachmentBuilder(Buffer.from(txt||"[empty]","utf8"),{name:c.name+"-transcript.txt"})]}).catch(()=>{});await i.reply({content:"Ticket closed.",ephemeral:true});setTimeout(()=>c.delete().catch(()=>{}),1200);return;}
+  if(cmd==="ticket-open"){const subject=i.options.getString("subject",true),id="ticket-"+Date.now().toString(36);state.tickets[id]={id,guildId:i.guildId,userId:i.user.id,subject,openedAt:new Date().toISOString(),status:"open"};await saveState();await log(i.guild,"TICKET OPEN "+id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+id+" opened. Subject: "+subject,ephemeral:true});return;}
+  if(cmd==="ticket-close"){const ticket=Object.values(state.tickets).filter(t=>t.guildId===i.guildId&&t.userId===i.user.id&&t.status==="open").sort((a,b)=>b.openedAt.localeCompare(a.openedAt))[0];if(!ticket){await i.reply({content:"No open Vought support ticket found for you.",ephemeral:true});return;}ticket.status="closed";ticket.closedAt=new Date().toISOString();await saveState();await log(i.guild,"TICKET CLOSE "+ticket.id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+ticket.id+" closed.",ephemeral:true});return;}
   if(cmd==="announce"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const c=chan(i.guild,"hq")||i.channel;await c.send("**"+(i.options.getString("title")||"Vought International")+"**\n"+i.options.getString("text",true));await i.reply({content:"Announcement issued.",ephemeral:true});return;}
   if(cmd==="event-create"){const c=chan(i.guild,"hq")||i.channel,name=i.options.getString("name",true),mins=i.options.getInteger("minutes",true),details=i.options.getString("details")||"No additional details.";const m=await c.send("VOUGHT EVENT — "+name+"\nStarts <t:"+Math.floor((Date.now()+mins*60000)/1000)+":R>\n"+details+"\n✅ attending • ❔ maybe • ❌ unavailable");for(const e of ["✅","❔","❌"])await m.react(e).catch(()=>{});await i.reply({content:"Event posted.",ephemeral:true});return;}
   if(cmd==="tag-set"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")]=i.options.getString("text",true);await saveState();await i.reply({content:"Tag saved.",ephemeral:true});return;}
