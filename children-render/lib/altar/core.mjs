@@ -5,7 +5,7 @@ export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
-export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v3';
+export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
@@ -53,7 +53,11 @@ export class AltarRuntime {
     const promotedPerses=rosterPerses
       ? {...rosterPerses,shrineEligible:true,childrenKey:'perses',avatarData:rosterPerses.avatarData??visitorPerses?.avatarData,senderName:rosterPerses.senderName??visitorPerses?.senderName}
       : visitorPerses?{...visitorPerses,shrineEligible:true}:null;
-    this.provisionRoster=roster.people.map(p=>p.id===rosterPerses?.id?promotedPerses:p);
+    this.provisionRoster=roster.people.map(p=>{
+      if(p.id===rosterPerses?.id)return promotedPerses;
+      if(hiveNameKey(p.displayName??p.name)==='melisseus')return {...p,shrineEligible:true};
+      return p;
+    });
     if(promotedPerses&&!this.provisionRoster.some(p=>p.id===promotedPerses.id))this.provisionRoster.push(promotedPerses);
     this.people=new Map(this.provisionRoster.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
     this.visitors=new Map((roster.visitors??[]).filter(p=>p.childrenKey!=='perses').map(p=>[p.id,p]));
@@ -88,7 +92,7 @@ export class AltarRuntime {
     const event={eventId:randomUUID(),timestamp:new Date(this.now()).toISOString(),speakers:p?[p.displayName]:['Operator'],channelId:threadId,parentForumId:FORUM_ID,location:`#altar — Ritual Chamber / ${label} (${threadId})`,plane:'astral',movementFrom:[],movementTo:[],transcript:clean(transcript,6000),discordMessageIds:ids,durableCanon:true,sourceKind:'elaed_altar',...extra};
     // Outbox precedes the rolling context window, so later V-Workspace ingestion can acknowledge every event.
     await this.store.lpush(`${PREFIX}:durable-outbox`,JSON.stringify(event));
-    if(!['shrine_provisioning','shrine_policy','shrine_presentation','shrine_reactivation'].includes(extra.eventType)){
+    if(!['shrine_provisioning','shrine_policy','shrine_presentation','shrine_reactivation','shrine_reference_deleted'].includes(extra.eventType)){
       await this.store.lpush(NETWORK_ACTIVITY,JSON.stringify(event));
       await this.store.ltrim(NETWORK_ACTIVITY,0,199);
     }
@@ -143,8 +147,23 @@ export class AltarRuntime {
       before=page.threads?.at(-1)?.thread_metadata?.archive_timestamp;
       if(more&&!before)throw new Error('archive_pagination_failed');
     }
-    let completed=0;this.presentationVerifiedCount=0;
+    let completed=0;this.presentationVerifiedCount=0;this.retiredReferencesDeleted=0;
+    const fullTitleCounts=new Map();
+    for(const p of this.provisionRoster)fullTitleCounts.set(shrineTitle(p),(fullTitleCounts.get(shrineTitle(p))??0)+1);
+    const candidateThreads=p=>{
+      const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
+      const visibleTitle=shrineTitle(p);
+      return existing.filter(t=>t.name===legacyTitle||(fullTitleCounts.get(visibleTitle)===1&&t.name===visibleTitle));
+    };
+    const rememberOrder=async p=>{
+      if(await this.store.get(`${PREFIX}:order:${p.id}`))return;
+      const candidates=candidateThreads(p);
+      const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
+      const ids=[...candidates.map(t=>t.id),stored].filter(id=>/^\d{15,22}$/.test(String(id??'')));
+      if(ids.length)await this.store.set(`${PREFIX}:order:${p.id}`,ids.sort((a,b)=>BigInt(a)<BigInt(b)?-1:BigInt(a)>BigInt(b)?1:0)[0]);
+    };
     for(const p of this.provisionRoster){
+      await rememberOrder(p);
       const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
       if(p.shrineEligible===false){
         if(stored){
@@ -232,7 +251,25 @@ export class AltarRuntime {
       if(!found&&!stored)await this.activity(p,thread.id,`Shrine established: ${p.displayName}`,[thread.message?.id].filter(Boolean),{eventType:'shrine_provisioning'});
       this.progress(++completed);
     }
-    // Retire only the known resident post; preserve historical reference shrines.
+    // The original Discord snowflake remains the durable shrine-order key even when a stale locked thread is deleted.
+    // Delete only known locked/archived references after active mappings are established.
+    const activeThreadIds=new Set();
+    for(const p of this.people.values()){
+      const id=await this.store.get(`${PREFIX}:shrine:${p.id}`);if(id)activeThreadIds.add(id);
+    }
+    for(const p of this.provisionRoster){
+      for(const thread of candidateThreads(p)){
+        if(activeThreadIds.has(thread.id)||!thread.thread_metadata?.archived||!thread.thread_metadata?.locked)continue;
+        if(!validThread(thread,this.guildId))throw new Error('retired_reference_outside_altar');
+        try{await this.api(`/channels/${thread.id}`,'DELETE');}
+        catch(error){if(error.status===404){}else throw error;}
+        if(await this.store.get(`${PREFIX}:shrine:${p.id}`)===thread.id)await this.store.del(`${PREFIX}:shrine:${p.id}`);
+        await this.store.del(`${PREFIX}:thread:${thread.id}`);
+        await this.store.del(`${PREFIX}:presentation:${p.id}`);
+        this.retiredReferencesDeleted++;
+        await this.activity(p,thread.id,`Locked retired shrine reference ${thread.id} deleted; spatial order remains ${await this.store.get(`${PREFIX}:order:${p.id}`)??thread.id}.`,[],{eventType:'shrine_reference_deleted',deletedThreadId:thread.id,shrineOrderId:await this.store.get(`${PREFIX}:order:${p.id}`)??thread.id});
+      }
+    }
     this.persesDedicatedPostRemoved=false;
     const storedResident=await this.store.get(`${PREFIX}:resident:perses`);
     const residentIds=new Set([storedResident,...existing.filter(t=>t.id==='1555721299601526916').map(t=>t.id)].filter(Boolean));
