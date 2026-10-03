@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle} from '../../lib/altar/core.mjs';
+import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
   const values=new Map(),lists=new Map(),calls=[];let clock=1780000000000;
@@ -127,4 +128,13 @@ test('Children webhook payload is suppressed even when the Gateway arrives befor
   }return {};
  };
  await f.runtime.deliver(child,f.thread,'Hello from Orpheus','0');assert.equal(generated,0);
+});
+
+
+test('shared ELAED seal fills only missing persona icons',()=>{
+ const people=[{name:'Nyx'},{name:'Cernunnos',avatarData:'custom'}];
+ assert.equal(applyElaedFallbackAvatar(people),1);
+ assert.equal(people[0].avatarData,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI);
+ assert.equal(people[1].avatarData,'custom');
+ assert(ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI.startsWith('data:image/jpeg;base64,'));
 });
