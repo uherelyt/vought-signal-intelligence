@@ -35,12 +35,14 @@ export function altarHistoricalLanguageRule(p){
     return "HISTORICAL-LANGUAGE CANON: This divine figure has multiple plausible historical language/register choices. Preserve the existing message language for now. Do not silently choose, infer, or canonize one; the Operator must select from researched options first.";
   }
   const base=altarBaseName(p);
-  if(ALTAR_GREEK_NATIVE_LANGUAGE.has(base))return "HISTORICAL-LANGUAGE CANON: This divine/mythic Greek figure speaks only in Ancient Greek using Greek script. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
+  if(ALTAR_MAYA_LANGUAGE_PENDING.has(base))return "HISTORICAL-LANGUAGE CANON: This Maya divine figure requires a canonical Maya language/register, but that selection is pending Operator approval. Preserve the existing message language for now. Do not silently choose, infer, or canonize a Maya language/register.";
+  const divine=String(p?.eligibilityReason??"")==="Divine office / mythic personification"||/\bdeified\s+(?:god|goddess|deity)\b/i.test(String(p?.eligibilityReason??""));
+  if(!divine)return "HISTORICAL-LANGUAGE CANON: The archaeological native-language rule is for gods/divine figures only. This figure has no approved divine-language mapping; preserve the existing message language and do not infer one.";
+  if(ALTAR_GREEK_NATIVE_LANGUAGE.has(base))return "HISTORICAL-LANGUAGE CANON: This Greek divine figure speaks only in Ancient Greek using Greek script. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
   if(ALTAR_EGYPTIAN_NATIVE_LANGUAGE.has(base))return "HISTORICAL-LANGUAGE CANON: This Egyptian deity speaks only in Ancient Egyptian. Use Egyptian hieroglyphic Unicode where the model can represent the intended wording faithfully. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
   if(ALTAR_NORSE_NATIVE_LANGUAGE.has(base))return "HISTORICAL-LANGUAGE CANON: This Norse deity speaks only in Old Norse. Use historically appropriate Old Norse orthography; do not silently choose a runic register. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
   if(ALTAR_LATIN_NATIVE_LANGUAGE.has(base))return "HISTORICAL-LANGUAGE CANON: This Roman deity speaks only in Latin. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
-  if(ALTAR_MAYA_LANGUAGE_PENDING.has(base))return "HISTORICAL-LANGUAGE CANON: This Maya divine figure requires a canonical Maya language/register, but that selection is pending Operator approval. Preserve the existing message language for now. Do not silently choose, infer, or canonize a Maya language/register.";
-  return "HISTORICAL-LANGUAGE CANON: No approved native-language mapping is stored for this figure yet. Preserve the existing message language for now and do not infer or canonize a historical language/register.";
+  return "HISTORICAL-LANGUAGE CANON: No approved native-language mapping is stored for this divine figure yet. Preserve the existing message language for now and do not infer or canonize a historical language/register.";
 }
 
 
