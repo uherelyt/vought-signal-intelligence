@@ -19,6 +19,54 @@ export async function postVoughtTubeOffering(input){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function errorCode(e){return e?.status?`http_${e.status}`:String(e?.message??'unavailable').replace(/https?:\/\/\S+/g,'[endpoint]').slice(0,100);}
+function discordMessageText(m){
+  const parts=[m?.content];
+  for(const e of m?.embeds??[]){
+    parts.push(e?.title,e?.description,e?.url,e?.author?.name,e?.author?.url,e?.footer?.text);
+    for(const f of e?.fields??[])parts.push(f?.name,f?.value);
+  }
+  for(const a of m?.attachments??[])parts.push(a?.filename,a?.url,a?.proxy_url);
+  return parts.filter(Boolean).join('\n');
+}
+function youtubeVideoId(text){
+  const value=String(text??'');
+  const patterns=[
+    /youtu\.be\/([A-Za-z0-9_-]{6,32})/i,
+    /youtube\.com\/watch\?[^\s>]*?v=([A-Za-z0-9_-]{6,32})/i,
+    /youtube\.com\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{6,32})/i,
+  ];
+  for(const pattern of patterns){const match=value.match(pattern);if(match)return match[1];}
+  return null;
+}
+function isWednesdayNewYork(iso){
+  const date=new Date(iso);
+  if(Number.isNaN(date.getTime()))return false;
+  return new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'long'}).format(date)==='Wednesday';
+}
+function parseVoughtTubeUploadNotification(m){
+  if(!(m?.author?.bot||m?.webhook_id))return null;
+  const text=discordMessageText(m);
+  const videoId=youtubeVideoId(text);
+  if(!videoId)return null;
+  const lower=text.toLowerCase();
+  const isVoughtTube=/\buherelyt\b/.test(lower)||lower.includes('@uherelyt')||lower.includes('youtube.com/@uherelyt')||lower.includes('voughttube');
+  if(!isVoughtTube)return null;
+  const observedAt=m.timestamp??new Date().toISOString();
+  if(!isWednesdayNewYork(observedAt))return null;
+  const embedTitle=(m.embeds??[]).map(e=>String(e?.title??'').trim()).find(Boolean);
+  const contentTitle=String(m.content??'').split('\n').map(x=>x.trim()).find(x=>x&&!/^https?:\/\//i.test(x)&&!/<@&?\d+>/.test(x));
+  const title=clean(embedTitle??contentTitle??`VoughtTube upload ${videoId}`,180);
+  return {
+    event_id:`discord:${m.id}`,
+    video_id:videoId,
+    title,
+    observed_at:observedAt,
+    source_channel_id:m.channel_id,
+    source_message_id:m.id,
+    source_author_id:m.author?.id??null,
+    source_author_name:m.author?.username??null,
+  };
+}
 const ALTAR_GREEK_NATIVE_LANGUAGE = new Set([
   "Adrasteia","Aether","Alcmene","Alexiares","Anicetus","Aphrodite","Apollo","Ares","Ariadne","Aristaeus",
   "Melissae Artemis","Asteria","Athena","Atlas","Calliope","Calypso","Chronos","Clymene","Coeus","Crius","Cronus",
@@ -270,11 +318,11 @@ export async function startAltar(env=process.env) {
   voughttubeOfferingBridge=async input=>{
     if(!provisioned){await provisionAll();if(!provisioned)throw new Error('altar_not_provisioned');}
     const videoId=String(input?.video_id??'').trim();
-    const approvalId=String(input?.approval_id??'').trim();
+    const eventId=String(input?.event_id??input?.approval_id??'').trim();
     const title=clean(String(input?.title??''),180);
-    const publishAt=String(input?.publish_at??'').trim();
-    if(!/^[A-Za-z0-9_-]{6,32}$/.test(videoId)||!/^[A-Za-z0-9._:-]{8,128}$/.test(approvalId)||!title||Number.isNaN(Date.parse(publishAt)))throw new Error('invalid_voughttube_offering');
-    const unix=Math.floor(Date.parse(publishAt)/1000);
+    const observedAt=String(input?.observed_at??input?.publish_at??'').trim();
+    if(!/^[A-Za-z0-9_-]{6,32}$/.test(videoId)||!/^[A-Za-z0-9._:-]{8,128}$/.test(eventId)||!title||Number.isNaN(Date.parse(observedAt)))throw new Error('invalid_voughttube_offering');
+    const unix=Math.floor(Date.parse(observedAt)/1000);
     const url=`https://youtu.be/${videoId}`;
     const results=[];
     for(const target of VOUTTUBE_OFFERING_RECIPIENTS){
@@ -294,10 +342,10 @@ export async function startAltar(env=process.env) {
       try{
         const channel=await runtime.checkOwnThread(threadId,p);
         if(channel.thread_metadata?.archived&&!channel.thread_metadata?.locked)await api(`/channels/${threadId}`,'PATCH',{archived:false});
-        const offeringText=`📺 **VoughtTube offering**\n**${title}**\nScheduled <t:${unix}:F> · ${url}\n${target.dedication}`;
+        const offeringText=`📺 **VoughtTube offering**\n**${title}**\nDetected as a new Wednesday upload <t:${unix}:F> · ${url}\n${target.dedication}`;
         const posted=await api(`/channels/${threadId}/messages`,'POST',{content:offeringText,allowed_mentions:{parse:[]}});
-        await runtime.activity(p,threadId,`VoughtTube offering: ${target.dedication} Release: "${title}" (${url}), scheduled ${publishAt}.`,[posted.id],{speakers:['VoughtTube'],eventType:'offer',offeringSource:'voughttube',approvalId,videoId,publishAt,role:target.role});
-        const receipt={videoId,approvalId,figureId:p.id,figure:p.displayName,threadId,offeringMessageId:posted.id,role:target.role,publishAt,recordedAt:new Date().toISOString()};
+        await runtime.activity(p,threadId,`VoughtTube offering: ${target.dedication} Release: "${title}" (${url}).`,[posted.id],{speakers:['VoughtTube'],eventType:'offer',offeringSource:'discord_youtube_notification',eventId,videoId,observedAt,role:target.role,sourceChannelId:input?.source_channel_id,sourceMessageId:input?.source_message_id,sourceAuthorId:input?.source_author_id,sourceAuthorName:input?.source_author_name});
+        const receipt={videoId,eventId,figureId:p.id,figure:p.displayName,threadId,offeringMessageId:posted.id,role:target.role,observedAt,sourceChannelId:input?.source_channel_id,sourceMessageId:input?.source_message_id,sourceAuthorId:input?.source_author_id,recordedAt:new Date().toISOString()};
         await store.set(receiptKey,JSON.stringify(receipt));
         results.push(receipt);
       }catch(e){
@@ -305,8 +353,8 @@ export async function startAltar(env=process.env) {
         throw e;
       }
     }
-    const summary={videoId,approvalId,publishAt,recipients:results};
-    altarStatus.lastVoughtTubeOffering={videoId,publishAt,recipientCount:results.length,recordedAt:new Date().toISOString()};
+    const summary={videoId,eventId,observedAt,recipients:results};
+    altarStatus.lastVoughtTubeOffering={videoId,observedAt,recipientCount:results.length,source:'discord_youtube_notification',recordedAt:new Date().toISOString()};
     console.info('[altar-voughttube-offering]',JSON.stringify(summary));
     return summary;
   };
@@ -386,9 +434,28 @@ export async function startAltar(env=process.env) {
         if(p.t==='MESSAGE_CREATE'){
           const m=p.d;
           if(m.guild_id!==guildId)return;
-          // Observe Children webhook conversations too, without reacting to them or creating loops.
-          if(OBSERVE_IDS.has(m.channel_id)&&(m.author?.bot||m.webhook_id))enqueue(async()=>{await store.lpush(`${PREFIX}:observed`,JSON.stringify({messageId:m.id,channelId:m.channel_id,author:m.author?.username,text:clean(m.content,1200),at:new Date().toISOString()}));await store.ltrim(`${PREFIX}:observed`,0,39);});
-          else enqueue(()=>runtime.message(m));
+          if(m.author?.bot||m.webhook_id){
+            enqueue(async()=>{
+              const shrineOwner=await store.get(`${PREFIX}:thread:${m.channel_id}`);
+              if(!shrineOwner){
+                const upload=parseVoughtTubeUploadNotification(m);
+                if(upload){
+                  try{
+                    const offering=await postVoughtTubeOffering(upload);
+                    console.info('[altar-voughttube-notification-routed]',JSON.stringify({sourceMessageId:m.id,sourceChannelId:m.channel_id,sourceAuthorId:m.author?.id,videoId:upload.video_id,recipientCount:offering.recipients?.length??0}));
+                  }catch(e){
+                    console.error('[altar-voughttube-notification-route-failed]',JSON.stringify({sourceMessageId:m.id,sourceChannelId:m.channel_id,reason:errorCode(e)}));
+                  }
+                  return;
+                }
+              }
+              // Observe Children webhook conversations too, without reacting to them or creating loops.
+              if(OBSERVE_IDS.has(m.channel_id)){
+                await store.lpush(`${PREFIX}:observed`,JSON.stringify({messageId:m.id,channelId:m.channel_id,author:m.author?.username,text:clean(discordMessageText(m),1200),at:new Date().toISOString()}));
+                await store.ltrim(`${PREFIX}:observed`,0,39);
+              }
+            });
+          }else enqueue(()=>runtime.message(m));
         }
         if(p.t==='INTERACTION_CREATE')void interaction(p.d).catch(e=>console.error('[altar-interaction-error]',errorCode(e)));
       };
