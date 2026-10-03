@@ -12,10 +12,12 @@ export async function consolidateVoughtChannels(guild: any) {
   const primary = guild.channels.cache.get(PRIMARY_MATERIAL_CHANNEL);
   if (!primary?.isTextBased()) throw new Error("Canonical #material channel is unavailable");
 
+  const removed: string[] = [];
   for (const name of LEGACY_CHANNEL_NAMES) {
     const legacy = guild.channels.cache.find((channel: any) => channel.name === name);
     if (legacy && legacy.id !== PRIMARY_MATERIAL_CHANNEL) {
-      await legacy.delete("Consolidated into canonical #material Vought International channel").catch(() => {});
+      const deleted = await legacy.delete("Consolidated into canonical #material Vought International channel").then(() => true).catch(() => false);
+      if (deleted) removed.push(name);
     }
   }
 
@@ -23,9 +25,11 @@ export async function consolidateVoughtChannels(guild: any) {
   const category = guild.channels.cache.find(
     (channel: any) => channel.type === 4 && channel.name === "VOUGHT INTERNATIONAL",
   );
+  let removedCategory = false;
   if (category && category.children?.cache?.size === 0) {
-    await category.delete("Vought International consolidated into #material").catch(() => {});
+    removedCategory = await category.delete("Vought International consolidated into #material").then(() => true).catch(() => false);
   }
 
+  console.info("[vought-material-consolidated]", JSON.stringify({guildId:guild.id,primaryChannelId:PRIMARY_MATERIAL_CHANNEL,removed,removedCategory}));
   return primary;
 }
