@@ -146,18 +146,39 @@ function isNetworkGuest(member:any,guild:any) {
 }
 async function ensureNetworkGuestBoundary(guild:any) {
   const guest=await role(guild,NETWORK_GUEST_ROLE);
-  await role(guild,NETWORK_MEMBER_ROLE);
+  const memberRole=await role(guild,NETWORK_MEMBER_ROLE);
+  const internalIds=[...new Set([
+    guild.ownerId,
+    process.env.COVE_DISCORD_APPLICATION_ID?.trim(),
+    process.env.CHILDREN_DISCORD_APPLICATION_ID?.trim(),
+    process.env.ALTAR_DISCORD_APPLICATION_ID?.trim(),
+    process.env.CHILDREN_DISCORD_OPERATOR_USER_ID?.trim(),
+    process.env.ALTAR_DISCORD_OPERATOR_USER_ID?.trim()
+  ].filter((id):id is string=>Boolean(id&&/^\d{15,22}$/.test(id))))];
 
   const restrictedIds=new Set([
     ...getChildrenLocationRegistry().map((location:any)=>location.channelId),
     LEGACY_RITUAL_CHANNEL_ID
   ]);
 
+  async function preserveInternalAccess(channel:any) {
+    await channel.permissionOverwrites.edit(memberRole,{ViewChannel:true},"Network core member access").catch(()=>{});
+    for(const id of internalIds){
+      const principal=await guild.members.fetch(id).catch(()=>null);
+      if(principal) await channel.permissionOverwrites.edit(principal,{ViewChannel:true},"Network internal principal access").catch(()=>{});
+    }
+  }
+
   let denied=0;
   for(const channelId of restrictedIds){
     if(channelId===ALTAR_FORUM_ID) continue;
     const channel=guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(()=>null);
     if(!channel?.permissionOverwrites?.edit) continue;
+
+    await preserveInternalAccess(channel);
+    await channel.permissionOverwrites.edit(guild.roles.everyone,{
+      ViewChannel:false
+    },"Network core is private by default").catch(()=>{});
     await channel.permissionOverwrites.edit(guest,{
       ViewChannel:false,
       SendMessages:false,
@@ -176,6 +197,10 @@ async function ensureNetworkGuestBoundary(guild:any) {
   const altar=guild.channels.cache.get(ALTAR_FORUM_ID) || await guild.channels.fetch(ALTAR_FORUM_ID).catch(()=>null);
   let altarAllowed=false;
   if(altar?.permissionOverwrites?.edit){
+    await preserveInternalAccess(altar);
+    await altar.permissionOverwrites.edit(guild.roles.everyone,{
+      ViewChannel:false
+    },"Ritual Chamber is invitation-only").catch(()=>{});
     await altar.permissionOverwrites.edit(guest,{
       ViewChannel:true,
       ReadMessageHistory:true,
@@ -193,9 +218,12 @@ async function ensureNetworkGuestBoundary(guild:any) {
   console.info("[vought-network-guest-boundary]",JSON.stringify({
     guildId:guild.id,
     roleId:guest.id,
+    memberRoleId:memberRole.id,
     restrictedChannels:denied,
     altarForumId:ALTAR_FORUM_ID,
-    altarAllowed
+    altarAllowed,
+    internalPrincipals:internalIds.length,
+    privateByDefault:true
   }));
   return guest;
 }
