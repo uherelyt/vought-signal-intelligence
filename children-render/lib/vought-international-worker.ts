@@ -12,6 +12,7 @@ import {
 import { Redis } from "./render-redis.ts";
 
 const ANCHOR = "1555308025525440584";
+const PRIMARY_MATERIAL_CHANNEL = "1556062516470358126";
 const STATE_KEY = "vought:cove-network:state:v1";
 const redisUrl = process.env.REDIS_URL?.trim() || "";
 const redis = redisUrl ? new Redis(redisUrl) : null;
@@ -48,7 +49,7 @@ const store = [
 ] as const;
 
 const channelNames = {
-  hq:"vought-hq",store:"vought-store",support:"vought-support",logs:"vought-logs",
+  hq:"material",store:"vought-store",support:"vought-support",logs:"vought-logs",
   starboard:"vought-starboard",suggestions:"vought-suggestions"
 };
 const optRoles = {
@@ -126,7 +127,10 @@ async function role(guild:any,name:string) {
   if (!r) r=await guild.roles.create({name,reason:"Vought International Network bootstrap"});
   return r;
 }
-function chan(guild:any,key:keyof typeof channelNames) { return guild.channels.cache.find((c:any)=>c.name===channelNames[key]); }
+function chan(guild:any,key:keyof typeof channelNames) {
+  if (key === "hq") return guild.channels.cache.get(PRIMARY_MATERIAL_CHANNEL) || guild.channels.cache.find((c:any)=>c.name===channelNames[key]);
+  return guild.channels.cache.find((c:any)=>c.name===channelNames[key]);
+}
 async function log(guild:any,line:string) { const c=chan(guild,"logs"); if(c?.isTextBased()) await c.send("[Vought International] "+line).catch(()=>{}); }
 async function bootstrap(guild:any) {
   if (!isNetworkGuild(guild)) return;
