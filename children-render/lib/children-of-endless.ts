@@ -311,7 +311,10 @@ export function getChildrenLocationBySlug(slug: string) {
 function defaultChildrenLocation() {
   const locations = getChildrenLocationRegistry();
   const preferred = process.env.CHILDREN_DISCORD_DEFAULT_LOCATION?.trim();
-  return (preferred ? getChildrenLocationBySlug(preferred) : null) ?? locations[0] ?? null;
+  return (preferred ? getChildrenLocationBySlug(preferred) : null) ??
+    locations.find((location) => location.slug === "house") ??
+    locations[0] ??
+    null;
 }
 
 function resolveChildrenLocation(value?: string) {
