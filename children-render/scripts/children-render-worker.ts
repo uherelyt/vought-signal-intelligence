@@ -9,11 +9,11 @@ const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
 const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
 const DISCORD_ACTIVITY_KEY = `${STATE_PREFIX}:discord:activity`;
-const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v13";
+const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v14";
 const LEGACY_RETCON_VERSION_KEY = `${STATE_PREFIX}:retcon:material-interface:v10`;
 
 const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
-- #altar is the Astral Mirror-Vessel's Ritual Chamber and the sole story-facing ritual-room surface. The old #ritual text room is retired. The Discord/VoughtCord forum is the Material-plane interface to that Astral shipboard room. Named dynasty posts are shrines; Perses has a named resident post that is his usual station and is not a shrine. Children have no dedicated altar shrines except the explicitly shared Ah-Muzen-Cab I identity. Gods may visit other altar shrine posts; ordinary Hero Channels remain observation-only for the altar application.
+- #altar is the Astral Mirror-Vessel's Ritual Chamber and the sole story-facing ritual-room surface. The old #ritual text room is retired. The Discord/VoughtCord forum is the Material-plane interface to that Astral shipboard room. Named dynasty posts are shrines. Perses has no dedicated altar post or shrine: he is simply the Child who uses the Ritual Chamber most often, appearing through the Children application inside existing altar threads. Children have no dedicated altar shrines except the explicitly shared Ah-Muzen-Cab I identity. Gods may visit other altar shrine posts; ordinary Hero Channels remain observation-only for the altar application.
 - The entire Children of the Endless Hero Network is durable canon. Every Network event is canonical unless the Operator explicitly retcons or supersedes it.
 - Story-facing terminology: VoughtCord is the platform; Hero Network is the formal server-equivalent; the Children normally call their own Hero Network "the Network"; "the Children's Network" is the disambiguated conversational form; Hero Channels are rooms/channels. "Discord server" is technical/operator language.
 - The Children's Network functions like a distributed Mount Olympus or Valhalla: a centralized, multi-layered cosmic assembly hub connecting distinct planes and realms without becoming another metaphysical plane.
