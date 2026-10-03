@@ -5,7 +5,7 @@ export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
-export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v2';
+export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v3';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
@@ -37,12 +37,26 @@ export function shrineReference(p) {
   // Discord requires starter content. Character dossiers stay in private generation/recall.
   return `🕯️ Shrine of ${clean(p.displayName,100)}.`;
 }
+function hiveNameKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+export function isSacredHiveMember(p){
+  const key=hiveNameKey(p?.displayName??p?.name);
+  if(key.includes('ah muzen cab')&&!/(^| )ii( |$)/.test(key))return true;
+  if(key==='ra'||key.startsWith('ra re'))return true;
+  return ['colel cab','aristaeus','melissae artemis','melisseus','mellona','mellonia','oshun','osun','austeja','bubilas','babilas','bhramari'].some(name=>key===name||key.startsWith(`${name} `));
+}
 
 export class AltarRuntime {
   constructor({store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
     Object.assign(this,{store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now,record,progress});
-    this.people=new Map(roster.people.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
-    this.visitors=new Map((roster.visitors??[]).map(p=>[p.id,p]));
+    const rosterPerses=roster.people.find(p=>p.childrenKey==='perses')??roster.people.find(p=>String(p.name??'').trim().toLowerCase()==='perses');
+    const visitorPerses=(roster.visitors??[]).find(p=>p.childrenKey==='perses');
+    const promotedPerses=rosterPerses
+      ? {...rosterPerses,shrineEligible:true,childrenKey:'perses',avatarData:rosterPerses.avatarData??visitorPerses?.avatarData,senderName:rosterPerses.senderName??visitorPerses?.senderName}
+      : visitorPerses?{...visitorPerses,shrineEligible:true}:null;
+    this.provisionRoster=roster.people.map(p=>p.id===rosterPerses?.id?promotedPerses:p);
+    if(promotedPerses&&!this.provisionRoster.some(p=>p.id===promotedPerses.id))this.provisionRoster.push(promotedPerses);
+    this.people=new Map(this.provisionRoster.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
+    this.visitors=new Map((roster.visitors??[]).filter(p=>p.childrenKey!=='perses').map(p=>[p.id,p]));
     this.trustedChildHooks=new Set();
     this.deliveryLane=Promise.resolve();
   }
@@ -112,9 +126,13 @@ export class AltarRuntime {
     const forum=await this.api(`/channels/${FORUM_ID}`);
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
-    const wanted=['Dynasty','Ancestor','Children bridge'];
-    if(wanted.some(n=>!tags.some(t=>t.name===n))&&tags.length<18){
-      const changed=await this.api(`/channels/${FORUM_ID}`,'PATCH',{available_tags:[...tags.map(t=>({id:t.id,name:t.name,moderated:t.moderated,emoji_id:t.emoji_id,emoji_name:t.emoji_name})),...wanted.filter(n=>!tags.some(t=>t.name===n)).map(name=>({name}))]});tags=changed.available_tags??tags;
+    const wanted=['Dynasty','Ancestor','Children bridge','Sacred Hive'];
+    const missingWanted=wanted.filter(n=>!tags.some(t=>t.name===n));
+    if(missingWanted.length){
+      if(tags.length+missingWanted.length>20)throw new Error('forum_tag_capacity_exceeded');
+      const changed=await this.api(`/channels/${FORUM_ID}`,'PATCH',{available_tags:[...tags.map(t=>({id:t.id,name:t.name,moderated:t.moderated,emoji_id:t.emoji_id,emoji_name:t.emoji_name})),...missingWanted.map(name=>({name}))]});
+      tags=changed.available_tags??tags;
+      if(wanted.some(n=>!tags.some(t=>t.name===n)))throw new Error('forum_tag_provision_failed');
     }
     const active=await this.api(`/guilds/${this.guildId}/threads/active`);
     const existing=(active.threads??[]).filter(t=>t.parent_id===FORUM_ID);
@@ -126,7 +144,7 @@ export class AltarRuntime {
       if(more&&!before)throw new Error('archive_pagination_failed');
     }
     let completed=0;this.presentationVerifiedCount=0;
-    for(const p of this.roster.people){
+    for(const p of this.provisionRoster){
       const stored=await this.store.get(`${PREFIX}:shrine:${p.id}`);
       if(p.shrineEligible===false){
         if(stored){
@@ -142,17 +160,22 @@ export class AltarRuntime {
       }
       const visibleTitle=shrineTitle(p);
       const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
-      const visibleTitleUnique=this.roster.people.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
+      const visibleTitleUnique=this.provisionRoster.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
       const found=existing.find(t=>t.name===legacyTitle)??(visibleTitleUnique?existing.find(t=>t.name===visibleTitle):null);
       const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
+      const bridgeTag=p.childrenKey?tags.find(t=>t.name==='Children bridge'):null;
+      const hiveTag=isSacredHiveMember(p)?tags.find(t=>t.name==='Sacred Hive'):null;
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
-      const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:tag?[tag.id]:[],message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
+      if(p.childrenKey&&(forum.flags&16)&&!bridgeTag)throw new Error('children_bridge_tag_unavailable');
+      if(isSacredHiveMember(p)&&(forum.flags&16)&&!hiveTag)throw new Error('sacred_hive_tag_unavailable');
+      const requiredTags=[tag?.id,bridgeTag?.id,hiveTag?.id].filter(Boolean);
+      const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:requiredTags,message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
       let thread=stored?await this.checkOwnThread(stored,p):found??await create();
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
       await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
       if(this.roster.policyVersion&&await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
-        const applied=[tag?.id,p.childrenKey?tags.find(t=>t.name==='Children bridge')?.id:null].filter(Boolean);
+        const applied=requiredTags;
         try {
           await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
         } catch(error) {
@@ -171,6 +194,13 @@ export class AltarRuntime {
         await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}});
         await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
         await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
+      }
+      const missingRequired=requiredTags.filter(id=>!(thread.applied_tags??[]).includes(id));
+      if(missingRequired.length){
+        const applied=[...new Set([...(thread.applied_tags??[]),...requiredTags])];
+        const tagged=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+        thread={...thread,...tagged,applied_tags:applied};
+        await this.activity(p,thread.id,'Shrine forum tags reconciled.',[],{eventType:'shrine_tag_reconciliation',sacredHive:isSacredHiveMember(p),childrenBridge:Boolean(p.childrenKey)});
       }
       if(thread.name!==shrineTitle(p)){
         const renamed=await this.api(`/channels/${thread.id}`,'PATCH',{name:shrineTitle(p)});
