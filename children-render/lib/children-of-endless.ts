@@ -86,6 +86,24 @@ const DISCORD_WEBHOOK_NAME = "Children of the Endless";
 const MAX_DISCORD_CONTENT = 1800;
 const AVATAR_CACHE_VERSION = "20261002-railway-1";
 
+const CHILDREN_NATIVE_LANGUAGE_RULES: Partial<Record<PersonaId, { language: string; script: string }>> = {
+  thanatos: { language: "Ancient Greek", script: "Greek script" },
+  perses: { language: "Ancient Greek", script: "Greek script" },
+  asclepius: { language: "Ancient Greek", script: "Greek script" },
+};
+const CHILDREN_LANGUAGE_PENDING = new Set<PersonaId>(["ah_muzen_cab", "cab"]);
+
+export function childrenHistoricalLanguageRule(persona: ChildrenPersona) {
+  const rule = CHILDREN_NATIVE_LANGUAGE_RULES[persona.id];
+  if (rule) {
+    return `HISTORICAL-LANGUAGE CANON: This divine figure speaks only in ${rule.language}, using ${rule.script}, for generated in-universe dialogue. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes. Preserve the persona's existing tone and meaning inside that language.`;
+  }
+  if (CHILDREN_LANGUAGE_PENDING.has(persona.id)) {
+    return "HISTORICAL-LANGUAGE CANON: A native-language rule is required for this divine figure, but the exact Maya language/register is pending Operator selection. Preserve the existing message language for now. Do not silently choose, infer, or canonize a Maya language/register.";
+  }
+  return "";
+}
+
 export type ChildrenPlane = "mental" | "astral" | "threshold";
 
 export type ChildrenLocation = {
@@ -1140,6 +1158,7 @@ export async function generateFreshChildrenMessage(
   if (!apiKey) throw new Error("Gemini generation is not configured");
   const model = process.env.CHILDREN_MODEL?.trim() || DEFAULT_MODEL;
   const previous = previousPersonaMessages(persona, transcript, recent);
+  const historicalLanguageRule = childrenHistoricalLanguageRule(persona);
   let rejected = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     const retry = attempt ? `\n\nREJECTED DRAFT (background only): ${rejected}\n\nREVISION REQUIRED: That draft copied recent dialogue. Give a fresh, direct answer; do not recycle it or answer the older conversation.\nCURRENT REQUEST: ${currentRequest ?? "Answer the current message/topic in the prompt above."}\nReturn only ${persona.displayName}'s new message.` : "";
@@ -1150,7 +1169,7 @@ export async function generateFreshChildrenMessage(
           role: "user",
           parts: [
             ...imageParts,
-            { text: `${prompt}${retry}` },
+            { text: `${prompt}${historicalLanguageRule ? `\n\n${historicalLanguageRule}` : ""}${retry}` },
           ],
         }],
         generationConfig: { temperature, maxOutputTokens: 220 },
