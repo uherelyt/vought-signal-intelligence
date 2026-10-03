@@ -179,3 +179,36 @@ test('current-policy locked shrine is replaced when new forum tags must be appli
   assert(!f.values.has(`${PREFIX}:thread:${old.id}`));
   assert.equal(f.values.get(`${PREFIX}:thread:${fresh.id}`),f.p.id);
 });
+
+
+test('Melisseus is force-active because Sacred Hive god status implies an ELAED shrine',()=>{
+  const f=fixture();
+  const melisseus={id:'elaed-dddddddddddd-1',name:'Melisseus',displayName:'Melisseus',relationships:[],humanControlled:false,shrineEligible:false};
+  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,generate:f.runtime.generate,roster:{people:[f.p,melisseus]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  const promoted=runtime.people.get(melisseus.id);
+  assert(promoted);assert.equal(promoted.shrineEligible,true);assert(isSacredHiveMember(promoted));
+});
+
+test('locked retired references are deleted while the oldest snowflake remains the shrine-order key',async()=>{
+  const f=fixture();f.values.clear();
+  const retired={id:'elaed-eeeeeeeeeeee-1',name:'Old God',displayName:'Old God',relationships:[],humanControlled:false,shrineEligible:false};
+  const oldId='1555666568409653001';
+  const old={id:oldId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Old God',thread_metadata:{archived:true,locked:true}};
+  const runtime=new AltarRuntime({store:f.runtime.store,api:null,generate:f.runtime.generate,roster:{people:[f.p,retired],policyVersion:'v3'},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  let deleted=false;
+  runtime.api=async(path,method='GET',body)=>{
+    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:0,available_tags:[{name:'Dynasty',id:'1'},{name:'Ancestor',id:'2'},{name:'Children bridge',id:'3'},{name:'Sacred Hive',id:'4'}]};
+    if(path.includes('/threads/active'))return {threads:[]};
+    if(path.includes('/archived/'))return {threads:[old],has_more:false};
+    if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Nyx',applied_tags:['1'],thread_metadata:{archived:false,locked:false},message:{id:f.thread}};
+    if(path===`/channels/${oldId}`&&method==='DELETE'){deleted=true;return {};}
+    if(path.includes('/messages/'))return {content:body?.content??'🕯️ Shrine of Nyx.',embeds:[],attachments:[],id:f.thread,channel_id:f.thread};
+    if(path===`/channels/${f.thread}`&&method==='PATCH')return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:body.name??'Nyx',applied_tags:body.applied_tags??['1'],thread_metadata:{archived:false,locked:false}};
+    if(path===`/channels/${f.thread}`)return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Nyx',applied_tags:['1'],thread_metadata:{archived:false,locked:false}};
+    return {};
+  };
+  await runtime.provision();
+  assert(deleted);
+  assert.equal(f.values.get(`${PREFIX}:order:${retired.id}`),oldId);
+  assert.equal(runtime.retiredReferencesDeleted,1);
+});
