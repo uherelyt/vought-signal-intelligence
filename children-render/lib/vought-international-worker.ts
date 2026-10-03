@@ -68,13 +68,13 @@ type State = {
   warnings:Record<string,unknown[]>;reminders:Reminder[];giveaways:Record<string,Giveaway>;tickets:Record<string,Ticket>;
   tags:Record<string,string>;triggers:Record<string,string>;starboarded:Record<string,boolean>;
   voiceSessions:Record<string,{startedAt:number;guildId:string;name:string}>;welcomed:Record<string,boolean>;
-  statsMessageIds:Record<string,string>;
+  statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;
 };
 
 const blankState = ():State => ({
   ratings:{},childBalances:{},userBalances:{},inventories:{},dailyCredits:{},cooldowns:{},
   activity:{messages:0,voiceMinutes:0,joins:0,leaves:0,commands:0},warnings:{},reminders:[],
-  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{}
+  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{}
 });
 
 let state = blankState();
@@ -198,6 +198,37 @@ async function registerNetworkGroup(token:string,appId:string,guildIds:string[]=
   }));
 }
 
+function storeCatalogText() {
+  return store.map(([id,name,price]) => "**"+name+"** — `"+id+"` — "+price+" VC").join("\n");
+}
+
+async function updateStoreSurface(guild:any) {
+  const material=chan(guild,"store");
+  if(!material?.isTextBased()) return;
+
+  const payload={
+    embeds:[{
+      title:"VOUGHT NETWORK STORE",
+      description:storeCatalogText(),
+      footer:{text:"Buy with /cove network buy • Vought Credits are promotional Network currency"}
+    }]
+  };
+
+  let message:any=null;
+  const existingId=state.storeMessageIds[guild.id];
+  if(existingId) message=await material.messages.fetch(existingId).catch(()=>null);
+
+  if(message) {
+    await message.edit(payload).catch(()=>{});
+  } else {
+    message=await material.send(payload).catch(()=>null);
+    if(message) state.storeMessageIds[guild.id]=message.id;
+  }
+
+  if(message && !message.pinned) await message.pin("Keep the Vought Network store visible in #material").catch(()=>{});
+  if(message) console.info("[vought-store-visible]",JSON.stringify({guildId:guild.id,channelId:material.id,messageId:message.id,pinned:Boolean(message.pinned)}));
+}
+
 async function updateStats(guild:any) {
   const hq=chan(guild,"hq"); if(!hq?.isTextBased()) return;
   const text=["Members: "+guild.memberCount,"Observed messages: "+state.activity.messages,"Observed voice minutes: "+state.activity.voiceMinutes,
@@ -214,7 +245,7 @@ async function handleCommand(i:any) {
   state.activity.commands++; const cmd=i.options.getSubcommand(); await log(i.guild,"COMMAND /cove network "+cmd+" by <@"+i.user.id+">");
   if(cmd==="leaderboard"){await i.reply(rows().map(r=>(r.rank?"#"+r.rank:"Unranked")+" "+r.name+" — "+r.score+" Network Supe Score — "+r.tier+(r.tier==="Unranked"?"":"-Rank")+" — "+r.credits+" VC").join("\n"));return;}
   if(cmd==="profile"){const id=i.options.getString("child",true);const r=rows().find(x=>x.id===id);if(!r){await i.reply({content:"Child not found.",ephemeral:true});return;}const p=state.ratings[id];await i.reply(["VOUGHT PROFILE — "+r.name,"Network Supe Score: "+r.score,"Vought Network Rank: "+(r.rank?"#"+r.rank:"Unranked"),"Tier: "+r.tier,"Vought Credits: "+r.credits+" VC","Rated messages: "+p.messages,"Rated voice minutes: "+p.voiceMinutes].join("\n"));return;}
-  if(cmd==="store"){await i.reply("VOUGHT STORE\n"+store.map(x=>x[0]+" — "+x[1]+" — "+x[2]+" VC").join("\n"));return;}
+  if(cmd==="store"){await updateStoreSurface(i.guild);await i.reply({content:"The Vought Network Store is pinned in <#"+PRIMARY_MATERIAL_CHANNEL+">. Use /cove network buy with the displayed product ID.",ephemeral:true});return;}
   if(cmd==="balance"){await i.reply({content:"Balance: "+(state.userBalances[i.user.id]||0)+" VC\nInventory: "+((state.inventories[i.user.id]||[]).join(", ")||"empty"),ephemeral:true});return;}
   if(cmd==="buy"){const id=i.options.getString("item",true),item=findItem(id);if(!item){await i.reply({content:"Product not found.",ephemeral:true});return;}const bal=state.userBalances[i.user.id]||0;if(bal<item[2]){await i.reply({content:"Insufficient VC. "+item[1]+" costs "+item[2]+" VC.",ephemeral:true});return;}state.userBalances[i.user.id]=bal-item[2];(state.inventories[i.user.id]||=[]).push(id);await saveState();await i.reply({content:"Purchased: "+item[1]+". Promotional inventory updated.",ephemeral:true});return;}
   if(cmd==="role"){const k=i.options.getString("role",true) as keyof typeof optRoles,r=await role(i.guild,optRoles[k]);const m=await i.guild.members.fetch(i.user.id);if(m.roles.cache.has(r.id)){await m.roles.remove(r);await i.reply({content:"Removed "+r.name+".",ephemeral:true});}else{await m.roles.add(r);await i.reply({content:"Added "+r.name+".",ephemeral:true});}return;}
@@ -242,7 +273,7 @@ async function timers(client:Client) {
   const now=Date.now();
   for(const r of [...state.reminders]) if(r.dueAt<=now){const c:any=await client.channels.fetch(r.channelId).catch(()=>null);if(c?.isTextBased())await c.send("<@"+r.userId+"> Vought reminder: "+r.text).catch(()=>{});if(r.repeatEveryMs&&r.remaining>1){r.remaining--;r.dueAt=now+r.repeatEveryMs;}else state.reminders=state.reminders.filter(x=>x.id!==r.id);}
   for(const g of Object.values(state.giveaways)) if(!g.closed&&g.endsAt<=now){g.closed=true;const ids=[...new Set(g.entrants)].sort(()=>Math.random()-.5).slice(0,g.winnerCount),item=findItem(g.itemId),c:any=await client.channels.fetch(g.channelId).catch(()=>null);if(c?.isTextBased())await c.send("VOUGHT GIVEAWAY CLOSED — "+(item?.[1]||g.itemId)+"\n"+(ids.length?"Winner(s): "+ids.map(id=>"<@"+id+">").join(", "):"No eligible entrants.")).catch(()=>{});}
-  for(const guild of client.guilds.cache.values()) if(isNetworkGuild(guild)) await updateStats(guild).catch(()=>{});
+  for(const guild of client.guilds.cache.values()) if(isNetworkGuild(guild)){await updateStats(guild).catch(()=>{});await updateStoreSurface(guild).catch(()=>{});}
   await saveState();
 }
 
@@ -254,7 +285,7 @@ export async function startVoughtInternational() {
   await loadState(); for(const [id] of children) ensureChild(id);
   const intents=[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.GuildMembers];
   const client=new Client({intents,partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember]});
-  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
+  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);await updateStoreSurface(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
   client.on(Events.InteractionCreate,i=>handleCommand(i).catch(async e=>{console.error("[vought-network-command-error]",e?.message||e);if(i.isRepliable()){const p={content:"Vought Network command failed.",ephemeral:true};if(i.replied||i.deferred)await i.followUp(p).catch(()=>{});else await i.reply(p).catch(()=>{});}}));
   client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;state.activity.messages++;if(!m.author.bot){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,"Network Member").catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
   client.on(Events.MessageReactionAdd,async (r,user)=>{if(user.bot)return;if(r.partial)try{await r.fetch();}catch{return;}if(!isNetworkGuild(r.message.guild))return;const g=state.giveaways[r.message.id];if(g&&!g.closed&&r.emoji.name==="🎟️"&&!g.entrants.includes(user.id))g.entrants.push(user.id);if(r.emoji.name==="⭐"&&r.count>=3&&!state.starboarded[r.message.id]){const c=chan(r.message.guild,"starboard");if(c?.isTextBased()){state.starboarded[r.message.id]=true;await c.send("⭐ "+r.count+" — #"+r.message.channel.name+"\n"+r.message.author+": "+(r.message.content||"[attachment]")+"\n"+r.message.url).catch(()=>{});}}await saveState();});
