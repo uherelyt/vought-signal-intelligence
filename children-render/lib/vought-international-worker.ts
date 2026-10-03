@@ -170,18 +170,32 @@ const networkGroup:any={type:O.GROUP,name:"network",description:"Vought Internat
   sub("purge","Bulk-delete recent messages",[n("amount","Messages to delete",true,1,100)])
 ]};
 
-async function registerNetworkGroup(token:string,appId:string) {
+async function registerNetworkGroup(token:string,appId:string,guildIds:string[]=[]) {
   const rest=new REST({version:"10"}).setToken(token);
   const list:any[]=await rest.get(Routes.applicationCommands(appId)) as any[];
   let c:any=list.find(x=>x.name==="cove");
+  const options=(c?.options||[]).filter((x:any)=>x.name!=="network");
+  options.push(networkGroup);
+  const body={name:"cove",description:c?.description||"Cove / Vought International",options};
   if(!c) {
-    c=await rest.post(Routes.applicationCommands(appId),{body:{name:"cove",description:"Cove / Vought International",options:[networkGroup]}});
+    c=await rest.post(Routes.applicationCommands(appId),{body});
   } else {
-    const options=(c.options||[]).filter((x:any)=>x.name!=="network");
-    options.push(networkGroup);
-    await rest.patch(Routes.applicationCommand(appId,c.id),{body:{name:c.name,description:c.description||"Cove / Vought International",options}});
+    c=await rest.patch(Routes.applicationCommand(appId,c.id),{body});
   }
-  console.info("[vought-international-commands-ready]", JSON.stringify({networkSubcommands:networkGroup.options.length}));
+
+  let guildMirrors=0;
+  for(const guildId of guildIds){
+    const local:any[]=await rest.get(Routes.applicationGuildCommands(appId,guildId)) as any[];
+    const existing=local.find(x=>x.name==="cove");
+    if(existing) await rest.patch(Routes.applicationGuildCommand(appId,guildId,existing.id),{body});
+    else await rest.post(Routes.applicationGuildCommands(appId,guildId),{body});
+    guildMirrors++;
+  }
+
+  console.info("[vought-international-commands-ready]", JSON.stringify({
+    networkSubcommands:networkGroup.options.length,
+    guildMirrors
+  }));
 }
 
 async function updateStats(guild:any) {
@@ -240,7 +254,7 @@ export async function startVoughtInternational() {
   await loadState(); for(const [id] of children) ensureChild(id);
   const intents=[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.GuildMembers];
   const client=new Client({intents,partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember]});
-  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;await registerNetworkGroup(token,appId);for(const g of c.guilds.cache.values())if(isNetworkGuild(g)){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:c.guilds.cache.filter(isNetworkGuild).size}));});
+  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
   client.on(Events.InteractionCreate,i=>handleCommand(i).catch(async e=>{console.error("[vought-network-command-error]",e?.message||e);if(i.isRepliable()){const p={content:"Vought Network command failed.",ephemeral:true};if(i.replied||i.deferred)await i.followUp(p).catch(()=>{});else await i.reply(p).catch(()=>{});}}));
   client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;state.activity.messages++;if(!m.author.bot){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,"Network Member").catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
   client.on(Events.MessageReactionAdd,async (r,user)=>{if(user.bot)return;if(r.partial)try{await r.fetch();}catch{return;}if(!isNetworkGuild(r.message.guild))return;const g=state.giveaways[r.message.id];if(g&&!g.closed&&r.emoji.name==="🎟️"&&!g.entrants.includes(user.id))g.entrants.push(user.id);if(r.emoji.name==="⭐"&&r.count>=3&&!state.starboarded[r.message.id]){const c=chan(r.message.guild,"starboard");if(c?.isTextBased()){state.starboarded[r.message.id]=true;await c.send("⭐ "+r.count+" — #"+r.message.channel.name+"\n"+r.message.author+": "+(r.message.content||"[attachment]")+"\n"+r.message.url).catch(()=>{});}}await saveState();});
