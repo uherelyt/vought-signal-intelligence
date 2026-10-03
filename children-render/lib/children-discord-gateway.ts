@@ -4,6 +4,7 @@ import {
   getChildrenLocationByChannelId,
   getChildrenLocationRegistry,
   runChildrenReactiveMessage,
+  VOUGHT_MATERIAL_CHANNEL_ID,
   runChildrenPulse,
 } from "./children-of-endless.ts";
 
@@ -42,6 +43,12 @@ type DiscordMessageCreate = {
   channel_id?: string;
   webhook_id?: string | null;
   content?: string;
+  embeds?: Array<{
+    title?: string | null;
+    description?: string | null;
+    fields?: Array<{ name?: string | null; value?: string | null }>;
+    footer?: { text?: string | null } | null;
+  }>;
   attachments?: Array<{
     id?: string;
     filename?: string;
@@ -252,9 +259,27 @@ async function handleMessageCreate(
   if (!data.channel_id || !config.allowedChannelIds.has(data.channel_id)) return;
   if (!getChildrenLocationByChannelId(data.channel_id)) return;
   if (!data.id || !data.author?.id) return;
-  if (data.webhook_id || data.author.bot) return;
 
-  const content = data.content?.trim() ?? "";
+  const voughtApplicationId = process.env.COVE_DISCORD_APPLICATION_ID?.trim();
+  const isVoughtMaterialMessage =
+    data.channel_id === VOUGHT_MATERIAL_CHANNEL_ID &&
+    Boolean(voughtApplicationId) &&
+    data.author.id === voughtApplicationId &&
+    data.author.bot === true &&
+    !data.webhook_id;
+
+  if (data.webhook_id) return;
+  if (data.author.bot && !isVoughtMaterialMessage) return;
+
+  const embedText = isVoughtMaterialMessage
+    ? (data.embeds ?? []).flatMap((embed) => [
+        embed.title?.trim(),
+        embed.description?.trim(),
+        ...(embed.fields ?? []).flatMap((field) => [field.name?.trim(), field.value?.trim()]),
+        embed.footer?.text?.trim(),
+      ]).filter(Boolean).join("\n").slice(0, 1500)
+    : "";
+  const content = [data.content?.trim() ?? "", embedText].filter(Boolean).join("\n").trim();
   const attachments = (data.attachments ?? []).flatMap((attachment) => {
     const url = attachment.url?.trim() || attachment.proxy_url?.trim();
     const id = attachment.id?.trim();
@@ -273,6 +298,7 @@ async function handleMessageCreate(
   if (!content && !attachments.length) return;
 
   const authorName =
+    (isVoughtMaterialMessage ? "Vought International" : "") ||
     data.member?.nick?.trim() ||
     data.author.global_name?.trim() ||
     data.author.username?.trim() ||
@@ -290,6 +316,9 @@ async function handleMessageCreate(
       authorName,
       content,
       attachments,
+      sourceKind: isVoughtMaterialMessage ? "vought" : "human",
+      forceSourceLocation: isVoughtMaterialMessage,
+      routingNotice: !isVoughtMaterialMessage,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

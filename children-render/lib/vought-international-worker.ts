@@ -11,6 +11,7 @@ import {
 } from "discord.js";
 import { Redis } from "./render-redis.ts";
 import { consolidateVoughtChannels } from "./vought-material-consolidation.ts";
+import { runChildrenReactiveMessage } from "./children-of-endless.ts";
 
 const ANCHOR = "1555308025525440584";
 const PRIMARY_MATERIAL_CHANNEL = "1556062516470358126";
@@ -68,13 +69,13 @@ type State = {
   warnings:Record<string,unknown[]>;reminders:Reminder[];giveaways:Record<string,Giveaway>;tickets:Record<string,Ticket>;
   tags:Record<string,string>;triggers:Record<string,string>;starboarded:Record<string,boolean>;
   voiceSessions:Record<string,{startedAt:number;guildId:string;name:string}>;welcomed:Record<string,boolean>;
-  statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;
+  statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;childrenBridgeSeen:Record<string,boolean>;
 };
 
 const blankState = ():State => ({
   ratings:{},childBalances:{},userBalances:{},inventories:{},dailyCredits:{},cooldowns:{},
   activity:{messages:0,voiceMinutes:0,joins:0,leaves:0,commands:0},warnings:{},reminders:[],
-  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{}
+  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{},childrenBridgeSeen:{}
 });
 
 let state = blankState();
@@ -202,6 +203,32 @@ function storeCatalogText() {
   return store.map(([id,name,price]) => "**"+name+"** — `"+id+"` — "+price+" VC").join("\n");
 }
 
+async function inviteChildrenResponse(message:any, content:string, kind="public") {
+  if(!message?.id || message.channelId!==PRIMARY_MATERIAL_CHANNEL) return;
+  const bridgeKey=kind+":"+message.id;
+  if(state.childrenBridgeSeen[bridgeKey]) return;
+
+  try {
+    const result=await runChildrenReactiveMessage({
+      messageId:message.id,
+      channelId:PRIMARY_MATERIAL_CHANNEL,
+      authorId:process.env.COVE_DISCORD_APPLICATION_ID?.trim()||message.author?.id||"vought-international",
+      authorName:"Vought International",
+      content,
+      sourceKind:"vought",
+      forceSourceLocation:true,
+      routingNotice:false
+    });
+    if(result.ok && (!result.skipped || result.reason==="duplicate_message")) {
+      state.childrenBridgeSeen[bridgeKey]=true;
+      await saveState();
+    }
+    console.info("[vought-children-bridge]",JSON.stringify({kind,messageId:message.id,ok:result.ok,skipped:Boolean(result.skipped),reason:result.reason||null,participants:result.participants||[]}));
+  } catch(error:any) {
+    console.error("[vought-children-bridge-error]",error?.message||String(error));
+  }
+}
+
 async function updateStoreSurface(guild:any) {
   const material=chan(guild,"store");
   if(!material?.isTextBased()) return;
@@ -226,7 +253,10 @@ async function updateStoreSurface(guild:any) {
   }
 
   if(message && !message.pinned) await message.pin("Keep the Vought Network store visible in #material").catch(()=>{});
-  if(message) console.info("[vought-store-visible]",JSON.stringify({guildId:guild.id,channelId:material.id,messageId:message.id,pinned:Boolean(message.pinned)}));
+  if(message) {
+    console.info("[vought-store-visible]",JSON.stringify({guildId:guild.id,channelId:material.id,messageId:message.id,pinned:Boolean(message.pinned)}));
+    await inviteChildrenResponse(message,"VOUGHT NETWORK STORE\n"+storeCatalogText(),"store");
+  }
 }
 
 async function updateStats(guild:any) {
@@ -249,20 +279,20 @@ async function handleCommand(i:any) {
   if(cmd==="balance"){await i.reply({content:"Balance: "+(state.userBalances[i.user.id]||0)+" VC\nInventory: "+((state.inventories[i.user.id]||[]).join(", ")||"empty"),ephemeral:true});return;}
   if(cmd==="buy"){const id=i.options.getString("item",true),item=findItem(id);if(!item){await i.reply({content:"Product not found.",ephemeral:true});return;}const bal=state.userBalances[i.user.id]||0;if(bal<item[2]){await i.reply({content:"Insufficient VC. "+item[1]+" costs "+item[2]+" VC.",ephemeral:true});return;}state.userBalances[i.user.id]=bal-item[2];(state.inventories[i.user.id]||=[]).push(id);await saveState();await i.reply({content:"Purchased: "+item[1]+". Promotional inventory updated.",ephemeral:true});return;}
   if(cmd==="role"){const k=i.options.getString("role",true) as keyof typeof optRoles,r=await role(i.guild,optRoles[k]);const m=await i.guild.members.fetch(i.user.id);if(m.roles.cache.has(r.id)){await m.roles.remove(r);await i.reply({content:"Removed "+r.name+".",ephemeral:true});}else{await m.roles.add(r);await i.reply({content:"Added "+r.name+".",ephemeral:true});}return;}
-  if(cmd==="poll"){const q=i.options.getString("question",true),opts=i.options.getString("options",true).split("|").map((x:string)=>x.trim()).filter(Boolean).slice(0,5),em=["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"];if(opts.length<2){await i.reply({content:"Provide at least two options separated by |.",ephemeral:true});return;}await i.reply("POLL — "+q+"\n"+opts.map((x:string,j:number)=>em[j]+" "+x).join("\n"));const m=await i.fetchReply();for(let j=0;j<opts.length;j++)await m.react(em[j]).catch(()=>{});return;}
-  if(cmd==="suggest"){const c=chan(i.guild,"suggestions")||i.channel,m=await c.send("VOUGHT SUGGESTION — <@"+i.user.id+">\n"+i.options.getString("text",true));await m.react("👍").catch(()=>{});await m.react("👎").catch(()=>{});await i.reply({content:"Suggestion filed.",ephemeral:true});return;}
+  if(cmd==="poll"){const q=i.options.getString("question",true),opts=i.options.getString("options",true).split("|").map((x:string)=>x.trim()).filter(Boolean).slice(0,5),em=["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"];if(opts.length<2){await i.reply({content:"Provide at least two options separated by |.",ephemeral:true});return;}const pollText="POLL — "+q+"\n"+opts.map((x:string,j:number)=>em[j]+" "+x).join("\n");await i.reply(pollText);const m=await i.fetchReply();for(let j=0;j<opts.length;j++)await m.react(em[j]).catch(()=>{});await inviteChildrenResponse(m,pollText,"poll");return;}
+  if(cmd==="suggest"){const c=chan(i.guild,"suggestions")||i.channel,text="VOUGHT SUGGESTION — <@"+i.user.id+">\n"+i.options.getString("text",true),m=await c.send(text);await m.react("👍").catch(()=>{});await m.react("👎").catch(()=>{});await inviteChildrenResponse(m,text,"suggestion");await i.reply({content:"Suggestion filed.",ephemeral:true});return;}
   if(cmd==="remind"){const mins=i.options.getInteger("minutes",true),repeat=i.options.getInteger("repeat_minutes"),count=i.options.getInteger("repeat_count")||1;state.reminders.push({id:"rem-"+Date.now(),guildId:i.guildId,channelId:i.channelId,userId:i.user.id,dueAt:Date.now()+mins*60000,text:i.options.getString("text",true),repeatEveryMs:repeat?repeat*60000:null,remaining:repeat?count:1});await saveState();await i.reply({content:"Reminder scheduled.",ephemeral:true});return;}
   if(cmd==="ticket-open"){const subject=i.options.getString("subject",true),id="ticket-"+Date.now().toString(36);state.tickets[id]={id,guildId:i.guildId,userId:i.user.id,subject,openedAt:new Date().toISOString(),status:"open"};await saveState();await log(i.guild,"TICKET OPEN "+id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+id+" opened. Subject: "+subject,ephemeral:true});return;}
   if(cmd==="ticket-close"){const ticket=Object.values(state.tickets).filter(t=>t.guildId===i.guildId&&t.userId===i.user.id&&t.status==="open").sort((a,b)=>b.openedAt.localeCompare(a.openedAt))[0];if(!ticket){await i.reply({content:"No open Vought support ticket found for you.",ephemeral:true});return;}ticket.status="closed";ticket.closedAt=new Date().toISOString();await saveState();await log(i.guild,"TICKET CLOSE "+ticket.id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+ticket.id+" closed.",ephemeral:true});return;}
-  if(cmd==="announce"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const c=chan(i.guild,"hq")||i.channel;await c.send("**"+(i.options.getString("title")||"Vought International")+"**\n"+i.options.getString("text",true));await i.reply({content:"Announcement issued.",ephemeral:true});return;}
-  if(cmd==="event-create"){const c=chan(i.guild,"hq")||i.channel,name=i.options.getString("name",true),mins=i.options.getInteger("minutes",true),details=i.options.getString("details")||"No additional details.";const m=await c.send("VOUGHT EVENT — "+name+"\nStarts <t:"+Math.floor((Date.now()+mins*60000)/1000)+":R>\n"+details+"\n✅ attending • ❔ maybe • ❌ unavailable");for(const e of ["✅","❔","❌"])await m.react(e).catch(()=>{});await i.reply({content:"Event posted.",ephemeral:true});return;}
+  if(cmd==="announce"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const c=chan(i.guild,"hq")||i.channel,text="**"+(i.options.getString("title")||"Vought International")+"**\n"+i.options.getString("text",true),m=await c.send(text);await inviteChildrenResponse(m,text,"announcement");await i.reply({content:"Announcement issued.",ephemeral:true});return;}
+  if(cmd==="event-create"){const c=chan(i.guild,"hq")||i.channel,name=i.options.getString("name",true),mins=i.options.getInteger("minutes",true),details=i.options.getString("details")||"No additional details.",text="VOUGHT EVENT — "+name+"\nStarts <t:"+Math.floor((Date.now()+mins*60000)/1000)+":R>\n"+details+"\n✅ attending • ❔ maybe • ❌ unavailable";const m=await c.send(text);for(const e of ["✅","❔","❌"])await m.react(e).catch(()=>{});await inviteChildrenResponse(m,text,"event");await i.reply({content:"Event posted.",ephemeral:true});return;}
   if(cmd==="tag-set"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")]=i.options.getString("text",true);await saveState();await i.reply({content:"Tag saved.",ephemeral:true});return;}
   if(cmd==="tag"){const v=state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")];await i.reply({content:v||"Vought tag not found.",ephemeral:!v});return;}
   if(cmd==="tag-delete"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}delete state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")];await saveState();await i.reply({content:"Tag deleted.",ephemeral:true});return;}
   if(cmd==="trigger-set"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}state.triggers[i.guildId+":"+norm(i.options.getString("phrase",true))]=i.options.getString("response",true);await saveState();await i.reply({content:"Trigger saved.",ephemeral:true});return;}
   if(cmd==="trigger-delete"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}delete state.triggers[i.guildId+":"+norm(i.options.getString("phrase",true))];await saveState();await i.reply({content:"Trigger deleted.",ephemeral:true});return;}
   if(cmd==="slowmode"){if(!isMod(i)){await i.reply({content:"Moderation access denied.",ephemeral:true});return;}const secs=i.options.getInteger("seconds",true);await i.channel.setRateLimitPerUser(secs,"Vought moderation");await log(i.guild,"SLOWMODE #"+i.channel.name+" — "+secs+"s");await i.reply({content:"Slowmode set.",ephemeral:true});return;}
-  if(cmd==="giveaway-start"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const item=findItem(i.options.getString("item",true));if(!item){await i.reply({content:"Product not found or not giveaway eligible.",ephemeral:true});return;}const mins=i.options.getInteger("minutes",true),w=i.options.getInteger("winners")||1,c=chan(i.guild,"store")||i.channel,m=await c.send("VOUGHT GIVEAWAY — "+item[1]+"\nEnds in "+mins+" minute(s). Winners: "+w+".\nReact 🎟️ to enter.");await m.react("🎟️");state.giveaways[m.id]={guildId:i.guildId,channelId:c.id,messageId:m.id,itemId:item[0],winnerCount:w,endsAt:Date.now()+mins*60000,entrants:[],closed:false};await saveState();await i.reply({content:"Giveaway launched.",ephemeral:true});return;}
+  if(cmd==="giveaway-start"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const item=findItem(i.options.getString("item",true));if(!item){await i.reply({content:"Product not found or not giveaway eligible.",ephemeral:true});return;}const mins=i.options.getInteger("minutes",true),w=i.options.getInteger("winners")||1,c=chan(i.guild,"store")||i.channel,text="VOUGHT GIVEAWAY — "+item[1]+"\nEnds in "+mins+" minute(s). Winners: "+w+".\nReact 🎟️ to enter.",m=await c.send(text);await m.react("🎟️");state.giveaways[m.id]={guildId:i.guildId,channelId:c.id,messageId:m.id,itemId:item[0],winnerCount:w,endsAt:Date.now()+mins*60000,entrants:[],closed:false};await saveState();await inviteChildrenResponse(m,text,"giveaway");await i.reply({content:"Giveaway launched.",ephemeral:true});return;}
   if(cmd==="stats"){await i.reply(["VOUGHT NETWORK ANALYTICS","Members: "+i.guild.memberCount,"Observed messages: "+state.activity.messages,"Observed voice minutes: "+state.activity.voiceMinutes,"Joins: "+state.activity.joins,"Leaves: "+state.activity.leaves,"Commands: "+state.activity.commands].join("\n"));return;}
   if(cmd==="warn"){if(!isMod(i)){await i.reply({content:"Moderation access denied.",ephemeral:true});return;}const user=i.options.getUser("user",true),reason=i.options.getString("reason")||"No reason supplied";(state.warnings[user.id]||=[]).push({reason,moderatorId:i.user.id,at:new Date().toISOString()});await saveState();await log(i.guild,"WARN <@"+user.id+"> — "+reason);await i.reply({content:"Warning recorded.",ephemeral:true});return;}
   if(cmd==="timeout"){if(!isMod(i)){await i.reply({content:"Moderation access denied.",ephemeral:true});return;}const user=i.options.getUser("user",true),mins=i.options.getInteger("minutes",true),m=await i.guild.members.fetch(user.id);await m.timeout(mins*60000,"Vought moderation");await log(i.guild,"TIMEOUT <@"+user.id+"> — "+mins+"m");await i.reply({content:"Timeout applied.",ephemeral:true});return;}
