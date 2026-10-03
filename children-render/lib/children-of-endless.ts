@@ -123,9 +123,9 @@ export const CHILDREN_USUAL_STATIONS: Record<PersonaId, ChildrenUsualStation> = 
   orpheus: { primary: "command" },
   perses: {
     primary: "command",
-    canonicalPrimary: "Ritual Chamber / #altar — Perses",
+    canonicalPrimary: "Ritual Chamber / #altar",
     secondary: ["command"],
-    note: "The named Perses forum post is his canonical usual station. Command Deck is only the ordinary text-channel fallback for scheduled Children routing.",
+    note: "Perses uses the Ritual Chamber most frequently, without a dedicated post. He participates in altar shrine threads through the Children application only. Command Deck is the ordinary text-channel fallback for scheduled Children routing.",
   },
   rose: { primary: "observation" },
   distress: {
@@ -150,7 +150,7 @@ export const RECOMMENDED_DISCORD_CHANNEL_MODEL = [
   { slug: "mirror", name: "Mirror Gate", plane: "threshold", discordType: "text", purpose: "The gate and transit between the Mental and Astral Planes." },
   { slug: "vessel", name: "Astral Mirror-Vessel", plane: "astral", discordType: "category", purpose: "The formed Astral vessel; ordinary conversations use nine room text channels while the Ritual Chamber is represented by the #altar forum." },
   ...VESSEL_ROOMS.map(({ slug, name, plane, description }) => ({ slug, name, plane, discordType: "text", category: "vessel", purpose: description })),
-  { slug: "altar", name: "Ritual Chamber", plane: "astral", discordType: "forum", category: "vessel", purpose: "The vessel's Ritual Chamber. Named dynasty posts are shrines; the Perses post is his non-shrine resident station and the general Children ritual/warding home." },
+  { slug: "altar", name: "Ritual Chamber", plane: "astral", discordType: "forum", category: "vessel", purpose: "The vessel's Ritual Chamber. Named dynasty posts are shrines. Perses is the room's most frequent Child user, without a dedicated post, and participates through the Children application." },
   { slug: "astral", name: "Astral Plane", plane: "astral", discordType: "text", purpose: "Off-vessel field missions, combat, investigation, and Astral Sea activity." },
 ];
 
@@ -958,7 +958,7 @@ export function getChildrenStatus(now = new Date()) {
     generation_provider: "google_gemini_direct",
     generation_configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
     timezone: process.env.CHILDREN_TIMEZONE?.trim() || DEFAULT_TIMEZONE,
-    persona_canon_version: "20261002-altar-ritual-room-v12",
+    persona_canon_version: "20261002-altar-ritual-room-v14",
     discord_image_input: {
       enabled: true,
       ordinary_messages: true,
