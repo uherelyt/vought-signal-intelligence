@@ -198,8 +198,21 @@ export class AltarRuntime {
       const missingRequired=requiredTags.filter(id=>!(thread.applied_tags??[]).includes(id));
       if(missingRequired.length){
         const applied=[...new Set([...(thread.applied_tags??[]),...requiredTags])];
-        const tagged=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
-        thread={...thread,...tagged,applied_tags:applied};
+        try{
+          const tagged=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          thread={...thread,...tagged,applied_tags:applied};
+        }catch(error){
+          if(error.status!==403||!thread.thread_metadata?.archived||!thread.thread_metadata?.locked)throw error;
+          const retiredId=thread.id;
+          thread=existing.find(t=>t.id!==retiredId&&t.name===shrineTitle(p)&&!t.thread_metadata?.archived&&!t.thread_metadata?.locked)??await create();
+          if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
+          await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
+          await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
+          await this.store.del(`${PREFIX}:thread:${retiredId}`);
+          const tagged=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:requiredTags,locked:false,archived:false});
+          thread={...thread,...tagged,applied_tags:requiredTags};
+          await this.activity(p,thread.id,`Active shrine replaces locked reference ${retiredId}; its history remains archived.`,[],{eventType:'shrine_reactivation',previousThreadId:retiredId,shrineEligible:true});
+        }
         await this.activity(p,thread.id,'Shrine forum tags reconciled.',[],{eventType:'shrine_tag_reconciliation',sacredHive:isSacredHiveMember(p),childrenBridge:Boolean(p.childrenKey)});
       }
       if(thread.name!==shrineTitle(p)){
