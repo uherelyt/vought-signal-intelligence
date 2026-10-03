@@ -155,3 +155,27 @@ test('Perses is promoted to shrine ownership while retaining Children delivery i
   assert(promoted);assert.equal(promoted.id,perses.id);assert.equal(promoted.shrineEligible,true);assert.equal(promoted.childrenKey,'perses');assert.equal(promoted.avatarData,'perses-portrait');
   assert(![...runtime.visitors.values()].some(p=>p.childrenKey==='perses'));
 });
+
+
+test('current-policy locked shrine is replaced when new forum tags must be applied',async()=>{
+  const f=fixture();f.runtime.roster={people:[f.p],policyVersion:'v3'};f.runtime.provisionRoster=[f.p];
+  f.values.set(`${PREFIX}:policy:${f.p.id}`,'v3');
+  f.values.set(`${PREFIX}:presentation:${f.p.id}`,'20261002-minimal-v1');
+  const old={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p),applied_tags:[],thread_metadata:{archived:true,locked:true}};
+  const fresh={...old,id:'1555666568409654777',applied_tags:[],thread_metadata:{archived:false,locked:false}};
+  let creates=0;
+  f.runtime.api=async(path,method='GET',body)=>{
+    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:16,available_tags:['Dynasty','Ancestor','Children bridge','Sacred Hive'].map((name,i)=>({name,id:String(i+1)}))};
+    if(path.includes('/threads/active'))return {threads:creates?[fresh]:[]};
+    if(path.includes('/archived/'))return {threads:[old],has_more:false};
+    if(path===`/channels/${FORUM_ID}/threads`&&method==='POST'){creates++;return fresh;}
+    if(path===`/channels/${old.id}`&&method==='PATCH')throw Object.assign(new Error('discord_http_403'),{status:403});
+    if(path===`/channels/${fresh.id}`&&method==='PATCH')return {...fresh,applied_tags:body.applied_tags};
+    return path===`/channels/${old.id}`?old:fresh;
+  };
+  await f.runtime.provision();
+  assert.equal(creates,1);
+  assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),fresh.id);
+  assert(!f.values.has(`${PREFIX}:thread:${old.id}`));
+  assert.equal(f.values.get(`${PREFIX}:thread:${fresh.id}`),f.p.id);
+});
