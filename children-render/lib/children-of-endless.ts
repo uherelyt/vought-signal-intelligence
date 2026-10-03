@@ -123,9 +123,9 @@ export const CHILDREN_USUAL_STATIONS: Record<PersonaId, ChildrenUsualStation> = 
   orpheus: { primary: "command" },
   perses: {
     primary: "command",
-    canonicalPrimary: "Ritual Chamber / #altar — Perses",
+    canonicalPrimary: "Ritual Chamber / #altar",
     secondary: ["command"],
-    note: "The named Perses forum post is his canonical usual station. Command Deck is only the ordinary text-channel fallback for scheduled Children routing.",
+    note: "Perses is the Child who uses the Ritual Chamber most often. He has no dedicated altar post or shrine; when he participates there, he appears through the Children application inside existing altar threads. Command Deck is only the ordinary text-channel fallback for scheduled Children routing.",
   },
   rose: { primary: "observation" },
   distress: {
@@ -150,7 +150,7 @@ export const RECOMMENDED_DISCORD_CHANNEL_MODEL = [
   { slug: "mirror", name: "Mirror Gate", plane: "threshold", discordType: "text", purpose: "The gate and transit between the Mental and Astral Planes." },
   { slug: "vessel", name: "Astral Mirror-Vessel", plane: "astral", discordType: "category", purpose: "The formed Astral vessel; ordinary conversations use nine room text channels while the Ritual Chamber is represented by the #altar forum." },
   ...VESSEL_ROOMS.map(({ slug, name, plane, description }) => ({ slug, name, plane, discordType: "text", category: "vessel", purpose: description })),
-  { slug: "altar", name: "Ritual Chamber", plane: "astral", discordType: "forum", category: "vessel", purpose: "The vessel's Ritual Chamber. Named dynasty posts are shrines; the Perses post is his non-shrine resident station and the general Children ritual/warding home." },
+  { slug: "altar", name: "Ritual Chamber", plane: "astral", discordType: "forum", category: "vessel", purpose: "The vessel's Ritual Chamber. Named dynasty posts are shrines. Children visit existing altar threads through the Children application; Perses is the most frequent Child user and has no dedicated post or shrine." },
   { slug: "astral", name: "Astral Plane", plane: "astral", discordType: "text", purpose: "Off-vessel field missions, combat, investigation, and Astral Sea activity." },
 ];
 
@@ -951,14 +951,14 @@ export function getChildrenStatus(now = new Date()) {
       vessel_forum_rooms: ["altar"],
       communications_surface: "material_plane_interface_to_remote_locations",
       rationale:
-        "Ordinary text channels are Material-plane terminals representing canonical Mental/Astral/Threshold locations. The #altar forum is the Material-plane interface for the Astral Ritual Chamber and replaces the retired #ritual text room.",
+        "Ordinary text channels are Material-plane terminals representing canonical Mental/Astral/Threshold locations. The #altar forum is the Material-plane interface for the Astral Ritual Chamber and replaces the retired #ritual text room. Perses is its most frequent Child user, but has no dedicated altar post; Children participate through the Children application inside existing altar threads.",
     },
     state_configured: Boolean(redisClient()),
     model: process.env.CHILDREN_MODEL?.trim() || DEFAULT_MODEL,
     generation_provider: "google_gemini_direct",
     generation_configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
     timezone: process.env.CHILDREN_TIMEZONE?.trim() || DEFAULT_TIMEZONE,
-    persona_canon_version: "20261002-altar-ritual-room-v12",
+    persona_canon_version: "20261002-altar-visitor-v13",
     discord_image_input: {
       enabled: true,
       ordinary_messages: true,
