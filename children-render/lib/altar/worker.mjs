@@ -296,15 +296,8 @@ export async function startAltar(env=process.env) {
         if(channel.thread_metadata?.archived&&!channel.thread_metadata?.locked)await api(`/channels/${threadId}`,'PATCH',{archived:false});
         const offeringText=`📺 **VoughtTube offering**\n**${title}**\nScheduled <t:${unix}:F> · ${url}\n${target.dedication}`;
         const posted=await api(`/channels/${threadId}/messages`,'POST',{content:offeringText,allowed_mentions:{parse:[]}});
-        let acknowledgementId=null,acknowledgementError=null;
-        try{
-          const ack=await runtime.ritual(p,threadId,'offer',`${target.dedication} VoughtTube release: "${title}" (${url}), scheduled ${publishAt}.`,posted.id);
-          acknowledgementId=ack?.id??null;
-        }catch(e){
-          acknowledgementError=errorCode(e);
-          console.warn('[altar-voughttube-offering-ack-failed]',JSON.stringify({videoId,figureId:p.id,reason:acknowledgementError}));
-        }
-        const receipt={videoId,approvalId,figureId:p.id,figure:p.displayName,threadId,offeringMessageId:posted.id,acknowledgementId,acknowledgementError,role:target.role,publishAt,recordedAt:new Date().toISOString()};
+        await runtime.activity(p,threadId,`VoughtTube offering: ${target.dedication} Release: "${title}" (${url}), scheduled ${publishAt}.`,[posted.id],{speakers:['VoughtTube'],eventType:'offer',offeringSource:'voughttube',approvalId,videoId,publishAt,role:target.role});
+        const receipt={videoId,approvalId,figureId:p.id,figure:p.displayName,threadId,offeringMessageId:posted.id,role:target.role,publishAt,recordedAt:new Date().toISOString()};
         await store.set(receiptKey,JSON.stringify(receipt));
         results.push(receipt);
       }catch(e){
