@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { runChildrenDiscordGatewayPersistent } from "../lib/children-discord-gateway.ts";
 import { runChildrenPulse } from "../lib/children-of-endless.ts";
 import { CHILDREN_NOTION_MEMORY_VERSION } from "../lib/children-memory.ts";
-import { startAltar, altarStatus, postVoughtTubeOffering } from "../lib/altar/worker.mjs";
+import { startAltar, altarStatus } from "../lib/altar/worker.mjs";
 
 const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
@@ -182,138 +182,24 @@ async function retconLegacyMaterialInterfaceActivity() {
   console.info("[children-legacy-retcon-applied]", JSON.stringify({ changed }));
 }
 
-const VOUTHTUBE_REPOSITORY = "uherelyt/voughtgpt-tumblr";
-const DEFAULT_OFFERING_VERIFY_URL = "https://cove-roan.vercel.app/api/youtube/offering/verify";
-
-function headerValue(request: import("node:http").IncomingMessage, name: string) {
-  const value = request.headers[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function isWednesdayInNewYork(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return false;
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    weekday: "long",
-  }).format(date) === "Wednesday";
-}
-
-async function readRequestBody(request: import("node:http").IncomingMessage) {
-  let body = "";
-  for await (const chunk of request) {
-    body += chunk.toString();
-    if (body.length > 65536) throw new Error("request_body_too_large");
-  }
-  return body;
-}
-
-async function verifyGitHubRepositoryToken(request: import("node:http").IncomingMessage) {
-  const token = (headerValue(request, "x-github-repo-token") ?? headerValue(request, "x-github-actions-token"))?.trim();
-  const repository = headerValue(request, "x-vought-repository")?.trim();
-  if (!token || repository !== VOUTHTUBE_REPOSITORY) return false;
-  try {
-    const result = await fetch(`https://api.github.com/repos/${VOUTHTUBE_REPOSITORY}`, {
-      headers: {
-        authorization: `Bearer ${token}`,
-        accept: "application/vnd.github+json",
-        "x-github-api-version": "2022-11-28",
-        "user-agent": "Vought-Altar-Offering-Bridge/1.0",
-      },
-      cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!result.ok) return false;
-    const payload = await result.json() as { full_name?: string };
-    return payload.full_name === VOUTHTUBE_REPOSITORY;
-  } catch {
-    return false;
-  }
-}
-
-async function verifyVoughtTubeOfferingRequest(request: import("node:http").IncomingMessage, bodyText: string) {
-  if (await verifyGitHubRepositoryToken(request)) return true;
-  const signature = headerValue(request, "x-vought-offering-signature")?.trim();
-  const timestamp = headerValue(request, "x-vought-offering-timestamp")?.trim();
-  if (!signature || !timestamp) return false;
-  const verifier = process.env.COVE_OFFERING_VERIFY_URL?.trim() || DEFAULT_OFFERING_VERIFY_URL;
-  try {
-    const result = await fetch(verifier, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-vought-offering-signature": signature,
-        "x-vought-offering-timestamp": timestamp,
-      },
-      body: bodyText,
-      cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!result.ok) return false;
-    const payload = await result.json() as { ok?: boolean };
-    return payload.ok === true;
-  } catch {
-    return false;
-  }
-}
-
 process.env.CHILDREN_RUNTIME_HOST ||= "render";
 
 const port = Number(process.env.PORT?.trim() || "10000");
-const httpServer = createServer(async (request, response) => {
+const httpServer = createServer((request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
-  try {
-    if (url.pathname === "/healthz" || url.pathname === "/") {
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify({
-        ok: true,
-        service: "children-voughtcord",
-        runtimeHost: process.env.CHILDREN_RUNTIME_HOST,
-        snapshot: CHILDREN_NOTION_MEMORY_VERSION,
-        altar: altarStatus,
-      }));
-      return;
-    }
-
-    if (url.pathname === "/voughttube/offering" && request.method === "POST") {
-      const bodyText = await readRequestBody(request);
-      if (!(await verifyVoughtTubeOfferingRequest(request, bodyText))) {
-        response.writeHead(401, { "content-type": "application/json" });
-        response.end(JSON.stringify({ ok: false, error: "unauthorized" }));
-        return;
-      }
-      let body: { approval_id?: unknown; video_id?: unknown; title?: unknown; publish_at?: unknown };
-      try {
-        body = JSON.parse(bodyText);
-      } catch {
-        response.writeHead(400, { "content-type": "application/json" });
-        response.end(JSON.stringify({ ok: false, error: "valid JSON body required" }));
-        return;
-      }
-      const approvalId = typeof body.approval_id === "string" ? body.approval_id.trim() : "";
-      const videoId = typeof body.video_id === "string" ? body.video_id.trim() : "";
-      const title = typeof body.title === "string" ? body.title.trim() : "";
-      const publishAt = typeof body.publish_at === "string" ? body.publish_at.trim() : "";
-      if (!/^[A-Za-z0-9._:-]{8,128}$/.test(approvalId) || !/^[A-Za-z0-9_-]{6,32}$/.test(videoId) || !title || !isWednesdayInNewYork(publishAt)) {
-        response.writeHead(400, { "content-type": "application/json" });
-        response.end(JSON.stringify({ ok: false, error: "valid Wednesday VoughtTube schedule required" }));
-        return;
-      }
-      const result = await postVoughtTubeOffering({ approval_id: approvalId, video_id: videoId, title, publish_at: publishAt });
-      response.writeHead(202, { "content-type": "application/json" });
-      response.end(JSON.stringify({ ok: true, offering: result }));
-      return;
-    }
-
-    response.writeHead(404, { "content-type": "text/plain" });
-    response.end("Not found");
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : "request_failed";
-    const status = reason === "altar_offering_bridge_not_ready" || reason === "altar_not_provisioned" ? 503 : 500;
-    console.error("[children-http-error]", JSON.stringify({ path: url.pathname, reason }));
-    response.writeHead(status, { "content-type": "application/json" });
-    response.end(JSON.stringify({ ok: false, error: reason }));
+  if (url.pathname === "/healthz" || url.pathname === "/") {
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({
+      ok: true,
+      service: "children-voughtcord",
+      runtimeHost: process.env.CHILDREN_RUNTIME_HOST,
+      snapshot: CHILDREN_NOTION_MEMORY_VERSION,
+      altar: altarStatus,
+    }));
+    return;
   }
+  response.writeHead(404, { "content-type": "text/plain" });
+  response.end("Not found");
 });
 httpServer.listen(port, "0.0.0.0");
 
