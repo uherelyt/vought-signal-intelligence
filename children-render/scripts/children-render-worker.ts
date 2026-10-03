@@ -4,6 +4,7 @@ import { runChildrenDiscordGatewayPersistent } from "../lib/children-discord-gat
 import { runChildrenPulse } from "../lib/children-of-endless.ts";
 import { CHILDREN_NOTION_MEMORY_VERSION } from "../lib/children-memory.ts";
 import { startAltar, altarStatus } from "../lib/altar/worker.mjs";
+import { startVoughtInternational, voughtInternationalStatus } from "../lib/vought-international-worker.ts";
 
 const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
@@ -196,6 +197,7 @@ const httpServer = createServer((request, response) => {
       runtimeHost: process.env.CHILDREN_RUNTIME_HOST,
       snapshot: CHILDREN_NOTION_MEMORY_VERSION,
       altar: altarStatus,
+      voughtInternational: voughtInternationalStatus,
     }));
     return;
   }
@@ -215,7 +217,12 @@ await retconLegacyMaterialInterfaceActivity();
 await verifyGeminiCredential();
 await runAcceptancePulse();
 
-// Separate Discord application; isolated failure/activation never replaces the Children identity.
+// Separate Discord applications; isolated failure/activation never replaces Children identity.
+void startVoughtInternational().catch((error) => {
+  voughtInternationalStatus.state = "startup_failed_check_configuration";
+  console.error("[vought-international-startup-failed]", error instanceof Error ? error.message : String(error));
+});
+
 void startAltar().catch((error) => {
   const status = Number(error?.status);
   altarStatus.state = Number.isInteger(status) && status >= 400 && status <= 599
