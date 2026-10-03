@@ -1,5 +1,6 @@
 import { Redis } from "./render-redis.ts";
 import { CHILDREN_AVATAR_DATA_URIS } from "./children-avatar-data.ts";
+import { generateValidatedYucatecMayaReply } from "./native-language-quality.mjs";
 import {
   CHILDREN_MEMORY_POLICY,
   CHILDREN_NOTION_MEMORY_VERSION,
@@ -1162,27 +1163,42 @@ export async function generateFreshChildrenMessage(
   let rejected = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     const retry = attempt ? `\n\nREJECTED DRAFT (background only): ${rejected}\n\nREVISION REQUIRED: That draft copied recent dialogue. Give a fresh, direct answer; do not recycle it or answer the older conversation.\nCURRENT REQUEST: ${currentRequest ?? "Answer the current message/topic in the prompt above."}\nReturn only ${persona.displayName}'s new message.` : "";
-    const response = await fetch(`${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        contents: [{
-          role: "user",
-          parts: [
-            ...imageParts,
-            { text: `${prompt}${historicalLanguageRule ? `\n\n${historicalLanguageRule}` : ""}${retry}` },
-          ],
-        }],
-        generationConfig: { temperature, maxOutputTokens: 220 },
-      }),
-      cache: "no-store", signal: AbortSignal.timeout(30_000),
-    });
-    if (!response.ok) {
-      let detail = "";
-      try { const body = await response.json() as { error?: { message?: string } }; detail = body.error?.message?.trim().slice(0, 240) ?? ""; } catch { /* Keep errors bounded. */ }
-      throw new Error(`Gemini generation returned ${response.status}${detail ? `: ${detail}` : ""}`);
+    const generationPrompt = `${prompt}${historicalLanguageRule ? `\n\n${historicalLanguageRule}` : ""}${retry}`;
+    let content: string;
+    if (persona.id === "ah_muzen_cab") {
+      content = sanitizeChildrenMessage(await generateValidatedYucatecMayaReply({
+        apiKey,
+        model,
+        qaModel: process.env.CHILDREN_LANGUAGE_QA_MODEL?.trim() || model,
+        personaName: persona.displayName,
+        prompt: generationPrompt,
+        currentRequest,
+        imageParts,
+        temperature,
+      }));
+    } else {
+      const response = await fetch(`${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [
+              ...imageParts,
+              { text: generationPrompt },
+            ],
+          }],
+          generationConfig: { temperature, maxOutputTokens: 220 },
+        }),
+        cache: "no-store", signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok) {
+        let detail = "";
+        try { const body = await response.json() as { error?: { message?: string } }; detail = body.error?.message?.trim().slice(0, 240) ?? ""; } catch { /* Keep errors bounded. */ }
+        throw new Error(`Gemini generation returned ${response.status}${detail ? `: ${detail}` : ""}`);
+      }
+      const body = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      content = sanitizeChildrenMessage(body.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "");
     }
-    const body = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-    const content = sanitizeChildrenMessage(body.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "");
     if (!content) throw new Error(`Empty generation for ${persona.id}`);
     if (!isRepeatedChildrenMessage(content, [...previous, ...(rejected ? [rejected] : [])])) return content;
     rejected = content;
