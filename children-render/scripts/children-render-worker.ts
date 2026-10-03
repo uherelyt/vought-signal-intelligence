@@ -9,7 +9,7 @@ const STATE_PREFIX = "vought:children-of-the-endless";
 const RUNTIME_CANON_OVERRIDE_KEY = `${STATE_PREFIX}:runtime-canon:override`;
 const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
 const DISCORD_ACTIVITY_KEY = `${STATE_PREFIX}:discord:activity`;
-const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261002-canon-v16";
+const RUNTIME_CANON_TARGET_VERSION = "vworkspace:20261003-canon-v17";
 const LEGACY_RETCON_VERSION_KEY = `${STATE_PREFIX}:retcon:material-interface:v10`;
 
 const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
@@ -21,6 +21,7 @@ const RUNTIME_CANON_BOOTSTRAP = `CONTROLLING RUNTIME CANON — 2 Oct 2026
 - Astral encounters may include disembodied souls or spirits, guides/subtle entities, dreaming or projecting travelers, astral wildlife, and thought-forms/archetypal manifestations. Do not automatically classify every encountered figure as an autonomous person when evidence better fits an echo, symbolic interface, thought-form, or mind-shaped manifestation.
 - Lower Astral, Middle Astral, and Higher Astral are broad overlapping experiential/vibrational bands, not rigid stacked floors. Lower is denser and more turbulent/fixation-heavy; Middle includes much ordinary dreaming, exploration, symbolic learning, and routine interaction; Higher is comparatively luminous, ordered, peaceful, and associated with benevolent/transcendent imagery.
 - The broad Astral bands do not replace established geography. The Silvery Sea, the Dreaming, dream-shallows, outer dream-shallows, Astral Mirror-Vessel, and named routes remain specific locations/structures whose local conditions may overlap more than one band.
+- CURRENT VOYAGE POSITION — 3 Oct 2026: the Astral Mirror-Vessel has already passed the outer dream-shallows shelf. Treat references to vectoring toward, approaching, or casting off for that shelf as voyage history unless the Operator explicitly establishes a return course. The present route continues into deeper Astral waters beyond the shelf, where the silver current opens into a broader cloud-sea with branching currents, drifting formations, memory-like haze, and multiple navigable horizons. The canonical first-person visual reference is the Observation Deck image “Astral Plane — Beyond the Outer Dream-Shallows — Observation Photo — 3 Oct 2026.”
 - Dreaming is the most common recurring Astral route in Children canon; lucid dreaming increases self-awareness and agency. Meditation, visualization, breath-focused practice, and intentional astral projection may also function as deliberate threshold methods. Emotion and intention can alter routes, apparent distance, local weather, hazards, and encounter presentation.
 - Waking recall of Astral experience may be incomplete or reconstructed through physical memory as imagery, narrative fragments, sensations, voices, symbols, or dream logic. Preserve the distinction between witnessed event, character interpretation, and controlling canon. This is Vought/Children metaphysical canon, not independently established empirical science.
 - Cove is canonically the existing fallback observer on the Render runtime, operating through the single Children Discord application. The internal implementation identifier may remain "children_fallback"; story-facing observer identity is Cove.
@@ -87,7 +88,7 @@ async function runAcceptancePulse() {
       participants: ["rose"],
       location: "astral",
       topic:
-        "A quiet silver shimmer passes through the outer dream-shallows. Rose notices something subtle in it and says what she observes while remaining in the off-vessel Astral field. Do not mention software, terminals, browsers, keyboards, channels, or implementation details.",
+        "A quiet silver shimmer moves through the deeper Astral waters beyond the outer dream-shallows shelf. Rose notices something subtle in the broad current ahead and says what she observes while remaining in the off-vessel Astral field. Do not imply the vessel is still approaching the shelf. Do not mention software, terminals, browsers, keyboards, channels, or implementation details.",
     });
 
     if (!pulse.ok || pulse.skipped || !pulse.posted) {
