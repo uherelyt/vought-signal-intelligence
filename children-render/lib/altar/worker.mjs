@@ -123,7 +123,7 @@ export async function startAltar(env=process.env) {
       if(!runtime.persesStationId)throw new Error('perses_station_missing');
       const persesChannel=await childApi(`/channels/${runtime.persesStationId}`);
       if(!validThread(persesChannel,guildId)||persesChannel.name!=='Perses'||await store.get(`${PREFIX}:thread:${runtime.persesStationId}`))throw new Error('perses_station_identity_mismatch');
-      if(altarStatus.legacyRitualRetired!==true)throw new Error('legacy_ritual_not_retired');
+      if(altarStatus.legacyRitualRetired!==true&&altarStatus.legacyRitualCleanupRequired!==true)throw new Error('legacy_ritual_retirement_state_unknown');
       const p=roster.people.find(x=>x.id==='elaed-c26aa32aca44-1');
       if(!p||p.humanControlled)throw new Error('acceptance_persona_unavailable');
       const host=roster.policyVersion?roster.people.find(x=>x.name==='Zeus'&&x.shrineEligible):p;
@@ -151,7 +151,8 @@ export async function startAltar(env=process.env) {
           if(id&&await store.get(`${PREFIX}:thread:${id}`))throw new Error('acceptance_retired_shrine_routable');
         }
       }
-      const result={state:'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesStationId:runtime.persesStationId,legacyRitualRetired:altarStatus.legacyRitualRetired,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
+      const cleanupRequired=altarStatus.legacyRitualRetired!==true;
+      const result={state:cleanupRequired?'passed_with_manual_cleanup':'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesStationId:runtime.persesStationId,legacyRitualRetired:altarStatus.legacyRitualRetired,legacyRitualCleanupRequired:cleanupRequired,legacyRitualCleanupReason:cleanupRequired?altarStatus.legacyRitualRetireError:undefined,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
       altarStatus.acceptance=result;
       await store.set(key,JSON.stringify(result));
       console.info('[altar-acceptance]',JSON.stringify(result));
@@ -186,6 +187,8 @@ export async function startAltar(env=process.env) {
       if(e.status===404){await store.set(receiptKey,'done');altarStatus.legacyRitualRetired=true;return;}
       altarStatus.legacyRitualRetired=false;
       altarStatus.legacyRitualRetireError=errorCode(e);
+      altarStatus.legacyRitualCleanupRequired=e?.status===403;
+      if(altarStatus.legacyRitualCleanupRequired)altarStatus.legacyRitualOperationallyRetired=true;
       console.warn('[altar-legacy-ritual-retire-pending]',errorCode(e));
     }
   }
