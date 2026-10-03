@@ -20,12 +20,14 @@ const ALTAR_GREEK_NATIVE_LANGUAGE = new Set([
 const ALTAR_NORSE_NATIVE_LANGUAGE = new Set(["Balder","Freyja","Hermod","Odin Borson Borson","Sigyn","Tyr","Vali","Vidar","Loki","Thor Odinson"]);
 const ALTAR_EGYPTIAN_NATIVE_LANGUAGE = new Set(["Ra","Set"]);
 const ALTAR_LATIN_NATIVE_LANGUAGE = new Set(["Clementia","Mellona"]);
-const ALTAR_MAYA_LANGUAGE_PENDING = new Set(["Ah-Muzen-Cab","Bacabs","Cacoch","Ixchel","Colel Cab"]);
+const ALTAR_MAYA_LANGUAGE_PENDING = new Set(["Bacabs","Cacoch","Ixchel","Colel Cab"]);
 
 function altarBaseName(p){
   return String(p?.name??p?.displayName??"").replace(/\s+".*$/,"").trim();
 }
 export function altarHistoricalLanguageRule(p){
+  if(p?.childrenKey==="cab")return "LANGUAGE CANON: Cab / Ah-Muzen-Cab II speaks English like most of the Children. He is the incarnation, not the pre-incarnation god who lived in the Maya cultural setting. Inherited or recovered divine memories do not replace his current linguistic identity. Do not switch him into Maya unless a scene explicitly quotes or recalls historical-language material.";
+  if(p?.childrenKey==="ah_muzen_cab")return "HISTORICAL-LANGUAGE CANON: Ah-Muzen-Cab I, in his transformed/current divine identity, speaks only in Modern Yucatec Maya using the Latin alphabet for generated in-universe dialogue. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
   const explicit=p?.historicalLanguage;
   if(explicit?.status==="confirmed"&&explicit.language){
     const script=explicit.script?`, using ${explicit.script}`:"";
