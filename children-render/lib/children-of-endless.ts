@@ -1902,7 +1902,9 @@ export async function runChildrenReactiveMessage(
   );
   const transcript: ChildrenTurn[] = [];
   const discordMessageIds = [input.messageId];
-  const movement = await movePersonas(redis, participants, location);
+  const movement = input.sourceKind === "vought"
+    ? { movementFrom: [] as string[], movementTo: [] as string[] }
+    : await movePersonas(redis, participants, location);
 
   await sendDiscordTyping(location.channelId);
 
@@ -1922,7 +1924,9 @@ export async function runChildrenReactiveMessage(
         transcript,
         recent,
         memory,
-        movementCueForPersona(persona, movement, location),
+        input.sourceKind === "vought"
+          ? "You are speaking to Vought International through the Network's Material-Plane surface. This communication does not by itself relocate your body, vessel position, or usual station."
+          : movementCueForPersona(persona, movement, location),
       );
       const turn: ChildrenTurn = {
         speaker,
