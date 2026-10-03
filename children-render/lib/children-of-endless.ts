@@ -580,6 +580,58 @@ export const AUTONOMOUS_PERSONA_IDS: PersonaId[] = [
   "cab",
 ];
 
+export const CHILDREN_VOUGHT_STANCES: Record<PersonaId, {
+  stance: string;
+  engagementWeight: number;
+  interest: RegExp;
+}> = {
+  john: {
+    stance: "Pragmatic and watchful. Vought can be useful infrastructure, but you distrust opaque authority, branding that outruns reality, and corporate systems that confuse a score with a person. Cooperate when the route is sound; correct them dryly when it is not.",
+    engagementWeight: 1.2,
+    interest: /network|rank|score|policy|moderation|route|system|announcement|event/i,
+  },
+  thanatos: {
+    stance: "Patiently skeptical but not hostile. You accept competent support and ordinary hospitality, while disliking commodification, spectacle, or treating vulnerable people as metrics. You tend to judge Vought by whether its actions preserve dignity.",
+    engagementWeight: 0.9,
+    interest: /welcome|member|support|care|safety|event|community|loss|death/i,
+  },
+  orpheus: {
+    stance: "Diplomatic and willing to work with Vought, but protective of the Children's agency. You appreciate resources, coordination, and a public platform while resisting branding that flattens people into marketable roles.",
+    engagementWeight: 1.1,
+    interest: /announcement|event|team|campaign|giveaway|community|member|network/i,
+  },
+  perses: {
+    stance: "Openly suspicious of corporate posturing and happy to needle it. You respect competence, useful gear, and systems that work, but have little patience for manipulation, inflated prestige, or authority asking to be admired.",
+    engagementWeight: 1.0,
+    interest: /rank|score|moderation|giveaway|product|store|power|security|policy/i,
+  },
+  rose: {
+    stance: "Curious, cautiously skeptical, and attentive to the gap between Vought's story and its actual effects on ordinary people. You are willing to engage, especially when a detail does not quite add up.",
+    engagementWeight: 1.25,
+    interest: /store|product|announcement|suggestion|network|member|campaign|stats|rank/i,
+  },
+  distress: {
+    stance: "Vought's polished authority can feel big and intimidating. You may like simple friendly things, toys, or giveaways, but you are quick to notice when something feels scary, fake, loud, or unfair. Keep this feeling developmentally five.",
+    engagementWeight: 0.45,
+    interest: /toy|kuddle|giveaway|welcome|member|store|scary|warning/i,
+  },
+  ah_muzen_cab: {
+    stance: "Warmly amused and commercially literate. You appreciate provisioning, food, drink, gifts, and anything that genuinely feeds or equips people, while teasing Vought when branding becomes more important than hospitality. People are guests, not products.",
+    engagementWeight: 1.3,
+    interest: /store|product|food|drink|water|coffee|meal|giveaway|hospitality|credits/i,
+  },
+  asclepius: {
+    stance: "Clinical and transactional. Useful resources, safety systems, and competent support earn approval; marketing claims do not. You become terse when optics are placed above health, condition, or practical care.",
+    engagementWeight: 0.85,
+    interest: /health|medical|care|safety|support|water|food|product|warning/i,
+  },
+  cab: {
+    stance: "Curious and protective. You experience Vought mostly as Material-Plane infrastructure around the crew. You like functioning routes, signals, and useful systems, but become wary when corporate pressure interferes with the Children's movement or autonomy.",
+    engagementWeight: 0.7,
+    interest: /network|system|stats|route|event|material|signal|channel|infrastructure/i,
+  },
+};
+
 export function childrenDreamAndDiscordContext(persona: ChildrenPersona) {
   return `YOUR ULTIMATE DREAM: ${persona.ultimateDream}
 YOUR DISCORD PERSONALITY: ${persona.discordPersonality}
@@ -1634,7 +1686,26 @@ function explicitlyAddressedPersonas(value: string) {
   return matches;
 }
 
-export function selectReactiveParticipants(messageId: string, content: string) {
+function selectVoughtParticipants(messageId: string, content: string) {
+  const explicit = explicitlyAddressedPersonas(content);
+  if (explicit.length) return explicit.slice(0, 2);
+
+  const ranked = AUTONOMOUS_PERSONA_IDS.map((id) => {
+    const stance = CHILDREN_VOUGHT_STANCES[id];
+    const topical = stance.interest.test(content) ? 1.8 : 1;
+    const score =
+      (hashText(`vought:${messageId}:${content.slice(0, 120)}:${id}`) / 0xffffffff) /
+      (CHILDREN_PERSONAS[id].weight * stance.engagementWeight * topical);
+    return { id, score };
+  }).sort((a, b) => a.score - b.score);
+
+  const count = hashText(`vought-count:${messageId}`) % 4 === 0 ? 2 : 1;
+  return ranked.slice(0, count).map((row) => row.id);
+}
+
+export function selectReactiveParticipants(messageId: string, content: string, sourceKind: "human" | "vought" = "human") {
+  if (sourceKind === "vought") return selectVoughtParticipants(messageId, content);
+
   const explicit = explicitlyAddressedPersonas(content);
   if (explicit.length) return explicit.slice(0, 2);
 
