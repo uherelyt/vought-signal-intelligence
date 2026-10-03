@@ -90,16 +90,16 @@ const CHILDREN_NATIVE_LANGUAGE_RULES: Partial<Record<PersonaId, { language: stri
   thanatos: { language: "Ancient Greek", script: "Greek script" },
   perses: { language: "Ancient Greek", script: "Greek script" },
   asclepius: { language: "Ancient Greek", script: "Greek script" },
+  ah_muzen_cab: { language: "Modern Yucatec Maya", script: "Latin alphabet" },
 };
-const CHILDREN_LANGUAGE_PENDING = new Set<PersonaId>(["ah_muzen_cab", "cab"]);
 
 export function childrenHistoricalLanguageRule(persona: ChildrenPersona) {
+  if (persona.id === "cab") {
+    return "LANGUAGE CANON: Cab / Ah-Muzen-Cab II speaks English like most of the Children. He is the incarnation, not the pre-incarnation god who lived in the Maya cultural setting. Inherited or recovered memories from that divine past do not change his current linguistic identity. Do not switch him into Maya unless a scene explicitly quotes or recalls historical-language material.";
+  }
   const rule = CHILDREN_NATIVE_LANGUAGE_RULES[persona.id];
   if (rule) {
     return `HISTORICAL-LANGUAGE CANON: This divine figure speaks only in ${rule.language}, using ${rule.script}, for generated in-universe dialogue. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes. Preserve the persona's existing tone and meaning inside that language.`;
-  }
-  if (CHILDREN_LANGUAGE_PENDING.has(persona.id)) {
-    return "HISTORICAL-LANGUAGE CANON: A native-language rule is required for this divine figure, but the exact Maya language/register is pending Operator selection. Preserve the existing message language for now. Do not silently choose, infer, or canonize a Maya language/register.";
   }
   return "";
 }
