@@ -6,7 +6,8 @@
     "node": "24.x"
   },
   "scripts": {
-    "start": "tsx scripts/children-render-worker.ts"
+    "start": "tsx scripts/children-render-worker.ts",
+    "test": "node --test test/altar/*.test.mjs test/native-language-quality.test.mjs"
   },
   "dependencies": {
     "redis": "^5.8.2",
