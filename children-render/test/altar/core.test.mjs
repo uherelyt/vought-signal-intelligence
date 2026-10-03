@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -137,4 +137,21 @@ test('shared ELAED seal fills only missing persona icons',()=>{
  assert.equal(people[0].avatarData,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI);
  assert.equal(people[1].avatarData,'custom');
  assert(ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI.startsWith('data:image/jpeg;base64,'));
+});
+
+
+test('Sacred Hive membership recognizes canonical shrine offices without tagging Cab II',()=>{
+  for(const name of ['Ah-Muzen-Cab "Honey, Content" I','Colel Cab','Aristaeus','Melissae Artemis','Melisseus','Mellona','Oshun','Austėja','Bubilas','Bhrāmarī','Ra'])assert(isSacredHiveMember({displayName:name}),name);
+  assert(!isSacredHiveMember({displayName:"Ah-Muzen-Cab 'Cab' II"}));
+  assert(!isSacredHiveMember({displayName:'Perses'}));
+});
+
+test('Perses is promoted to shrine ownership while retaining Children delivery identity',()=>{
+  const f=fixture();
+  const perses={id:'elaed-cccccccccccc-1',name:'Perses',displayName:'Perses',relationships:[],humanControlled:false,shrineEligible:false};
+  const visitor={...perses,id:'child:perses',childrenKey:'perses',avatarData:'perses-portrait'};
+  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,childApi:async()=>({}),childrenApplicationId:'children',generate:f.runtime.generate,roster:{people:[f.p,perses],visitors:[visitor]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  const promoted=[...runtime.people.values()].find(p=>p.name==='Perses');
+  assert(promoted);assert.equal(promoted.id,perses.id);assert.equal(promoted.shrineEligible,true);assert.equal(promoted.childrenKey,'perses');assert.equal(promoted.avatarData,'perses-portrait');
+  assert(![...runtime.visitors.values()].some(p=>p.childrenKey==='perses'));
 });
