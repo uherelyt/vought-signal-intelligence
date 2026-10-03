@@ -218,7 +218,7 @@ export async function startAltar(env=process.env) {
     altarStatus.state='gateway_lease_wait';await wait(10000);
   }
   if(!leaseAcquired){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
-  const runtime=new AltarRuntime({store,api,childApi,childrenApplicationId:env.CHILDREN_DISCORD_APPLICATION_ID,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify({...event,transcript:'[retained in private durable outbox]'})),generate:async(p,input,{recent,observed,extra})=>{
+  const runtime=new AltarRuntime({store,api,childApi,childrenApplicationId:env.CHILDREN_DISCORD_APPLICATION_ID,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify(event)),generate:async(p,input,{recent,observed,extra})=>{
     const episodic=await store.lrange('vought:children-of-the-endless:discord:activity',0,199);
     const memory=renderChildrenLongTermMemory(`${p.name} ${input}`,5,6500)+'\n'+renderChildrenEpisodicMemory(episodic,`${p.name} ${input}`);
     const child=p.childrenKey?CHILDREN_PERSONAS[p.childrenKey]:null;
