@@ -6,6 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "prestart": "npm test",
     "start": "tsx scripts/children-render-worker.ts",
     "test": "node --test test/altar/*.test.mjs test/native-language-quality.test.mjs && tsx --test test/persona-sets.test.ts"
   },
