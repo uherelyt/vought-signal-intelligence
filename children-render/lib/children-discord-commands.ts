@@ -5,14 +5,14 @@ import {
   type ChildrenDiscordImageAttachment,
 } from "./children-image-input.ts";
 import {
-  AUTONOMOUS_PERSONA_IDS, CHILDREN_PERSONAS, getChildrenLocationByChannelId,
-  getChildrenLocationRegistry, runChildrenReactiveMessage, selectParticipants, selectChildrenLocationForTopic,
+  CHILD_MEMBER_IDS, ON_VESSEL, CHILDREN_PERSONAS, getChildrenLocationByChannelId,
+  getChildrenLocationRegistry, runChildrenReactiveMessage, selectChildMembers, selectCrew, selectChildrenLocationForTopic,
   type PersonaId,
 } from "./children-of-endless.ts";
 
 const API = "https://discord.com/api/v10";
 const PREFIX = "vought:children-of-the-endless:commands";
-const COMMAND_VERSION = "20261004-seven-child-roster-1";
+const COMMAND_VERSION = "20261004-membership-vessel-split-1";
 export const MEMBER_COMMANDS: Record<string, PersonaId> = {
   john: "john", orpheus: "orpheus", rose: "rose", distress: "distress",
   "ah-muzen-cab": "ah_muzen_cab", asclepius: "asclepius", cab: "cab",
@@ -31,12 +31,16 @@ export const CHILDREN_SLASH_COMMANDS = [
     options: [messageOption, imageOption],
   })),
   {
-    name: "children", type: 1, description: "Talk to the Children as a group.",
+    name: "children", type: 1, description: "Talk to up to three actual Children of the Endless.",
     options: [
       messageOption,
       imageOption,
-      { type: 3, name: "members", description: "Optional: up to three member IDs, separated by commas." },
+      { type: 3, name: "members", description: "Optional: up to three Child IDs, separated by commas." },
     ],
+  },
+  {
+    name: "crew", type: 1, description: "Summon three people currently traveling aboard the vessel.",
+    options: [messageOption, imageOption],
   },
 ];
 
@@ -86,7 +90,7 @@ function resolvedSlashImage(interaction: ChildrenInteraction): ChildrenDiscordIm
 export function routeChildrenCommand(interaction: ChildrenInteraction) {
   if (interaction.type !== 2 || !interaction.data?.name) return null;
   const name = interaction.data.name;
-  if (!Object.hasOwn(MEMBER_COMMANDS, name) && name !== "children") return null;
+  if (!Object.hasOwn(MEMBER_COMMANDS, name) && name !== "children" && name !== "crew") return null;
   const rawMessage = interaction.data.options?.find((row) => row.name === "message")?.value;
   if (rawMessage !== undefined && typeof rawMessage !== "string") return null;
   const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
@@ -104,15 +108,19 @@ export function routeChildrenCommand(interaction: ChildrenInteraction) {
   if (Object.hasOwn(MEMBER_COMMANDS, name)) {
     return { content, displayContent, attachments, participants: [MEMBER_COMMANDS[name]] };
   }
-  const members = interaction.data.options?.find((row) => row.name === "members")?.value;
-  if (members !== undefined) {
-    if (typeof members !== "string") return null;
-    const values = [...new Set(members.split(",").map((id) => id.trim().toLowerCase()))];
-    const ids = values.map((id) => MEMBER_COMMANDS[id] ?? id);
-    if (!ids.length || ids.length > 3 || ids.some((id) => !AUTONOMOUS_PERSONA_IDS.includes(id as PersonaId))) return null;
-    return { content, displayContent, attachments, participants: ids as PersonaId[] };
+  if (name === "children") {
+    const members = interaction.data.options?.find((row) => row.name === "members")?.value;
+    if (members !== undefined) {
+      if (typeof members !== "string") return null;
+      const values = [...new Set(members.split(",").map((id) => id.trim().toLowerCase()))];
+      const ids = values.map((id) => MEMBER_COMMANDS[id] ?? id);
+      if (!ids.length || ids.length > 3 || ids.some((id) => !CHILD_MEMBER_IDS.includes(id as PersonaId))) return null;
+      return { content, displayContent, attachments, participants: ids as PersonaId[] };
+    }
+    return { content, displayContent, attachments, participants: selectChildMembers(`slash:${interaction.id}`, 3) };
   }
-  return { content, displayContent, attachments, participants: selectParticipants(`slash:${interaction.id}`, 3) };
+
+  return { content, displayContent, attachments, participants: selectCrew(`slash:${interaction.id}`, 3) };
 }
 
 async function api(path: string, token: string, method = "GET", body?: unknown, deadline = Infinity) {
@@ -153,7 +161,7 @@ export async function ensureChildrenSlashCommands(redis: Redis) {
     if (channel.guild_id) guilds.add(channel.guild_id);
   }
   for (const guild of guilds) {
-    // Upsert our ten commands only; preserve unrelated application commands.
+    // Upsert our nine commands only; preserve unrelated application commands.
     for (const command of CHILDREN_SLASH_COMMANDS) {
       await api(`/applications/${appId}/guilds/${guild}/commands`, token, "POST", command, deadline);
     }
@@ -188,7 +196,7 @@ export async function handleChildrenInteraction(interaction: ChildrenInteraction
     ? hasImage
       ? { type: 5, data: {} }
       : { type: 4, data: { content: publicMessage, allowed_mentions: { parse: [] } } }
-    : { type: 4, data: { flags: 64, content: `Use a member command or /children in ${getChildrenLocationRegistry().map((row) => `#${row.slug}`).join(", ")}. Include a message, a supported image, or both. Group members: up to three valid member IDs.`, allowed_mentions: { parse: [] } } };
+    : { type: 4, data: { flags: 64, content: `Use a member command, /children, or /crew in ${getChildrenLocationRegistry().map((row) => `#${row.slug}`).join(", ")}. Include a message, a supported image, or both. /children accepts up to three actual Child IDs; /crew randomly summons three on-vessel personas.`, allowed_mentions: { parse: [] } } };
 
   const ack = await fetch(`${API}/interactions/${interaction.id}/${interaction.token}/callback`, {
     method: "POST",
