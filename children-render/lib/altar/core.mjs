@@ -53,7 +53,7 @@ export function migrateRosterTo4Oct(input){
     q=patchRelationships(q,'The-Astral-Plane',['Godmother: Oshtur','Friend: Erelyt Drabbuh','Friend: Ah-Muzen-Cab "Honey, Content"  I',`Friend: Ah-Muzen-Cab "'Cab"  II`,'Friend: Orpheus','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Rose Walker','Friend: Asclepius','Friend: The-House-of-Mirrors']);
     q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father',`Godfather: Ah-Muzen-Cab "'Cab"  II`,'Adopted mother: Despair of The Endless','Adopted father: ML3QN','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
     if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['Biological mother Hebe / biological father Heracles are preserved Family Echo structural fields under source review; external Maya and Greek sources do not establish this genealogy.']};
-    const divineStatus=DIVINE_SHRINE_STATUS.get(q.name);
+    const divineStatus=q.divineStatus??DIVINE_SHRINE_STATUS.get(q.name);
     return divineStatus?{...q,divineStatus,shrineEligible:true}:q;
   });
   for(const add of FOUR_OCT_ADDITIONS){
@@ -61,7 +61,7 @@ export function migrateRosterTo4Oct(input){
   }
   if(doc.people.length!==245||new Set(doc.people.map(p=>p.id)).size!==245)throw new Error('current_roster_count_or_identity_mismatch');
   doc.version='20261004-familyecho-0520-v1';
-  doc.policyVersion='20261004-divine-shrines-v1';
+  doc.policyVersion='20261004-divine-shrines-v2';
   doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
   doc.ancestorDesignationPending=false;
   return doc;
