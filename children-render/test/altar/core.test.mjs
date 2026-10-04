@@ -64,7 +64,7 @@ test('forum delivery includes exact thread ID and suppresses mass mentions',asyn
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};
  const {shrineTitle}=await import('../../lib/altar/core.mjs');const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p)};
- f.runtime.api=async(path,method='GET',body)=>{if(method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
+ f.runtime.api=async(path,method='GET',body)=>{if(method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge','Sacred Hive','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
  await f.runtime.provision();await f.runtime.provision();assert.equal(creates,0);assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),f.thread);
 });
 test('a god may visit another registered shrine but never an unregistered altar thread',async()=>{
@@ -84,7 +84,7 @@ test('a locked retired ancestor gets one active replacement, with history preser
  f.runtime.store.set=async(k,v,o)=>{if(k===`${PREFIX}:shrine:${f.p.id}`&&v===fresh.id&&failSave){failSave=false;throw new Error('transient_store_failure');}return set(k,v,o);};
  f.runtime.api=async(path,method='GET',body)=>{
   if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:fresh.id,channel_id:fresh.id};}
-  if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge'].map((name,i)=>({name,id:String(i)}))};
+  if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge','Sacred Hive'].map((name,i)=>({name,id:String(i)}))};
   if(path.includes('/threads/active'))return {threads:creates?[fresh]:[]};
   if(path.includes('/archived/'))return {threads:[old],has_more:false};
   if(path===`/channels/${FORUM_ID}/threads`&&method==='POST'){creates++;return fresh;}
@@ -163,6 +163,31 @@ test('Perses and Thanatos are promoted to Dynasty shrine ownership and leave Chi
   assert(![...runtime.visitors.values()].some(p=>['perses','thanatos'].includes(p.childrenKey)));
 });
 
+
+test('Asclepius owns one shared shrine identity and still delivers through the Children application',async()=>{
+  const f=fixture();
+  const rosterAsclepius={id:'elaed-asclepius-1',name:'Asclepius',displayName:'Asclepius',relationships:[],humanControlled:false,shrineEligible:false};
+  const visitor={...rosterAsclepius,id:'child:asclepius',childrenKey:'asclepius',avatarData:'asclepius-portrait',senderName:'Asclepius'};
+  const runtime=new AltarRuntime({
+    store:f.runtime.store,
+    api:f.runtime.api,
+    childApi:async()=>({}),
+    childrenApplicationId:'children',
+    generate:f.runtime.generate,
+    roster:{people:[f.p,rosterAsclepius],visitors:[visitor]},
+    guildId:f.guildId,
+    operatorId:'op',
+    applicationId:'altar',
+  });
+  const shared=runtime.people.get(rosterAsclepius.id);
+  assert(shared);
+  assert.equal(shared.shrineEligible,true);
+  assert.equal(shared.childrenKey,'asclepius');
+  assert.equal(shared.avatarData,'asclepius-portrait');
+  assert.equal(shared.senderName,'Asclepius');
+  assert(!runtime.visitors.has('child:asclepius'));
+  assert.equal([...runtime.people.values()].filter(p=>p.childrenKey==='asclepius').length,1);
+});
 
 test('current-policy locked shrine is replaced when new forum tags must be applied',async()=>{
   const f=fixture();f.runtime.roster={people:[f.p],policyVersion:'v3'};f.runtime.provisionRoster=[f.p];
