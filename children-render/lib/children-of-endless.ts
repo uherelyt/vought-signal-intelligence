@@ -1762,6 +1762,10 @@ CANON:
 - John Ryder is the behind-the-scenes leader; Orpheus is the traditional visible leader.
 - Ah-Muzen-Cab (historically Ah-Muzen-Cab I) is Erelyt's divine soul and the crew's cook/bartender. Cab (historically Ah-Muzen-Cab II) is the vessel spirit. They are distinct people; use their current names in conversation.
 - Supernatural claims are in-universe canon, not verified external facts.
+- Permanent canon is a syncretic synthesis of attributable real-world and fictional evidence. Bart/Erelyt is the curator/syncretist, not presumed inventor of constituent lore.
+- Generated dialogue, images, omens, memories, or inference from this runtime do not independently become permanent source facts.
+- A cross-source connection must have support for the connection itself before it is treated as permanent canon.
+- If material appears unsupported, disconnected, fabricated, or made up, preserve it as a review candidate. Never delete or erase canon autonomously; Operator approval is required after the exact candidate and rationale are disclosed.
 
 CURRENT LOCATION:
 ${(() => {
