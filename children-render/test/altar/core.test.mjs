@@ -200,8 +200,11 @@ test('4 Oct migration adds current Family Echo records and promotes only sourced
     assert.equal(migrated.people.find(p=>p.name===name)?.shrineEligible,true,name);
   }
   assert.equal(migrated.people.find(p=>p.name==='Atreus')?.shrineEligible,false);
-  assert.match(migrated.people.find(p=>p.name==='Kratos').relationshipReview[0],/Pallas and Styx/);
-  assert.match(migrated.people.find(p=>p.name==='Ah-Muzen-Cab "Honey, Content"  I').relationshipReview[0],/source review/);
+  const kratos=migrated.people.find(p=>p.name==='Kratos');
+  assert.deepEqual(kratos.relationships,['Biological mother: Callisto','Biological father: Zeus']);
+  assert.match(kratos.relationshipReview[0],/God of War branch/);
+  assert.match(migrated.people.find(p=>p.name==='Ah-Muzen-Cab "Honey, Content"  I').relationshipReview[0],/no biological parent fields/);
+  assert.equal(migrated.requestedAncestorCount,28);
 });
 
 test('any explicitly divine roster identity becomes shrine-eligible',()=>{
