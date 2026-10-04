@@ -62,9 +62,9 @@ test('forum delivery includes exact thread ID and suppresses mass mentions',asyn
  assert.equal(f.lists.get(`${PREFIX}:durable-outbox`).length,1);
 });
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
- const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};
+ const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const {shrineTitle}=await import('../../lib/altar/core.mjs');const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p)};
- f.runtime.api=async(path,method='GET',body)=>{if(method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge','Sacred Hive','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
+ f.runtime.api=async(path,method='GET',body)=>{if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Children bridge','Sacred Hive','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
  await f.runtime.provision();await f.runtime.provision();assert.equal(creates,0);assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),f.thread);
 });
 test('a god may visit another registered shrine but never an unregistered altar thread',async()=>{
@@ -75,7 +75,7 @@ test('a god may visit another registered shrine but never an unregistered altar 
  await assert.rejects(f.runtime.deliver(f.p,second,'Unregistered.','0'),/inactive_or_unregistered/);
 });
 test('a locked retired ancestor gets one active replacement, with history preserved and retry adoption',async()=>{
- const f=fixture();f.runtime.roster={people:[f.p],policyVersion:'v3'};
+ const f=fixture();f.runtime.roster={people:[f.p],policyVersion:'v3'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const {shrineTitle}=await import('../../lib/altar/core.mjs');
  const old={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p),thread_metadata:{archived:true,locked:true}};
  const fresh={...old,id:'1555666568409653777',thread_metadata:{archived:false,locked:false}};
