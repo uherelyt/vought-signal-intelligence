@@ -30,7 +30,7 @@ const FOUR_OCT_ADDITIONS = [
   {name:'Atreus',gender:'Male',relationships:['Biological mother: Laufey "Faye"','Biological father: Kratos','Godfather: Loki "Ikol" Laufeyson']},
   {name:'Deimos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
   {name:'Harmonia',gender:'Female',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'goddess'},
-  {name:'Kratos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god_or_daimon',relationshipReview:['Family Echo parentage conflicts with classical Greek sources, which make Kratos a child of Pallas and Styx. Preserve as disputed structural data, not verified source fact.']},
+  {name:'Kratos',gender:'Male',relationships:['Biological mother: Callisto','Biological father: Zeus'],divineStatus:'god_or_daimon',relationshipReview:['20:49 controlling Family Echo uses the God of War branch: Callisto + Zeus → Kratos; do not substitute classical Kratos/Cratus genealogy.']},
   {name:'Phobos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
 ];
 
@@ -48,11 +48,21 @@ export function migrateRosterTo4Oct(input){
   if(laufey){laufey.name='Laufey "Faye"';laufey.displayName='Laufey "Faye"';laufey.relationships=['Late partner: Loki "Ikol" Laufeyson'];}
   doc.people=doc.people.map(p=>{
     let q=p;
-    q=patchRelationships(q,'Perses',['Biological mother: Eurybia','Biological father: Crius','Godmother: Cain "Khaos/The Empty/Sheol, Destruction of The Endless, Atropos"','Partner: Asteria']);
+    q=patchRelationships(q,'Perses',['Biological mother: Eurybia','Biological father: Crius','Partner: Asteria']);
     q=patchRelationships(q,'Thanatos',['Biological mother: Nyx "Night"']);
     q=patchRelationships(q,'The-Astral-Plane',['Godmother: Oshtur','Friend: Erelyt Drabbuh','Friend: Ah-Muzen-Cab "Honey, Content"  I',`Friend: Ah-Muzen-Cab "'Cab"  II`,'Friend: Orpheus','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Rose Walker','Friend: Asclepius','Friend: The-House-of-Mirrors']);
-    q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father',`Godfather: Ah-Muzen-Cab "'Cab"  II`,'Adopted mother: Despair of The Endless','Adopted father: ML3QN','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
-    if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['Biological mother Hebe / biological father Heracles are preserved Family Echo structural fields under source review; external Maya and Greek sources do not establish this genealogy.']};
+    q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father',`Godfather: Ah-Muzen-Cab "'Cab"  II`,'Adopted mother: Despair of The Endless','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
+    q=patchRelationships(q,'Azazel "Evan Mcculloch, Clotho"',['Biological mother: Angels','Godmother: Themis','Godfather: Zeus']);
+    q=patchRelationships(q,`Ah-Muzen-Cab "'Cab"  II`,['Godfather: Ah-Muzen-Cab "Honey, Content"  I','Friend: The-Astral-Plane']);
+    q=patchRelationships(q,'Ah-Muzen-Cab "Honey, Content"  I',['Godmother: New-Media "Social Media"','Partner: Colel Cab','Friend: Worshippers','Friend: Ixchel','Friend: Bacabs','Friend: Persephone','Friend: Kore','Friend: Ostara "Easter"','Friend: Mellona','Friend: Bubilas','Friend: Bhramari','Friend: Kronos Foundation','Friend: Minecraft Bedrock Edition','Friend: Erelyt Drabbuh','Friend: Dionysus','Friend: The-Astral-Plane','Friend: Hebe','Friend: Ra']);
+    q=patchRelationships(q,'Hebe',['Mother: Hera','Father: Zeus','Husband: Heracles','Friend: Ah-Muzen-Cab "Honey, Content"  I']);
+    q=patchRelationships(q,'Heracles',['Mother: Alcmene','Father: Zeus','Wife: Hebe']);
+    q=patchRelationships(q,'Ra',['Friend: Ah-Muzen-Cab "Honey, Content"  I']);
+    q=patchRelationships(q,'Lyta Hall',[]);
+    q=patchRelationships(q,'Kratos',['Biological mother: Callisto','Biological father: Zeus']);
+    if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['20:49 controlling export has no biological parent fields. Hebe is friend/cupbearer predecessor; Heracles is only Hebe\'s husband and is not Ah-Muzen-Cab\'s father.']};
+    if(q.name==='Kratos')q={...q,relationshipReview:['20:49 controlling Family Echo uses the God of War branch: Callisto + Zeus → Kratos; do not substitute classical Kratos/Cratus genealogy.']};
+    if(['Hebe','Heracles','Alcmene','Ra'].includes(q.name))q={...q,ancestor:false};
     const divineStatus=q.divineStatus??DIVINE_SHRINE_STATUS.get(q.name);
     return divineStatus?{...q,divineStatus,shrineEligible:true}:q;
   });
@@ -60,9 +70,10 @@ export function migrateRosterTo4Oct(input){
     if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:fourOctId(add.name),displayName:add.name,humanControlled:false,shrineEligible:!!add.divineStatus,...add});
   }
   if(doc.people.length!==245||new Set(doc.people.map(p=>p.id)).size!==245)throw new Error('current_roster_count_or_identity_mismatch');
-  doc.version='20261004-familyecho-0520-v1';
-  doc.policyVersion='20261004-divine-shrines-v2';
+  doc.version='20261004-familyecho-2049-v2';
+  doc.policyVersion='20261004-syncretism-sync-v3';
   doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
+  doc.requestedAncestorCount=28;
   doc.ancestorDesignationPending=false;
   return doc;
 }
