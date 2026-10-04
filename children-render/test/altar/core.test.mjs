@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -166,7 +166,7 @@ test('Perses and Thanatos are promoted to Dynasty shrine ownership and leave Chi
 
 test('Asclepius owns one shared shrine identity and still delivers through the Children application',async()=>{
   const f=fixture();
-  const rosterAsclepius={id:'elaed-asclepius-1',name:'Asclepius',displayName:'Asclepius',relationships:[],humanControlled:false,shrineEligible:false};
+  const rosterAsclepius={id:'elaed-asclepius-1',name:'Asclepius',displayName:'Asclepius',relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'god'};
   const visitor={...rosterAsclepius,id:'child:asclepius',childrenKey:'asclepius',avatarData:'asclepius-portrait',senderName:'Asclepius'};
   const runtime=new AltarRuntime({
     store:f.runtime.store,
@@ -187,6 +187,33 @@ test('Asclepius owns one shared shrine identity and still delivers through the C
   assert.equal(shared.senderName,'Asclepius');
   assert(!runtime.visitors.has('child:asclepius'));
   assert.equal([...runtime.people.values()].filter(p=>p.childrenKey==='asclepius').length,1);
+});
+
+test('4 Oct migration adds current Family Echo records and promotes only sourced divine additions',()=>{
+  const people=Array.from({length:239},(_,i)=>({id:`elaed-${i.toString(16).padStart(12,'0')}-1`,name:`Legacy ${i}`,displayName:`Legacy ${i}`,relationships:[],humanControlled:false,shrineEligible:false}));
+  people[0]={...people[0],name:'Ah-Muzen-Cab "Honey, Content"  I',displayName:'Ah-Muzen-Cab "Honey, Content"  I'};
+  people[1]={...people[1],name:'Ah-Muzen-Cab "'Cab"  II',displayName:'Ah-Muzen-Cab "'Cab"  II'};
+  people[2]={...people[2],name:'Distress of The Endless "Despair of The Endless, Aponoia" Endless',displayName:'Distress of The Endless "Despair of The Endless, Aponoia" Endless'};
+  const migrated=migrateRosterTo4Oct({people,visitors:[],requestedAncestorCount:0});
+  assert.equal(migrated.people.length,245);
+  for(const name of ['Anteros','Deimos','Harmonia','Kratos','Phobos','Ah-Muzen-Cab "'Cab"  II','Distress of The Endless "Despair of The Endless, Aponoia" Endless']){
+    assert.equal(migrated.people.find(p=>p.name===name)?.shrineEligible,true,name);
+  }
+  assert.equal(migrated.people.find(p=>p.name==='Atreus')?.shrineEligible,false);
+  assert.match(migrated.people.find(p=>p.name==='Kratos').relationshipReview[0],/Pallas and Styx/);
+  assert.match(migrated.people.find(p=>p.name==='Ah-Muzen-Cab "Honey, Content"  I').relationshipReview[0],/source review/);
+});
+
+test('a divine vessel persona gets one shared shrine without a duplicate visitor identity',()=>{
+  const f=fixture();
+  const cab={id:'elaed-cccccccccccc-1',name:'Ah-Muzen-Cab "'Cab"  II',displayName:'Ah-Muzen-Cab "'Cab"  II',relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'divine_incarnation'};
+  const visitor={...cab,id:'child:cab',childrenKey:'cab',avatarData:'cab-portrait'};
+  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,childApi:async()=>({}),childrenApplicationId:'children',generate:f.runtime.generate,roster:{people:[f.p,cab],visitors:[visitor]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  const shared=runtime.people.get(cab.id);
+  assert.equal(shared.childrenKey,'cab');
+  assert.equal(shared.avatarData,'cab-portrait');
+  assert(!runtime.visitors.has('child:cab'));
+  assert.equal([...runtime.people.values()].filter(p=>p.childrenKey==='cab').length,1);
 });
 
 test('current-policy locked shrine is replaced when new forum tags must be applied',async()=>{
@@ -213,9 +240,9 @@ test('current-policy locked shrine is replaced when new forum tags must be appli
 });
 
 
-test('Melisseus is force-active because Sacred Hive god status implies an ELAED shrine',()=>{
+test('Melisseus remains active under explicit sourced divinity status',()=>{
   const f=fixture();
-  const melisseus={id:'elaed-dddddddddddd-1',name:'Melisseus',displayName:'Melisseus',relationships:[],humanControlled:false,shrineEligible:false};
+  const melisseus={id:'elaed-dddddddddddd-1',name:'Melisseus',displayName:'Melisseus',relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'god'};
   const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,generate:f.runtime.generate,roster:{people:[f.p,melisseus]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
   const promoted=runtime.people.get(melisseus.id);
   assert(promoted);assert.equal(promoted.shrineEligible,true);assert(isSacredHiveMember(promoted));
