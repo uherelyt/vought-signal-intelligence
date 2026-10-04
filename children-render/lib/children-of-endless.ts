@@ -585,10 +585,6 @@ export const ON_VESSEL: PersonaId[] = [
   "cab",
 ];
 
-// Backward-compatible alias for code paths that mean "may autonomously operate
-// through the vessel application", not "is a Child of the Endless".
-export const AUTONOMOUS_PERSONA_IDS: PersonaId[] = ON_VESSEL;
-
 const ON_VESSEL_ID_SET = new Set<PersonaId>(ON_VESSEL);
 
 export const CHILDREN_VOUGHT_STANCES: Record<PersonaId, {
@@ -647,7 +643,7 @@ export function childrenDreamAndDiscordContext(persona: ChildrenPersona) {
   return `YOUR ULTIMATE DREAM: ${persona.ultimateDream}
 YOUR DISCORD PERSONALITY: ${persona.discordPersonality}
 CREW DREAMS:
-${AUTONOMOUS_PERSONA_IDS.map((id) => `${CHILDREN_PERSONAS[id].displayName}: ${CHILDREN_PERSONAS[id].ultimateDream}`).join("\n")}
+${ON_VESSEL.map((id) => `${CHILDREN_PERSONAS[id].displayName}: ${CHILDREN_PERSONAS[id].ultimateDream}`).join("\n")}
 Bart/Erelyt: ${HUMAN_PARTICIPANT_CANON.ultimateDream} ${HUMAN_PARTICIPANT_CANON.discordPersonality}
 BART/ERELYT TEAM ROLE: ${HUMAN_PARTICIPANT_CANON.role}
 MYTHOGRAPHER CURIOSITY: Bart/Erelyt's curiosity is central to the role. Treat his repeated questions as purposeful inquiry: the modern Pandora / Endless impulse to examine what is hidden, unclear, sealed, contradictory, or unfinished so the story can be understood accurately.
@@ -1106,7 +1102,7 @@ export function getChildrenStatus(now = new Date()) {
     },
     usual_shipboard_stations: {
       ...Object.fromEntries(
-        AUTONOMOUS_PERSONA_IDS.map((id) => [id, CHILDREN_USUAL_STATIONS[id]]),
+        ON_VESSEL.map((id) => [id, CHILDREN_USUAL_STATIONS[id]]),
       ),
       bart_erelyt: { primary: HUMAN_USUAL_STATION.bart_erelyt, human_controlled: true },
     },
@@ -1117,7 +1113,8 @@ export function getChildrenStatus(now = new Date()) {
     cooldown_hours: isChildrenDreamWindow(now) ? 1 : 3,
     daily_cap: 12,
     manual_pulse_limits: { cooldown_hours: numberEnv("CHILDREN_COOLDOWN_HOURS", 4, 1, 24), daily_cap: integerEnv("CHILDREN_DAILY_CAP", 5, 1, 24) },
-    autonomous_personas: AUTONOMOUS_PERSONA_IDS,
+    child_member_ids: CHILD_MEMBER_IDS,
+    on_vessel_personas: ON_VESSEL,
     human_controlled: ["bart", "erelyt"],
   };
 }
@@ -1724,7 +1721,7 @@ function selectVoughtParticipants(messageId: string, content: string) {
   const explicit = explicitlyAddressedPersonas(content);
   if (explicit.length) return explicit.slice(0, 2);
 
-  const ranked = AUTONOMOUS_PERSONA_IDS.map((id) => {
+  const ranked = ON_VESSEL.map((id) => {
     const stance = CHILDREN_VOUGHT_STANCES[id];
     const topical = stance.interest.test(content) ? 1.8 : 1;
     const score =
