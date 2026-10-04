@@ -6,9 +6,10 @@
     "node": "24.x"
   },
   "scripts": {
-    "prestart": "npm test",
+    "prestart": "npm run test:persona",
     "start": "tsx scripts/children-render-worker.ts",
-    "test": "node --test test/altar/*.test.mjs test/native-language-quality.test.mjs && tsx --test test/persona-sets.test.ts"
+    "test": "node --test test/altar/*.test.mjs test/native-language-quality.test.mjs && tsx --test test/persona-sets.test.ts",
+    "test:persona": "tsx --test test/persona-sets.test.ts"
   },
   "dependencies": {
     "redis": "^5.8.2",
