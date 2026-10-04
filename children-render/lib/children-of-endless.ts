@@ -589,7 +589,6 @@ export const ON_VESSEL: PersonaId[] = [
 // through the vessel application", not "is a Child of the Endless".
 export const AUTONOMOUS_PERSONA_IDS: PersonaId[] = ON_VESSEL;
 
-const CHILD_MEMBER_ID_SET = new Set<PersonaId>(CHILD_MEMBER_IDS);
 const ON_VESSEL_ID_SET = new Set<PersonaId>(ON_VESSEL);
 
 export const CHILDREN_VOUGHT_STANCES: Record<PersonaId, {
