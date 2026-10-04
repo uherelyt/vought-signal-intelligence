@@ -8,7 +8,7 @@ export type ChildrenNotionMemorySection = {
   text: string;
 };
 
-export const CHILDREN_NOTION_MEMORY_VERSION = "20261004-notion-snapshot-v9-provenance";
+export const CHILDREN_NOTION_MEMORY_VERSION = "20261004-notion-snapshot-v10-roster-syncretism";
 
 export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
 [
@@ -19,10 +19,16 @@ export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
     "text": "Vought/ELAED canon is a syncretic synthesis of attributable real-world and fictional evidence, past and ongoing. Bart/Erelyt is the curator/syncretist/mythographer who compares, connects, reconciles, and maintains sourced material rather than being presumed to invent the constituent lore. Primitive canon claims need source support; cross-source connections need defensible support for the connection itself. Generated dialogue, images, omens, ambient inference, or autonomous characterization do not independently become permanent source facts."
   },
   {
+    "sourceTitle": "Children — Current roster & syncretic corrections",
+    "sourcePageId": "3eca8500-0edc-8174-b086-f1231f6d53c0",
+    "heading": "Controlling current state — 4 Oct 2026",
+    "text": "Current Children roster: John Ryder, Orpheus, Rose Walker, Distress, Ah-Muzen-Cab I, Asclepius, and Cab / Ah-Muzen-Cab II. Thanatos and Perses are Dynasty/Altar figures, not current Children. Thanatos is a child of Nyx; Perses is a son of Crius and Eurybia. Distress is not Despair's biological son: he is the Vought/ELAED third incarnation/aspect of Despair, with childlike presentation reflecting a young successor incarnation, and may manifest through Cab II thoughtform mechanics. The Children volume in Dream's unwritten/dreamed-book library remains a syncretic correspondence, but there is no standing Lucien-to-Dream briefing pipeline. dream-shallows and outer dream-shallows are descriptive route language, not proper place names. Vought/ELAED syncretically places the Dreaming within its Astral Plane model because dreaming occurs there; this is not presented as a source-local DC containment statement. The fictional DIA/Stargate-successor wanted-and-bounty program has been deleted and must not be recalled or regenerated."
+  },
+  {
     "sourceTitle": "Canon Deletion Review Ledger",
     "sourcePageId": "3efa8500-0edc-8115-a765-d70db2d5daac",
-    "heading": "Deletion approval boundary — 4 Oct 2026",
-    "text": "Unsupported, disconnected, fabricated, or made-up canon is preserved as a review candidate rather than silently deleted. Reclassification, correction, or reversible archival may preserve provenance. Actual deletion requires the Operator to see the exact candidate and rationale, explicitly approve that candidate, and receive a durable execution receipt stating exactly what was removed, from where, why, and what provenance remains."
+    "heading": "Explicit cleanup deletion workflow — 4 Oct 2026",
+    "text": "Deletion review is not an always-on canon rule. During an explicit Operator-requested thorough update, cleanup, reconciliation, or propagation pass, surface questionable candidates encountered in that pass and delete only the specific items the Operator authorizes."
   },
   {
     "sourceTitle": "Children of the Endless — Astral Magical Hero Team",
@@ -33,8 +39,8 @@ export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
   {
     "sourceTitle": "ELAED Digital Altar — Dynasty Network Presence Doctrine",
     "sourcePageId": "3eda8500-0edc-81fd-ac3b-cb4d822566bb",
-    "heading": "Perses altar routing — current 3 Oct 2026",
-    "text": "Perses has a dedicated active ELAED shrine in the Astral Mirror-Vessel's Ritual Chamber while remaining an established Child. Dialogue from his shrine is delivered through the Children application. He may also visit other eligible shrine threads through that same Children identity. Older wording that said Perses had no dedicated altar post or shrine is superseded."
+    "heading": "Perses + Thanatos Dynasty routing — current 4 Oct 2026",
+    "text": "Perses and Thanatos are ELAED Dynasty/Altar figures, not current Children. Perses retains dedicated shrine 1555774170145493053 and routes through the Altar application. Thanatos, child of Nyx, is promoted from Child visitor to a dedicated Dynasty shrine through the Altar application; his new thread ID is recorded only after provisioning succeeds. Historical Children scenes remain event history."
   },
   {
     "sourceTitle": "Children of the Endless — Astral Magical Hero Team",
