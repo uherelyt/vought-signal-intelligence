@@ -12,7 +12,8 @@ import {
 
 const API = "https://discord.com/api/v10";
 const PREFIX = "vought:children-of-the-endless:commands";
-const COMMAND_VERSION = "20261004-membership-vessel-split-1";
+const COMMAND_VERSION = "20261004-membership-vessel-split-2";
+const RETIRED_MEMBER_COMMANDS = new Set(["thanatos", "perses"]);
 export const MEMBER_COMMANDS: Record<string, PersonaId> = {
   john: "john", orpheus: "orpheus", rose: "rose", distress: "distress",
   "ah-muzen-cab": "ah_muzen_cab", asclepius: "asclepius", cab: "cab",
@@ -142,7 +143,8 @@ async function api(path: string, token: string, method = "GET", body?: unknown, 
       continue;
     }
     if (!response.ok) throw new Error(`Discord command API returned ${response.status} for ${path}`);
-    return response.json();
+    if (response.status === 204) return null;
+    return response.json().catch(() => null);
   }
   throw new Error("Discord command registration exhausted retries");
 }
@@ -160,16 +162,43 @@ export async function ensureChildrenSlashCommands(redis: Redis) {
     const channel = await api(`/channels/${location.channelId}`, token, "GET", undefined, deadline);
     if (channel.guild_id) guilds.add(channel.guild_id);
   }
+  let retiredRemoved = 0;
   for (const guild of guilds) {
-    // Upsert our nine commands only; preserve unrelated application commands.
+    // Upsert our nine commands while preserving unrelated application commands.
     for (const command of CHILDREN_SLASH_COMMANDS) {
       await api(`/applications/${appId}/guilds/${guild}/commands`, token, "POST", command, deadline);
+    }
+
+    // Remove stale member commands that belonged to personas no longer hosted as
+    // Children slash targets. Discord does not remove old guild commands merely
+    // because they disappear from the current registration array.
+    const registered = await api(
+      `/applications/${appId}/guilds/${guild}/commands`,
+      token,
+      "GET",
+      undefined,
+      deadline,
+    ) as Array<{ id?: string; name?: string }> | null;
+    for (const command of registered ?? []) {
+      if (!command.id || !command.name || !RETIRED_MEMBER_COMMANDS.has(command.name)) continue;
+      await api(
+        `/applications/${appId}/guilds/${guild}/commands/${command.id}`,
+        token,
+        "DELETE",
+        undefined,
+        deadline,
+      );
+      retiredRemoved += 1;
     }
   }
   if (!guilds.size) throw new Error("No allowlisted guild found for Children commands");
   await redis.set(registryKey, true, { ex: 24 * 60 * 60 });
   await redis.set(`${PREFIX}:registered_at`, new Date().toISOString());
-  console.info("[children-slash-commands-registered]", { count: CHILDREN_SLASH_COMMANDS.length, guilds: guilds.size });
+  console.info("[children-slash-commands-registered]", {
+    count: CHILDREN_SLASH_COMMANDS.length,
+    guilds: guilds.size,
+    retiredRemoved,
+  });
 }
 
 export async function handleChildrenInteraction(interaction: ChildrenInteraction) {
