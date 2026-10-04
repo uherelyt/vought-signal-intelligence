@@ -146,14 +146,21 @@ test('Sacred Hive membership recognizes canonical shrine offices without tagging
   assert(!isSacredHiveMember({displayName:'Perses'}));
 });
 
-test('Perses is promoted to shrine ownership while retaining Children delivery identity',()=>{
+test('Perses and Thanatos are promoted to Dynasty shrine ownership and leave Children delivery',()=>{
   const f=fixture();
   const perses={id:'elaed-cccccccccccc-1',name:'Perses',displayName:'Perses',relationships:[],humanControlled:false,shrineEligible:false};
-  const visitor={...perses,id:'child:perses',childrenKey:'perses',avatarData:'perses-portrait'};
-  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,childApi:async()=>({}),childrenApplicationId:'children',generate:f.runtime.generate,roster:{people:[f.p,perses],visitors:[visitor]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
-  const promoted=[...runtime.people.values()].find(p=>p.name==='Perses');
-  assert(promoted);assert.equal(promoted.id,perses.id);assert.equal(promoted.shrineEligible,true);assert.equal(promoted.childrenKey,'perses');assert.equal(promoted.avatarData,'perses-portrait');
-  assert(![...runtime.visitors.values()].some(p=>p.childrenKey==='perses'));
+  const thanatos={id:'elaed-dddddddddddd-1',name:'Thanatos',displayName:'Thanatos',relationships:[],humanControlled:false,shrineEligible:false};
+  const visitors=[
+    {...perses,id:'child:perses',childrenKey:'perses',avatarData:'perses-portrait',senderName:'Perses'},
+    {...thanatos,id:'child:thanatos',childrenKey:'thanatos',avatarData:'thanatos-portrait',senderName:'Thanatos'},
+  ];
+  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,childApi:async()=>({}),childrenApplicationId:'children',generate:f.runtime.generate,roster:{people:[f.p,perses,thanatos],visitors},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  const promotedPerses=[...runtime.people.values()].find(p=>p.name==='Perses');
+  const promotedThanatos=[...runtime.people.values()].find(p=>p.name==='Thanatos');
+  for(const [promoted,key,portrait] of [[promotedPerses,'perses','perses-portrait'],[promotedThanatos,'thanatos','thanatos-portrait']]){
+    assert(promoted);assert.equal(promoted.shrineEligible,true);assert.equal(promoted.childrenKey,undefined);assert.equal(promoted.formerChildrenKey,key);assert.equal(promoted.avatarData,portrait);
+  }
+  assert(![...runtime.visitors.values()].some(p=>['perses','thanatos'].includes(p.childrenKey)));
 });
 
 
