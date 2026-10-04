@@ -19,6 +19,7 @@ const ALTAR_FORUM_ID = "1555666568409653268";
 const LEGACY_RITUAL_CHANNEL_ID = "1555340514356625489";
 const NETWORK_MEMBER_ROLE = "Network Member";
 const NETWORK_GUEST_ROLE = "Network Guest";
+const TWO_HOURS = 2 * 60 * 60 * 1000;
 const STATE_KEY = "vought:cove-network:state:v1";
 const redisUrl = process.env.REDIS_URL?.trim() || "";
 const redis = redisUrl ? new Redis(redisUrl) : null;
@@ -66,6 +67,7 @@ type Rating = {score:number;messages:number;voiceMinutes:number;lastAward:number
 type Reminder = {id:string;guildId:string;channelId:string;userId:string;dueAt:number;text:string;repeatEveryMs:number|null;remaining:number};
 type Giveaway = {guildId:string;channelId:string;messageId:string;itemId:string;winnerCount:number;endsAt:number;entrants:string[];closed:boolean};
 type Ticket = {id:string;guildId:string;userId:string;subject:string;openedAt:string;closedAt?:string;status:"open"|"closed"};
+type BumpReminder = {guildId:string;channelId:string;dueAt:number|null;lastBumpAt:number|null;remindedAt:number|null};
 type State = {
   ratings:Record<string,Rating>;childBalances:Record<string,number>;userBalances:Record<string,number>;
   inventories:Record<string,string[]>;dailyCredits:Record<string,number>;cooldowns:Record<string,number>;
@@ -74,12 +76,14 @@ type State = {
   tags:Record<string,string>;triggers:Record<string,string>;starboarded:Record<string,boolean>;
   voiceSessions:Record<string,{startedAt:number;guildId:string;name:string}>;welcomed:Record<string,boolean>;
   statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;childrenBridgeSeen:Record<string,boolean>;
+  bumpReminders:Record<string,BumpReminder>;
 };
 
 const blankState = ():State => ({
   ratings:{},childBalances:{},userBalances:{},inventories:{},dailyCredits:{},cooldowns:{},
   activity:{messages:0,voiceMinutes:0,joins:0,leaves:0,commands:0},warnings:{},reminders:[],
-  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{},childrenBridgeSeen:{}
+  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{},childrenBridgeSeen:{},
+  bumpReminders:{}
 });
 
 let state = blankState();
@@ -242,11 +246,60 @@ async function bootstrap(guild:any) {
 function isAdmin(i:any){return i.memberPermissions?.has(PermissionsBitField.Flags.ManageGuild)||i.guild?.ownerId===i.user.id;}
 function isMod(i:any){return i.memberPermissions?.has(PermissionsBitField.Flags.ModerateMembers)||i.memberPermissions?.has(PermissionsBitField.Flags.ManageMessages)||isAdmin(i);}
 
+function messageText(message:any) {
+  const parts=[message?.content||""];
+  for(const embed of message?.embeds||[]){
+    if(embed?.title) parts.push(embed.title);
+    if(embed?.description) parts.push(embed.description);
+    for(const field of embed?.fields||[]) parts.push(field?.name||"",field?.value||"");
+  }
+  return parts.join(" ").toLowerCase();
+}
+function looksLikeDisboardBump(message:any) {
+  if(!message?.author?.bot) return false;
+  const author=String(message.author.username||message.author.globalName||"").toLowerCase();
+  if(!author.includes("disboard")) return false;
+  const text=messageText(message);
+  return text.includes("bump")&&(text.includes("done")||text.includes("success")||text.includes("bumped"));
+}
+function bumpReminderFor(guildId:string) {
+  return state.bumpReminders[guildId] ||= {
+    guildId,
+    channelId:PRIMARY_MATERIAL_CHANNEL,
+    dueAt:null,
+    lastBumpAt:null,
+    remindedAt:null
+  };
+}
+function armBumpReminder(guildId:string,channelId?:string|null) {
+  const entry=bumpReminderFor(guildId);
+  entry.channelId=channelId||entry.channelId||PRIMARY_MATERIAL_CHANNEL;
+  entry.lastBumpAt=Date.now();
+  entry.dueAt=entry.lastBumpAt+TWO_HOURS;
+  entry.remindedAt=null;
+  return entry;
+}
+async function checkBumpReminder(guild:any) {
+  const entry=state.bumpReminders[guild.id];
+  if(!entry?.dueAt||Date.now()<entry.dueAt||entry.remindedAt) return;
+  const channel=guild.channels.cache.get(entry.channelId) || await guild.channels.fetch(entry.channelId).catch(()=>null) || chan(guild,"hq");
+  if(!channel?.isTextBased()) return;
+  await channel.send("<@"+guild.ownerId+"> DISBOARD bump window open. Run /bump manually. Vought/Cove only sends the reminder and will not execute, reward, or force a bump.").catch(()=>{});
+  entry.remindedAt=Date.now();
+  entry.dueAt=null;
+  await log(guild,"DISBOARD BUMP REMINDER sent in <#"+channel.id+">");
+}
+
 const O={SUB:1,GROUP:2,STRING:3,INTEGER:4,USER:6};
 const s=(name:string,description:string,required=false,choices?:any[])=>({type:O.STRING,name,description,required,...(choices?{choices}:{})});
 const n=(name:string,description:string,required=false,min_value?:number,max_value?:number)=>({type:O.INTEGER,name,description,required,...(min_value!==undefined?{min_value}:{}),...(max_value!==undefined?{max_value}:{})});
 const u=(name:string,description:string,required=false)=>({type:O.USER,name,description,required});
 const sub=(name:string,description:string,options:any[]=[])=>({type:O.SUB,name,description,options});
+const bumpGroup:any={type:O.GROUP,name:"bump",description:"DISBOARD bump reminder controls",options:[
+  sub("here","Use this channel for DISBOARD bump reminders"),
+  sub("record","Record a completed bump and arm the next reminder"),
+  sub("status","Show the current DISBOARD bump reminder state")
+]};
 const networkGroup:any={type:O.GROUP,name:"network",description:"Vought International Network utilities",options:[
   sub("profile","Show a Child Network Supe Score",[s("child","Child entity ID",true)]),
   sub("leaderboard","Show Children Network rankings"),sub("store","Show the Vought Network store"),
@@ -273,8 +326,8 @@ async function registerNetworkGroup(token:string,appId:string,guildIds:string[]=
   const rest=new REST({version:"10"}).setToken(token);
   const list:any[]=await rest.get(Routes.applicationCommands(appId)) as any[];
   let c:any=list.find(x=>x.name==="cove");
-  const options=(c?.options||[]).filter((x:any)=>x.name!=="network");
-  options.push(networkGroup);
+  const options=(c?.options||[]).filter((x:any)=>x.name!=="network"&&x.name!=="bump");
+  options.push(bumpGroup,networkGroup);
   const body={name:"cove",description:c?.description||"Cove / Vought International",options};
   if(!c) {
     c=await rest.post(Routes.applicationCommands(appId),{body});
@@ -293,6 +346,7 @@ async function registerNetworkGroup(token:string,appId:string,guildIds:string[]=
 
   console.info("[vought-international-commands-ready]", JSON.stringify({
     networkSubcommands:networkGroup.options.length,
+    bumpSubcommands:bumpGroup.options.length,
     guildMirrors
   }));
 }
@@ -368,7 +422,38 @@ async function updateStats(guild:any) {
 }
 
 async function handleCommand(i:any) {
-  if(!i.isChatInputCommand()||i.commandName!=="cove"||i.options.getSubcommandGroup(false)!=="network") return;
+  if(!i.isChatInputCommand()||i.commandName!=="cove") return;
+  const group=i.options.getSubcommandGroup(false);
+  if(group==="bump"){
+    if(!isNetworkGuild(i.guild)){await i.reply({content:"DISBOARD bump reminders are not enabled here.",ephemeral:true});return;}
+    if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}
+    state.activity.commands++;
+    const cmd=i.options.getSubcommand();
+    await log(i.guild,"COMMAND /cove bump "+cmd+" by <@"+i.user.id+">");
+    const entry=bumpReminderFor(i.guildId);
+    if(cmd==="here"){
+      entry.channelId=i.channelId;
+      await saveState();
+      await i.reply({content:"DISBOARD bump reminders assigned to this channel.",ephemeral:true});
+      return;
+    }
+    if(cmd==="record"){
+      const armed=armBumpReminder(i.guildId,entry.channelId||i.channelId);
+      await saveState();
+      await i.reply({content:"Bump recorded. Next reminder: <t:"+Math.floor((armed.dueAt||0)/1000)+":F> (<t:"+Math.floor((armed.dueAt||0)/1000)+":R>). The actual /bump remains manual.",ephemeral:true});
+      return;
+    }
+    if(cmd==="status"){
+      const details=["Reminder channel: <#"+(entry.channelId||PRIMARY_MATERIAL_CHANNEL)+">"];
+      if(entry.dueAt) details.push("Next reminder: <t:"+Math.floor(entry.dueAt/1000)+":F> (<t:"+Math.floor(entry.dueAt/1000)+":R>)");
+      else if(entry.remindedAt) details.push("Reminder sent: <t:"+Math.floor(entry.remindedAt/1000)+":R>. Waiting for the next successful /bump.");
+      else details.push("No bump reminder is currently armed.");
+      await i.reply({content:details.join("\n"),ephemeral:true});
+      return;
+    }
+    return;
+  }
+  if(group!=="network") return;
   if(!isNetworkGuild(i.guild)){await i.reply({content:"Vought Network utilities are not enabled here.",ephemeral:true});return;}
   if(isNetworkGuest(i.member,i.guild)){await i.reply({content:"Network Guest access is limited to the Ritual Chamber and shrines. Vought Network utilities are not available to guest members.",ephemeral:true});return;}
   state.activity.commands++; const cmd=i.options.getSubcommand(); await log(i.guild,"COMMAND /cove network "+cmd+" by <@"+i.user.id+">");
@@ -402,7 +487,7 @@ async function timers(client:Client) {
   const now=Date.now();
   for(const r of [...state.reminders]) if(r.dueAt<=now){const c:any=await client.channels.fetch(r.channelId).catch(()=>null);if(c?.isTextBased())await c.send("<@"+r.userId+"> Vought reminder: "+r.text).catch(()=>{});if(r.repeatEveryMs&&r.remaining>1){r.remaining--;r.dueAt=now+r.repeatEveryMs;}else state.reminders=state.reminders.filter(x=>x.id!==r.id);}
   for(const g of Object.values(state.giveaways)) if(!g.closed&&g.endsAt<=now){g.closed=true;const ids=[...new Set(g.entrants)].sort(()=>Math.random()-.5).slice(0,g.winnerCount),item=findItem(g.itemId),c:any=await client.channels.fetch(g.channelId).catch(()=>null);if(c?.isTextBased())await c.send("VOUGHT GIVEAWAY CLOSED — "+(item?.[1]||g.itemId)+"\n"+(ids.length?"Winner(s): "+ids.map(id=>"<@"+id+">").join(", "):"No eligible entrants.")).catch(()=>{});}
-  for(const guild of client.guilds.cache.values()) if(isNetworkGuild(guild)){await updateStats(guild).catch(()=>{});await updateStoreSurface(guild).catch(()=>{});}
+  for(const guild of client.guilds.cache.values()) if(isNetworkGuild(guild)){await updateStats(guild).catch(()=>{});await updateStoreSurface(guild).catch(()=>{});await checkBumpReminder(guild).catch(()=>{});}
   await saveState();
 }
 
@@ -416,7 +501,7 @@ export async function startVoughtInternational() {
   const client=new Client({intents,partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember]});
   client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);await updateStoreSurface(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
   client.on(Events.InteractionCreate,i=>handleCommand(i).catch(async e=>{console.error("[vought-network-command-error]",e?.message||e);if(i.isRepliable()){const p={content:"Vought Network command failed.",ephemeral:true};if(i.replied||i.deferred)await i.followUp(p).catch(()=>{});else await i.reply(p).catch(()=>{});}}));
-  client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;const guest=isNetworkGuest(m.member,m.guild);if(!guest)state.activity.messages++;if(!m.author.bot&&!guest){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,NETWORK_MEMBER_ROLE).catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=guest?null:childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
+  client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;if(looksLikeDisboardBump(m)){const existing=bumpReminderFor(m.guildId);const armed=armBumpReminder(m.guildId,existing.channelId||PRIMARY_MATERIAL_CHANNEL);await log(m.guild,"DISBOARD BUMP detected; next reminder <t:"+Math.floor((armed.dueAt||0)/1000)+":F>");await saveState();return;}const guest=isNetworkGuest(m.member,m.guild);if(!guest)state.activity.messages++;if(!m.author.bot&&!guest){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,NETWORK_MEMBER_ROLE).catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=guest?null:childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
   client.on(Events.MessageReactionAdd,async (r,user)=>{if(user.bot)return;if(r.partial)try{await r.fetch();}catch{return;}if(!isNetworkGuild(r.message.guild))return;const g=state.giveaways[r.message.id];if(g&&!g.closed&&r.emoji.name==="🎟️"&&!g.entrants.includes(user.id))g.entrants.push(user.id);if(r.emoji.name==="⭐"&&r.count>=3&&!state.starboarded[r.message.id]){const c=chan(r.message.guild,"starboard");if(c?.isTextBased()){state.starboarded[r.message.id]=true;await c.send("⭐ "+r.count+" — #"+r.message.channel.name+"\n"+r.message.author+": "+(r.message.content||"[attachment]")+"\n"+r.message.url).catch(()=>{});}}await saveState();});
   client.on(Events.GuildMemberAdd,async m=>{if(!isNetworkGuild(m.guild))return;state.activity.joins++;const guest=await role(m.guild,NETWORK_GUEST_ROLE).catch(()=>null);if(guest)await m.roles.add(guest).catch(()=>{});await log(m.guild,"GUEST JOIN <@"+m.id+"> — Ritual Chamber/shrines only");await saveState();});
   client.on(Events.GuildMemberUpdate,async (_oldM,newM)=>{if(!isNetworkGuild(newM.guild))return;const guestRole=newM.guild.roles.cache.find((r:any)=>r.name===NETWORK_GUEST_ROLE),memberRole=newM.guild.roles.cache.find((r:any)=>r.name===NETWORK_MEMBER_ROLE);if(guestRole&&memberRole&&newM.roles.cache.has(guestRole.id)&&newM.roles.cache.has(memberRole.id)){await newM.roles.remove(guestRole,"Promoted from Network Guest to Network Member").catch(()=>{});await log(newM.guild,"GUEST PROMOTED <@"+newM.id+">");}});
