@@ -57,11 +57,28 @@ export class AltarRuntime {
       delete promoted.childrenKey;
       return {rosterPerson,promoted};
     };
+    const bridgeSharedShrine=(childrenKey,name)=>{
+      const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
+      if(!rosterPerson)return {rosterPerson:null,bridged:null};
+      const visitor=(roster.visitors??[]).find(p=>p.childrenKey===childrenKey);
+      const bridged={
+        ...rosterPerson,
+        shrineEligible:true,
+        childrenKey,
+        avatarData:rosterPerson.avatarData??visitor?.avatarData,
+        senderName:rosterPerson.senderName??visitor?.senderName,
+      };
+      return {rosterPerson,bridged};
+    };
     const perses=promoteFormerChild('perses','perses');
     const thanatos=promoteFormerChild('thanatos','thanatos');
+    const ahMuzenCab=bridgeSharedShrine('ah_muzen_cab','ah-muzen-cab "honey, content"  i');
+    const asclepius=bridgeSharedShrine('asclepius','asclepius');
     this.provisionRoster=roster.people.map(p=>{
       if(p.id===perses.rosterPerson?.id)return perses.promoted;
       if(p.id===thanatos.rosterPerson?.id)return thanatos.promoted;
+      if(p.id===ahMuzenCab.rosterPerson?.id)return ahMuzenCab.bridged;
+      if(p.id===asclepius.rosterPerson?.id)return asclepius.bridged;
       if(hiveNameKey(p.displayName??p.name)==='melisseus')return {...p,shrineEligible:true};
       return p;
     });
@@ -69,7 +86,8 @@ export class AltarRuntime {
       if(promoted&&!this.provisionRoster.some(p=>p.id===promoted.id))this.provisionRoster.push(promoted);
     }
     this.people=new Map(this.provisionRoster.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
-    this.visitors=new Map((roster.visitors??[]).filter(p=>!['perses','thanatos'].includes(p.childrenKey)).map(p=>[p.id,p]));
+    const sharedShrineKeys=new Set(['perses','thanatos','ah_muzen_cab','asclepius']);
+    this.visitors=new Map((roster.visitors??[]).filter(p=>!sharedShrineKeys.has(p.childrenKey)).map(p=>[p.id,p]));
     this.trustedChildHooks=new Set();
     this.deliveryLane=Promise.resolve();
   }
