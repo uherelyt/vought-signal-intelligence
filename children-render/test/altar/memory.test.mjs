@@ -8,7 +8,7 @@ const roster={policyVersion:'v2',expectedShrines:1,ancestorDefinition:'Structura
 ]};
 test('Children genealogy recall distinguishes the full tree, active shrines and a visitor ancestor',()=>{
  const memory=formatAltarCanonMemory('Who are Erelyt’s ancestors and which have shrines?',roster);
- assert(memory.includes('full tree has 3 identities; 1 eligible'));
+ assert(memory.includes('full tree has 3 identities; target shrine eligibility is 1'));
  assert(memory.includes('Named ancestors: Nyx; Cab II'));
  assert(!memory.includes('Named ancestors: Nyx; Cab II; Friend'));
  assert(memory.includes('Child visitor without a dedicated shrine'));
