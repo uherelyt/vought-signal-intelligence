@@ -65,9 +65,27 @@ function sectionScore(section: ChildrenNotionMemorySection, terms: string[]) {
   return score;
 }
 
+const SUPERSEDED_MEMORY_PATTERNS = [
+  /Despair's biological child/i,
+  /born when Despair became Erelyt's mother/i,
+  /Perses .*remaining an established Child/i,
+  /speaks .*through the Children application/i,
+  /Death[’']s Son/i,
+  /represented Endless parentage/i,
+  /Lucien.{0,120}brief/i,
+  /all nine autonomous personas/i,
+  /all nine Children may speak/i,
+  /John Ryder, Thanatos, Orpheus, Perses, Rose Walker, Distress/i,
+];
+
+function currentMemorySection(section: ChildrenNotionMemorySection) {
+  return !SUPERSEDED_MEMORY_PATTERNS.some((pattern) => pattern.test(section.text));
+}
+
 export function selectChildrenLongTermMemory(query: string, limit = 5) {
   const terms = expandedQuery(query);
   return CHILDREN_NOTION_MEMORY_SECTIONS
+    .filter(currentMemorySection)
     .map((section, index) => ({ section, index, score: sectionScore(section, terms) }))
     .filter((row) => row.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
