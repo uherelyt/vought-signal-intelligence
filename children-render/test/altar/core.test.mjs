@@ -192,11 +192,11 @@ test('Asclepius owns one shared shrine identity and still delivers through the C
 test('4 Oct migration adds current Family Echo records and promotes only sourced divine additions',()=>{
   const people=Array.from({length:239},(_,i)=>({id:`elaed-${i.toString(16).padStart(12,'0')}-1`,name:`Legacy ${i}`,displayName:`Legacy ${i}`,relationships:[],humanControlled:false,shrineEligible:false}));
   people[0]={...people[0],name:'Ah-Muzen-Cab "Honey, Content"  I',displayName:'Ah-Muzen-Cab "Honey, Content"  I'};
-  people[1]={...people[1],name:'Ah-Muzen-Cab "'Cab"  II',displayName:'Ah-Muzen-Cab "'Cab"  II'};
+  people[1]={...people[1],name:`Ah-Muzen-Cab "'Cab"  II`,displayName:`Ah-Muzen-Cab "'Cab"  II`};
   people[2]={...people[2],name:'Distress of The Endless "Despair of The Endless, Aponoia" Endless',displayName:'Distress of The Endless "Despair of The Endless, Aponoia" Endless'};
   const migrated=migrateRosterTo4Oct({people,visitors:[],requestedAncestorCount:0});
   assert.equal(migrated.people.length,245);
-  for(const name of ['Anteros','Deimos','Harmonia','Kratos','Phobos','Ah-Muzen-Cab "'Cab"  II','Distress of The Endless "Despair of The Endless, Aponoia" Endless']){
+  for(const name of ['Anteros','Deimos','Harmonia','Kratos','Phobos',`Ah-Muzen-Cab "'Cab"  II`,'Distress of The Endless "Despair of The Endless, Aponoia" Endless']){
     assert.equal(migrated.people.find(p=>p.name===name)?.shrineEligible,true,name);
   }
   assert.equal(migrated.people.find(p=>p.name==='Atreus')?.shrineEligible,false);
@@ -206,7 +206,7 @@ test('4 Oct migration adds current Family Echo records and promotes only sourced
 
 test('a divine vessel persona gets one shared shrine without a duplicate visitor identity',()=>{
   const f=fixture();
-  const cab={id:'elaed-cccccccccccc-1',name:'Ah-Muzen-Cab "'Cab"  II',displayName:'Ah-Muzen-Cab "'Cab"  II',relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'divine_incarnation'};
+  const cab={id:'elaed-cccccccccccc-1',name:`Ah-Muzen-Cab "'Cab"  II`,displayName:`Ah-Muzen-Cab "'Cab"  II`,relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'divine_incarnation'};
   const visitor={...cab,id:'child:cab',childrenKey:'cab',avatarData:'cab-portrait'};
   const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,childApi:async()=>({}),childrenApplicationId:'children',generate:f.runtime.generate,roster:{people:[f.p,cab],visitors:[visitor]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
   const shared=runtime.people.get(cab.id);
