@@ -48,19 +48,28 @@ export function isSacredHiveMember(p){
 export class AltarRuntime {
   constructor({store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
     Object.assign(this,{store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now,record,progress});
-    const rosterPerses=roster.people.find(p=>p.childrenKey==='perses')??roster.people.find(p=>String(p.name??'').trim().toLowerCase()==='perses');
-    const visitorPerses=(roster.visitors??[]).find(p=>p.childrenKey==='perses');
-    const promotedPerses=rosterPerses
-      ? {...rosterPerses,shrineEligible:true,childrenKey:'perses',avatarData:rosterPerses.avatarData??visitorPerses?.avatarData,senderName:rosterPerses.senderName??visitorPerses?.senderName}
-      : visitorPerses?{...visitorPerses,shrineEligible:true}:null;
+    const promoteFormerChild=(childrenKey,name)=>{
+      const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
+      const visitor=(roster.visitors??[]).find(p=>p.childrenKey===childrenKey);
+      const source=rosterPerson??visitor;
+      if(!source)return {rosterPerson:null,promoted:null};
+      const promoted={...source,shrineEligible:true,avatarData:source.avatarData??visitor?.avatarData,senderName:source.senderName??visitor?.senderName,formerChildrenKey:childrenKey};
+      delete promoted.childrenKey;
+      return {rosterPerson,promoted};
+    };
+    const perses=promoteFormerChild('perses','perses');
+    const thanatos=promoteFormerChild('thanatos','thanatos');
     this.provisionRoster=roster.people.map(p=>{
-      if(p.id===rosterPerses?.id)return promotedPerses;
+      if(p.id===perses.rosterPerson?.id)return perses.promoted;
+      if(p.id===thanatos.rosterPerson?.id)return thanatos.promoted;
       if(hiveNameKey(p.displayName??p.name)==='melisseus')return {...p,shrineEligible:true};
       return p;
     });
-    if(promotedPerses&&!this.provisionRoster.some(p=>p.id===promotedPerses.id))this.provisionRoster.push(promotedPerses);
+    for(const promoted of [perses.promoted,thanatos.promoted]){
+      if(promoted&&!this.provisionRoster.some(p=>p.id===promoted.id))this.provisionRoster.push(promoted);
+    }
     this.people=new Map(this.provisionRoster.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
-    this.visitors=new Map((roster.visitors??[]).filter(p=>p.childrenKey!=='perses').map(p=>[p.id,p]));
+    this.visitors=new Map((roster.visitors??[]).filter(p=>!['perses','thanatos'].includes(p.childrenKey)).map(p=>[p.id,p]));
     this.trustedChildHooks=new Set();
     this.deliveryLane=Promise.resolve();
   }
