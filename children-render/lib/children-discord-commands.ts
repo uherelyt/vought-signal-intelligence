@@ -12,11 +12,10 @@ import {
 
 const API = "https://discord.com/api/v10";
 const PREFIX = "vought:children-of-the-endless:commands";
-const COMMAND_VERSION = "20261002-slash-image-persist-3";
+const COMMAND_VERSION = "20261004-seven-child-roster-1";
 export const MEMBER_COMMANDS: Record<string, PersonaId> = {
-  john: "john", thanatos: "thanatos", orpheus: "orpheus", perses: "perses",
-  rose: "rose", distress: "distress", "ah-muzen-cab": "ah_muzen_cab",
-  asclepius: "asclepius", cab: "cab",
+  john: "john", orpheus: "orpheus", rose: "rose", distress: "distress",
+  "ah-muzen-cab": "ah_muzen_cab", asclepius: "asclepius", cab: "cab",
 };
 const messageOption = {
   type: 3, name: "message", description: "Optional message or question.",
