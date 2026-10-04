@@ -204,6 +204,15 @@ test('4 Oct migration adds current Family Echo records and promotes only sourced
   assert.match(migrated.people.find(p=>p.name==='Ah-Muzen-Cab "Honey, Content"  I').relationshipReview[0],/source review/);
 });
 
+test('any explicitly divine roster identity becomes shrine-eligible',()=>{
+  const people=Array.from({length:239},(_,i)=>({id:`elaed-${i.toString(16).padStart(12,'0')}-1`,name:`Legacy ${i}`,displayName:`Legacy ${i}`,relationships:[],humanControlled:false,shrineEligible:false}));
+  people[17]={...people[17],name:'Future Divine Figure',displayName:'Future Divine Figure',divineStatus:'divine_being'};
+  const migrated=migrateRosterTo4Oct({people,visitors:[],requestedAncestorCount:0});
+  const figure=migrated.people.find(p=>p.name==='Future Divine Figure');
+  assert.equal(figure?.shrineEligible,true);
+  assert.equal(figure?.divineStatus,'divine_being');
+});
+
 test('a divine vessel persona gets one shared shrine without a duplicate visitor identity',()=>{
   const f=fixture();
   const cab={id:'elaed-cccccccccccc-1',name:`Ah-Muzen-Cab "'Cab"  II`,displayName:`Ah-Muzen-Cab "'Cab"  II`,relationships:[],humanControlled:false,shrineEligible:true,divineStatus:'divine_incarnation'};
