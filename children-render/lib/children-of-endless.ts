@@ -571,17 +571,26 @@ export const HUMAN_PARTICIPANT_CANON = {
     "Human-controlled participant. Never generate Bart/Erelyt's dialogue, actions, thoughts, decisions, or consent.",
 } as const;
 
-export const AUTONOMOUS_PERSONA_IDS: PersonaId[] = [
+export const CHILD_MEMBER_IDS: PersonaId[] = [
   "john",
   "orpheus",
   "rose",
   "distress",
-  "ah_muzen_cab",
+];
+
+export const ON_VESSEL: PersonaId[] = [
+  ...CHILD_MEMBER_IDS,
   "asclepius",
+  "ah_muzen_cab",
   "cab",
 ];
 
-const ACTIVE_CHILD_PERSONA_IDS = new Set<PersonaId>(AUTONOMOUS_PERSONA_IDS);
+// Backward-compatible alias for code paths that mean "may autonomously operate
+// through the vessel application", not "is a Child of the Endless".
+export const AUTONOMOUS_PERSONA_IDS: PersonaId[] = ON_VESSEL;
+
+const CHILD_MEMBER_ID_SET = new Set<PersonaId>(CHILD_MEMBER_IDS);
+const ON_VESSEL_ID_SET = new Set<PersonaId>(ON_VESSEL);
 
 export const CHILDREN_VOUGHT_STANCES: Record<PersonaId, {
   stance: string;
@@ -774,7 +783,7 @@ function uniquePersonaIds(values: unknown): PersonaId[] {
     if (typeof value !== "string") continue;
     if (!(value in CHILDREN_PERSONAS)) continue;
     const id = value as PersonaId;
-    if (!ACTIVE_CHILD_PERSONA_IDS.has(id)) continue;
+    if (!ON_VESSEL_ID_SET.has(id)) continue;
     if (seen.has(id)) continue;
     seen.add(id);
     result.push(id);
@@ -782,16 +791,36 @@ function uniquePersonaIds(values: unknown): PersonaId[] {
   return result;
 }
 
-export function selectParticipants(seed: string, count = 3, requested?: PersonaId[]) {
-  const explicit = uniquePersonaIds(requested);
-  if (explicit.length) return explicit.slice(0, 4);
+function selectFromPersonaSet(
+  seed: string,
+  poolIds: PersonaId[],
+  count: number,
+  requested?: PersonaId[],
+) {
+  const allowed = new Set(poolIds);
+  const explicit = uniquePersonaIds(requested).filter((id) => allowed.has(id));
+  if (explicit.length) return explicit.slice(0, Math.min(4, poolIds.length));
 
-  const pool = AUTONOMOUS_PERSONA_IDS.map((id) => ({
+  const pool = poolIds.map((id) => ({
     id,
     score: (hashText(`${seed}:${id}`) / 0xffffffff) / CHILDREN_PERSONAS[id].weight,
   })).sort((a, b) => a.score - b.score);
 
-  return pool.slice(0, Math.min(4, Math.max(2, count))).map((item) => item.id);
+  return pool
+    .slice(0, Math.min(poolIds.length, Math.min(4, Math.max(1, count))))
+    .map((item) => item.id);
+}
+
+export function selectParticipants(seed: string, count = 3, requested?: PersonaId[]) {
+  return selectFromPersonaSet(seed, ON_VESSEL, count, requested);
+}
+
+export function selectChildMembers(seed: string, count = 3, requested?: PersonaId[]) {
+  return selectFromPersonaSet(seed, CHILD_MEMBER_IDS, count, requested);
+}
+
+export function selectCrew(seed: string, count = 3, requested?: PersonaId[]) {
+  return selectFromPersonaSet(seed, ON_VESSEL, count, requested);
 }
 
 export function sanitizeChildrenMessage(value: string) {
@@ -1689,7 +1718,7 @@ function explicitlyAddressedPersonas(value: string) {
   if (/\bday prince\b/.test(text)) add("ah_muzen_cab");
   if (/\bcab\b|astral mirror[-\s]?vessel|\bthe vessel\b|\bthe ship\b/.test(withoutFullNames)) add("cab");
 
-  return matches.filter((id) => ACTIVE_CHILD_PERSONA_IDS.has(id));
+  return matches.filter((id) => ON_VESSEL_ID_SET.has(id));
 }
 
 function selectVoughtParticipants(messageId: string, content: string) {
@@ -1715,12 +1744,12 @@ export function selectReactiveParticipants(messageId: string, content: string, s
   const explicit = explicitlyAddressedPersonas(content);
   if (explicit.length) return explicit.slice(0, 2);
 
-  const groupAddress =
-    /\bchildren\b|\beveryone\b|\ball of you\b|\bcrew\b/i.test(content);
-  return selectParticipants(
-    `reactive:${messageId}:${content.slice(0, 80)}`,
-    2,
-  ).slice(0, groupAddress ? 2 : 1);
+  const childGroupAddress = /\bchildren\b/i.test(content);
+  const crewGroupAddress = /\bcrew\b|\beveryone\b|\ball of you\b/i.test(content);
+  const seed = `reactive:${messageId}:${content.slice(0, 80)}`;
+  if (childGroupAddress) return selectChildMembers(seed, 2).slice(0, 2);
+  if (crewGroupAddress) return selectCrew(seed, 2).slice(0, 2);
+  return selectParticipants(seed, 1).slice(0, 1);
 }
 
 async function generateReactiveTurn(
