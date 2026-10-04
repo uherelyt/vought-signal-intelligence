@@ -297,14 +297,14 @@ export async function startAltar(env=process.env) {
           if(id&&await store.get(`${PREFIX}:thread:${id}`))throw new Error('acceptance_retired_shrine_routable');
         }
       }
-      const perses=[...runtime.people.values()].find(x=>x.childrenKey==='perses');
-      if(!perses)throw new Error('perses_shrine_persona_missing');
+      const perses=[...runtime.people.values()].find(x=>String(x.name??x.displayName??'').trim().toLowerCase()==='perses');
+      if(!perses||perses.childrenKey)throw new Error('perses_dynasty_shrine_persona_missing');
       const melisseus=[...runtime.people.values()].find(x=>String(x.name??x.displayName??'').trim().toLowerCase()==='melisseus');
       if(!melisseus)throw new Error('melisseus_shrine_persona_missing');
       const persesThreadId=await store.get(`${PREFIX}:shrine:${perses.id}`);
       const persesChannel=await runtime.checkThread(persesThreadId,perses);
       const forumTags=(await api(`/channels/${FORUM_ID}`)).available_tags??[];
-      if(!persesChannel.applied_tags?.some(id=>forumTags.some(t=>t.id===id&&t.name==='Children bridge')))throw new Error('perses_children_bridge_tag_missing');
+      if(persesChannel.applied_tags?.some(id=>forumTags.some(t=>t.id===id&&t.name==='Children bridge')))throw new Error('perses_children_bridge_tag_stale');
       const sacredHive=[...runtime.people.values()].filter(isSacredHiveMember);
       for(const member of sacredHive){
         const memberThreadId=await store.get(`${PREFIX}:shrine:${member.id}`);
@@ -316,7 +316,7 @@ export async function startAltar(env=process.env) {
       if(!melisseusChannel.applied_tags?.some(id=>forumTags.some(t=>t.id===id&&t.name==='Sacred Hive')))throw new Error('melisseus_sacred_hive_tag_missing');
       const melisseusOrderId=await store.get(`${PREFIX}:order:${melisseus.id}`);
       const cleanupRequired=altarStatus.legacyRitualRetired!==true;
-      const result={state:cleanupRequired?'passed_with_manual_cleanup':'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_children_application',persesThreadId,melisseusThreadId,melisseusOrderId,sacredHiveShrineCount:sacredHive.length,retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired,legacyRitualCleanupRequired:cleanupRequired,legacyRitualCleanupReason:cleanupRequired?altarStatus.legacyRitualRetireError:undefined,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
+      const result={state:cleanupRequired?'passed_with_manual_cleanup':'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_altar_application',persesThreadId,melisseusThreadId,melisseusOrderId,sacredHiveShrineCount:sacredHive.length,retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired,legacyRitualCleanupRequired:cleanupRequired,legacyRitualCleanupReason:cleanupRequired?altarStatus.legacyRitualRetireError:undefined,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
       altarStatus.acceptance=result;
       await store.set(key,JSON.stringify(result));
       console.info('[altar-acceptance]',JSON.stringify(result));
@@ -359,7 +359,7 @@ export async function startAltar(env=process.env) {
   let provisioned=false,provisioning=false,ticking=false;
   async function provisionAll(){
     if(provisioned||provisioning)return;provisioning=true;
-    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();altarStatus.persesDedicatedPostRemoved=runtime.persesDedicatedPostRemoved;altarStatus.persesMode='dedicated_shrine_children_application';await verifyPortraits(runtime);await retireLegacyRitualChannel();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';altarStatus.presentationVersion=SHRINE_PRESENTATION_VERSION;altarStatus.presentationVerifiedCount=runtime.presentationVerifiedCount;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);console.info('[altar-presentation-verified]',JSON.stringify({version:SHRINE_PRESENTATION_VERSION,count:runtime.presentationVerifiedCount,portraitCount:portraitKeys.length,fallbackIconCount,fallbackIconVerified:altarStatus.fallbackIconVerified===true,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_children_application',retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired}));await runtime.webhook(true);await verifyActivation();}
+    try{altarStatus.state='provisioning';altarStatus.shrineCount=await runtime.provision();altarStatus.persesDedicatedPostRemoved=runtime.persesDedicatedPostRemoved;altarStatus.persesMode='dedicated_shrine_altar_application';await verifyPortraits(runtime);await retireLegacyRitualChannel();provisioned=true;altarStatus.startupPhase='complete';altarStatus.state='live';altarStatus.presentationVersion=SHRINE_PRESENTATION_VERSION;altarStatus.presentationVerifiedCount=runtime.presentationVerifiedCount;console.info('[altar-shrines-provisioned]',altarStatus.shrineCount);console.info('[altar-presentation-verified]',JSON.stringify({version:SHRINE_PRESENTATION_VERSION,count:runtime.presentationVerifiedCount,portraitCount:portraitKeys.length,fallbackIconCount,fallbackIconVerified:altarStatus.fallbackIconVerified===true,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_altar_application',retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired}));await runtime.webhook(true);await verifyActivation();}
     catch(e){altarStatus.state='provisioning_retry';console.error('[altar-provisioning-retry]',errorCode(e));}
     finally{provisioning=false;}
   }
