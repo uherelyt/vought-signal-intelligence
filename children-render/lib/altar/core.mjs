@@ -11,16 +11,70 @@ export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909',
 export const TAROT = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World', ...['Wands','Cups','Swords','Pentacles'].flatMap(s=>['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'].map(n=>`${n} of ${s}`))];
 export const RUNES = ['Fehu','Uruz','Thurisaz','Ansuz','Raidho','Kenaz','Gebo','Wunjo','Hagalaz','Nauthiz','Isa','Jera','Eihwaz','Perthro','Algiz','Sowilo','Tiwaz','Berkano','Ehwaz','Mannaz','Laguz','Ingwaz','Dagaz','Othala'];
 
-export function decodeRoster(value) {
-  const doc=JSON.parse(gunzipSync(Buffer.from(value,'base64'), {maxOutputLength:2_000_000}).toString('utf8'));
-  if (!Array.isArray(doc.people) || doc.people.length!==239 || new Set(doc.people.map(p=>p.id)).size!==239) throw new Error('roster_count_or_identity_mismatch');
-  for(const p of doc.people) if(!/^elaed-[a-f0-9]{12}-\d+$/.test(p.id)||typeof p.name!=='string'||!Array.isArray(p.relationships)) throw new Error('invalid_roster');
-  if(doc.policyVersion){
-    if(doc.people.filter(p=>p.shrineEligible).length!==doc.expectedShrines)throw new Error('shrine_eligibility_count_mismatch');
-    if(doc.people.filter(p=>p.ancestor).length!==doc.requestedAncestorCount||doc.ancestorDesignationPending)throw new Error('ancestor_count_mismatch');
-    if(doc.people.some(p=>p.shrineEligible&&p.childrenKey&&p.childrenKey!=='ah_muzen_cab'))throw new Error('children_dedicated_shrine_forbidden');
-    if(!Array.isArray(doc.visitors)||doc.visitors.some(p=>!p.childrenKey||p.shrineEligible!==false||p.humanControlled)||new Set(doc.visitors.map(p=>p.id)).size!==doc.visitors.length)throw new Error('invalid_children_visitors');
+const DIVINE_SHRINE_STATUS = new Map([
+  ['Ah-Muzen-Cab "'Cab"  II','divine_incarnation'],
+  ['Asclepius','god'],
+  ['Distress of The Endless "Despair of The Endless, Aponoia" Endless','endless_incarnation'],
+  ['Melisseus','god'],
+  ['Perses','god'],
+  ['Thanatos','god'],
+  ['Anteros','god'],
+  ['Deimos','god'],
+  ['Harmonia','goddess'],
+  ['Kratos','god_or_daimon'],
+  ['Phobos','god'],
+]);
+
+const FOUR_OCT_ADDITIONS = [
+  {name:'Anteros',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
+  {name:'Atreus',gender:'Male',relationships:['Biological mother: Laufey "Faye"','Biological father: Kratos','Godfather: Loki "Ikol" Laufeyson']},
+  {name:'Deimos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
+  {name:'Harmonia',gender:'Female',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'goddess'},
+  {name:'Kratos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god_or_daimon',relationshipReview:['Family Echo parentage conflicts with classical Greek sources, which make Kratos a child of Pallas and Styx. Preserve as disputed structural data, not verified source fact.']},
+  {name:'Phobos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
+];
+
+function fourOctId(name){
+  return `elaed-${createHash('sha256').update(`familyecho-2026-10-04-0520:${name}`).digest('hex').slice(0,12)}-1`;
+}
+function patchRelationships(p,name,relationships){
+  if(p.name===name)return {...p,relationships};
+  return p;
+}
+export function migrateRosterTo4Oct(input){
+  const doc={...input,people:input.people.map(p=>({...p,relationships:[...p.relationships]})),visitors:(input.visitors??[]).map(p=>({...p}))};
+  if(doc.people.length!==239&&doc.people.length!==245)throw new Error('roster_count_or_identity_mismatch');
+  let laufey=doc.people.find(p=>p.name==='Laufey');
+  if(laufey){laufey.name='Laufey "Faye"';laufey.displayName='Laufey "Faye"';laufey.relationships=['Late partner: Loki "Ikol" Laufeyson'];}
+  doc.people=doc.people.map(p=>{
+    let q=p;
+    q=patchRelationships(q,'Perses',['Biological mother: Eurybia','Biological father: Crius','Godmother: Cain "Khaos/The Empty/Sheol, Destruction of The Endless, Atropos"','Partner: Asteria']);
+    q=patchRelationships(q,'Thanatos',['Biological mother: Nyx "Night"']);
+    q=patchRelationships(q,'The-Astral-Plane',['Godmother: Oshtur','Friend: Erelyt Drabbuh','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Ah-Muzen-Cab "'Cab"  II','Friend: Orpheus','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Rose Walker','Friend: Asclepius','Friend: The-House-of-Mirrors']);
+    q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father','Godfather: Ah-Muzen-Cab "'Cab"  II','Adopted mother: Despair of The Endless','Adopted father: ML3QN','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
+    if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['Biological mother Hebe / biological father Heracles are preserved Family Echo structural fields under source review; external Maya and Greek sources do not establish this genealogy.']};
+    const divineStatus=DIVINE_SHRINE_STATUS.get(q.name);
+    return divineStatus?{...q,divineStatus,shrineEligible:true}:q;
+  });
+  for(const add of FOUR_OCT_ADDITIONS){
+    if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:fourOctId(add.name),displayName:add.name,humanControlled:false,shrineEligible:!!add.divineStatus,...add});
   }
+  if(doc.people.length!==245||new Set(doc.people.map(p=>p.id)).size!==245)throw new Error('current_roster_count_or_identity_mismatch');
+  doc.version='20261004-familyecho-0520-v1';
+  doc.policyVersion='20261004-divine-shrines-v1';
+  doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
+  doc.ancestorDesignationPending=false;
+  return doc;
+}
+
+export function decodeRoster(value) {
+  const legacy=JSON.parse(gunzipSync(Buffer.from(value,'base64'), {maxOutputLength:2_000_000}).toString('utf8'));
+  if(!Array.isArray(legacy.people)||!Array.isArray(legacy.visitors))throw new Error('invalid_roster');
+  const doc=migrateRosterTo4Oct(legacy);
+  for(const p of doc.people)if(!/^elaed-[a-f0-9]{12}-\d+$/.test(p.id)||typeof p.name!=='string'||!Array.isArray(p.relationships))throw new Error('invalid_roster');
+  if(doc.people.filter(p=>p.shrineEligible!==false).length!==doc.expectedShrines)throw new Error('shrine_eligibility_count_mismatch');
+  if(doc.people.filter(p=>p.ancestor).length!==doc.requestedAncestorCount||doc.ancestorDesignationPending)throw new Error('ancestor_count_mismatch');
+  if(doc.visitors.some(p=>!p.childrenKey||p.shrineEligible!==false||p.humanControlled)||new Set(doc.visitors.map(p=>p.id)).size!==doc.visitors.length)throw new Error('invalid_children_visitors');
   return doc;
 }
 export function validThread(channel, guildId) {return channel?.type===11 && channel.parent_id===FORUM_ID && channel.guild_id===guildId;}
@@ -57,37 +111,25 @@ export class AltarRuntime {
       delete promoted.childrenKey;
       return {rosterPerson,promoted};
     };
-    const bridgeSharedShrine=(childrenKey,name)=>{
-      const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
-      if(!rosterPerson)return {rosterPerson:null,bridged:null};
-      const visitor=(roster.visitors??[]).find(p=>p.childrenKey===childrenKey);
-      const bridged={
-        ...rosterPerson,
-        shrineEligible:true,
-        childrenKey,
-        avatarData:rosterPerson.avatarData??visitor?.avatarData,
-        senderName:rosterPerson.senderName??visitor?.senderName,
-      };
-      return {rosterPerson,bridged};
-    };
     const perses=promoteFormerChild('perses','perses');
     const thanatos=promoteFormerChild('thanatos','thanatos');
-    const ahMuzenCab=bridgeSharedShrine('ah_muzen_cab','ah-muzen-cab "honey, content"  i');
-    const asclepius=bridgeSharedShrine('asclepius','asclepius');
+    const sharedShrineKeys=new Set(['perses','thanatos']);
+    const visitors=roster.visitors??[];
+    const visitorFor=p=>visitors.find(v=>v.childrenKey===p.childrenKey)??visitors.find(v=>hiveNameKey(v.displayName??v.name)===hiveNameKey(p.displayName??p.name));
     this.provisionRoster=roster.people.map(p=>{
       if(p.id===perses.rosterPerson?.id)return perses.promoted;
       if(p.id===thanatos.rosterPerson?.id)return thanatos.promoted;
-      if(p.id===ahMuzenCab.rosterPerson?.id)return ahMuzenCab.bridged;
-      if(p.id===asclepius.rosterPerson?.id)return asclepius.bridged;
-      if(hiveNameKey(p.displayName??p.name)==='melisseus')return {...p,shrineEligible:true};
-      return p;
+      if(p.shrineEligible===false)return p;
+      const visitor=visitorFor(p);
+      if(!visitor||['perses','thanatos'].includes(visitor.childrenKey))return p;
+      sharedShrineKeys.add(visitor.childrenKey);
+      return {...p,childrenKey:visitor.childrenKey,avatarData:p.avatarData??visitor.avatarData,senderName:p.senderName??visitor.senderName};
     });
     for(const promoted of [perses.promoted,thanatos.promoted]){
       if(promoted&&!this.provisionRoster.some(p=>p.id===promoted.id))this.provisionRoster.push(promoted);
     }
     this.people=new Map(this.provisionRoster.filter(p=>p.shrineEligible!==false).map(p=>[p.id,p]));
-    const sharedShrineKeys=new Set(['perses','thanatos','ah_muzen_cab','asclepius']);
-    this.visitors=new Map((roster.visitors??[]).filter(p=>!sharedShrineKeys.has(p.childrenKey)).map(p=>[p.id,p]));
+    this.visitors=new Map(visitors.filter(p=>!sharedShrineKeys.has(p.childrenKey)).map(p=>[p.id,p]));
     this.trustedChildHooks=new Set();
     this.deliveryLane=Promise.resolve();
   }
