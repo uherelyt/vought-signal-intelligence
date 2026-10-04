@@ -29,8 +29,6 @@ const children = [
   ["orpheus","Orpheus",["orpheus"]],
   ["rose-walker","Rose Walker",["rose","rose walker"]],
   ["john-ryder",'John "Pestilence" Ryder',["john","john ryder","pestilence"]],
-  ["thanatos","Thanatos",["thanatos"]],
-  ["perses","Perses",["perses"]],
   ["distress","Distress of the Endless",["distress"]],
   ["asclepius","Asclepius",["asclepius"]],
   ["ah-muzen-cab","Ah-Muzen-Cab",["ah-muzen-cab","ah muzen cab"]],
