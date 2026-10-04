@@ -121,7 +121,7 @@ export async function startAltar(env=process.env) {
   const c=config(env);
   // Roster count is visible even while the new application's credentials await provisioning.
   let roster;
-  if(env.ALTAR_ROSTER_GZIP_BASE64){try{roster=decodeRoster(env.ALTAR_ROSTER_GZIP_BASE64);altarStatus.rosterCount=roster.people.length;altarStatus.rosterVersion=roster.version;}catch(e){altarStatus.state='invalid_roster';console.error('[altar-configuration]',errorCode(e));return;}}
+  if(env.ALTAR_ROSTER_GZIP_BASE64){try{roster=decodeRoster(env.ALTAR_ROSTER_GZIP_BASE64);altarStatus.rosterCount=roster.people.length;altarStatus.rosterVersion=roster.version;for(let i=0;i<env.ALTAR_ROSTER_GZIP_BASE64.length;i+=3500)console.info('[altar-roster-snapshot]',JSON.stringify({i:i/3500,chunk:env.ALTAR_ROSTER_GZIP_BASE64.slice(i,i+3500)}));}catch(e){altarStatus.state='invalid_roster';console.error('[altar-configuration]',errorCode(e));return;}}
   if(c.reason){altarStatus.state=c.reason;console.info('[altar-configuration]',JSON.stringify(altarStatus));return;}
   const redis=createClient({url:env.REDIS_URL});redis.on('error',()=>{altarStatus.state='redis_unavailable';});await redis.connect();
   const store={get:k=>redis.get(k),set:(k,v,o={})=>redis.set(k,String(v),{...(o.nx?{NX:true}:{}),...(o.ex?{EX:o.ex}:{})}),incr:k=>redis.incr(k),del:k=>redis.del(k),expire:(k,s)=>redis.expire(k,s),lpush:(k,v)=>redis.lPush(k,v),lrange:(k,a,b)=>redis.lRange(k,a,b),ltrim:(k,a,b)=>redis.lTrim(k,a,b),remove:(k,v)=>redis.lRem(k,1,v)};
