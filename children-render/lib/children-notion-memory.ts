@@ -8,10 +8,22 @@ export type ChildrenNotionMemorySection = {
   text: string;
 };
 
-export const CHILDREN_NOTION_MEMORY_VERSION = "20261003-notion-snapshot-v11";
+export const CHILDREN_NOTION_MEMORY_VERSION = "20261004-notion-snapshot-v9-provenance";
 
 export const CHILDREN_NOTION_MEMORY_SECTIONS: ChildrenNotionMemorySection[] =
 [
+  {
+    "sourceTitle": "Canon Provenance & Syncretism Doctrine",
+    "sourcePageId": "3efa8500-0edc-81ac-ab46-c94e9eeb0c43",
+    "heading": "Controlling provenance rule — 4 Oct 2026",
+    "text": "Vought/ELAED canon is a syncretic synthesis of attributable real-world and fictional evidence, past and ongoing. Bart/Erelyt is the curator/syncretist/mythographer who compares, connects, reconciles, and maintains sourced material rather than being presumed to invent the constituent lore. Primitive canon claims need source support; cross-source connections need defensible support for the connection itself. Generated dialogue, images, omens, ambient inference, or autonomous characterization do not independently become permanent source facts."
+  },
+  {
+    "sourceTitle": "Canon Deletion Review Ledger",
+    "sourcePageId": "3efa8500-0edc-8115-a765-d70db2d5daac",
+    "heading": "Deletion approval boundary — 4 Oct 2026",
+    "text": "Unsupported, disconnected, fabricated, or made-up canon is preserved as a review candidate rather than silently deleted. Reclassification, correction, or reversible archival may preserve provenance. Actual deletion requires the Operator to see the exact candidate and rationale, explicitly approve that candidate, and receive a durable execution receipt stating exactly what was removed, from where, why, and what provenance remains."
+  },
   {
     "sourceTitle": "Children of the Endless — Astral Magical Hero Team",
     "sourcePageId": "3eca8500-0edc-8174-b086-f1231f6d53c0",
