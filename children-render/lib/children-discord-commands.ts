@@ -5,7 +5,7 @@ import {
   type ChildrenDiscordImageAttachment,
 } from "./children-image-input.ts";
 import {
-  CHILD_MEMBER_IDS, ON_VESSEL, CHILDREN_PERSONAS, getChildrenLocationByChannelId,
+  CHILD_MEMBER_IDS, CHILDREN_PERSONAS, getChildrenLocationByChannelId,
   getChildrenLocationRegistry, runChildrenReactiveMessage, selectChildMembers, selectCrew, selectChildrenLocationForTopic,
   type PersonaId,
 } from "./children-of-endless.ts";
@@ -266,7 +266,7 @@ export async function handleChildrenInteraction(interaction: ChildrenInteraction
       });
     }
   }
-  let content = "The Children could not answer. Please try again.";
+  let content = "The requested vessel persona(s) could not answer. Please try again.";
   try {
     const result = await runChildrenReactiveMessage({
       messageId: `interaction:${interaction.id}`, channelId: location.channelId,
