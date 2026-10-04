@@ -12,7 +12,7 @@ export const TAROT = ['The Fool','The Magician','The High Priestess','The Empres
 export const RUNES = ['Fehu','Uruz','Thurisaz','Ansuz','Raidho','Kenaz','Gebo','Wunjo','Hagalaz','Nauthiz','Isa','Jera','Eihwaz','Perthro','Algiz','Sowilo','Tiwaz','Berkano','Ehwaz','Mannaz','Laguz','Ingwaz','Dagaz','Othala'];
 
 const DIVINE_SHRINE_STATUS = new Map([
-  ['Ah-Muzen-Cab "'Cab"  II','divine_incarnation'],
+  [`Ah-Muzen-Cab "'Cab"  II`,'divine_incarnation'],
   ['Asclepius','god'],
   ['Distress of The Endless "Despair of The Endless, Aponoia" Endless','endless_incarnation'],
   ['Melisseus','god'],
@@ -50,8 +50,8 @@ export function migrateRosterTo4Oct(input){
     let q=p;
     q=patchRelationships(q,'Perses',['Biological mother: Eurybia','Biological father: Crius','Godmother: Cain "Khaos/The Empty/Sheol, Destruction of The Endless, Atropos"','Partner: Asteria']);
     q=patchRelationships(q,'Thanatos',['Biological mother: Nyx "Night"']);
-    q=patchRelationships(q,'The-Astral-Plane',['Godmother: Oshtur','Friend: Erelyt Drabbuh','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Ah-Muzen-Cab "'Cab"  II','Friend: Orpheus','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Rose Walker','Friend: Asclepius','Friend: The-House-of-Mirrors']);
-    q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father','Godfather: Ah-Muzen-Cab "'Cab"  II','Adopted mother: Despair of The Endless','Adopted father: ML3QN','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
+    q=patchRelationships(q,'The-Astral-Plane',['Godmother: Oshtur','Friend: Erelyt Drabbuh','Friend: Ah-Muzen-Cab "Honey, Content"  I',`Friend: Ah-Muzen-Cab "'Cab"  II`,'Friend: Orpheus','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Rose Walker','Friend: Asclepius','Friend: The-House-of-Mirrors']);
+    q=patchRelationships(q,'Erelyt Drabbuh',['Biological mother: Mother','Biological father: Father',`Godfather: Ah-Muzen-Cab "'Cab"  II`,'Adopted mother: Despair of The Endless','Adopted father: ML3QN','Friend: Vought International','Friend: Orpheus','Friend: Rose Walker','Friend: John "Pestilence, the Horseman of the Apocalypse" Ryder','Friend: Distress of The Endless "Despair of The Endless, Aponoia" Endless','Friend: Ah-Muzen-Cab "Honey, Content"  I','Friend: Asclepius','Friend: The-Astral-Plane']);
     if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['Biological mother Hebe / biological father Heracles are preserved Family Echo structural fields under source review; external Maya and Greek sources do not establish this genealogy.']};
     const divineStatus=DIVINE_SHRINE_STATUS.get(q.name);
     return divineStatus?{...q,divineStatus,shrineEligible:true}:q;
