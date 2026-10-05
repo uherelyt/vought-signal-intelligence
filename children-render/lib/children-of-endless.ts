@@ -2018,6 +2018,28 @@ export async function runChildrenReactiveMessage(
       posted: transcript.length,
     };
   } catch (error) {
+    // Preserve the inbound Network event even when reply generation or delivery fails.
+    // Discord receipt is canon evidence; reactive success must not be a prerequisite for ingestion.
+    try {
+      await recordDiscordActivity(redis, {
+        speakers: [input.authorName || "Human"],
+        channelId: sourceLocation.channelId,
+        location: activityLocationLabel(sourceLocation),
+        plane: sourceLocation.plane,
+        movementFrom: [],
+        movementTo: [],
+        transcript: `${input.authorName || "Human"} [#${sourceLocation.slug}]: ${archivalContent || content}`,
+        discordMessageIds: [input.messageId],
+        durableCanon: true,
+        timestamp: now.toISOString(),
+      });
+      console.warn("[children-discord-activity-recovered-after-reactive-failure]", input.messageId);
+    } catch (recordError) {
+      console.error(
+        "[children-discord-activity-recovery-error]",
+        recordError instanceof Error ? recordError.message : String(recordError),
+      );
+    }
     await redis.del(claimKey);
     throw error;
   }
