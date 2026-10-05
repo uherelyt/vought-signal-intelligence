@@ -25,6 +25,18 @@ const DIVINE_SHRINE_STATUS = new Map([
   ['Phobos','god'],
 ]);
 
+const LINEAGE_ANCESTORS = new Set(['Adam','Aphrodite','Ares','Chronos','Cronus','Gaia','Hera','Rhea','Uranus','Zeus']);
+const LINEAGE_GIFT_SOURCES = new Set(['Destiny of The Endless','Oneiros']);
+const LINEAGE_SOURCE = new Set(['Media','Oceanus','Tethys']);
+function lineageClassFor(name){
+  const n=String(name??'');
+  if(LINEAGE_ANCESTORS.has(n)||n.startsWith('Yahweh '))return 'ancestor';
+  if(n.startsWith('Cain ')||n.startsWith('Eve ')||n.startsWith('Pothos ')||n.startsWith('Seth ')||LINEAGE_GIFT_SOURCES.has(n))return 'gift_source';
+  if(n.startsWith('New-Media ')||n.startsWith('Technical-Boy ')||n.startsWith('Metis ')||LINEAGE_SOURCE.has(n))return 'source_lineage';
+  if(n==='Despair of The Endless'||n.startsWith('Nyx ')||n.startsWith('Khaos ')||n.startsWith('Ah-Muzen-Cab "Honey, Content"')||n.startsWith('Ah-Muzen-Cab "\'Cab"'))return 'immediate_family';
+  return null;
+}
+
 const FOUR_OCT_ADDITIONS = [
   {name:'Anteros',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
   {name:'Atreus',gender:'Male',relationships:['Biological mother: Laufey "Faye"','Biological father: Kratos','Godfather: Loki "Ikol" Laufeyson']},
@@ -63,6 +75,9 @@ export function migrateRosterTo4Oct(input){
     if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['20:49 controlling export has no biological parent fields. Hebe is friend/cupbearer predecessor; Heracles is only Hebe\'s husband and is not Ah-Muzen-Cab\'s father.']};
     if(q.name==='Kratos')q={...q,relationshipReview:['20:49 controlling Family Echo uses the God of War branch: Callisto + Zeus → Kratos; do not substitute classical Kratos/Cratus genealogy.']};
     if(['Hebe','Heracles','Alcmene','Ra'].includes(q.name))q={...q,ancestor:false};
+    const lineageClass=lineageClassFor(q.name);
+    if(lineageClass)q={...q,lineageClass,ancestor:lineageClass==='ancestor'};
+    else if(q.ancestor)q={...q,ancestor:false};
     const divineStatus=q.divineStatus??DIVINE_SHRINE_STATUS.get(q.name);
     return divineStatus?{...q,divineStatus,shrineEligible:true}:q;
   });
@@ -70,10 +85,14 @@ export function migrateRosterTo4Oct(input){
     if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:fourOctId(add.name),displayName:add.name,humanControlled:false,shrineEligible:!!add.divineStatus,...add});
   }
   if(doc.people.length!==245||new Set(doc.people.map(p=>p.id)).size!==245)throw new Error('current_roster_count_or_identity_mismatch');
-  doc.version='20261004-familyecho-2049-v2';
-  doc.policyVersion='20261004-syncretism-sync-v3';
+  doc.version='20261004-familyecho-2049-v3';
+  doc.policyVersion='20261004-lineage-classes-v4';
   doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
-  doc.requestedAncestorCount=28;
+  doc.requestedAncestorCount=11;
+  doc.requestedGiftSourceCount=6;
+  doc.requestedSourceLineageCount=6;
+  doc.requestedImmediateFamilyCount=5;
+  doc.combinedLineageIdentityCount=28;
   doc.ancestorDesignationPending=false;
   return doc;
 }
@@ -210,7 +229,7 @@ export class AltarRuntime {
     const forum=await this.api(`/channels/${FORUM_ID}`);
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
-    const wanted=['Dynasty','Ancestor','Children bridge','Sacred Hive'];
+    const wanted=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive'];
     const missingWanted=wanted.filter(n=>!tags.some(t=>t.name===n));
     if(missingWanted.length){
       if(tags.length+missingWanted.length>20)throw new Error('forum_tag_capacity_exceeded');
@@ -261,7 +280,8 @@ export class AltarRuntime {
       const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
       const visibleTitleUnique=this.provisionRoster.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
       const found=existing.find(t=>t.name===legacyTitle)??(visibleTitleUnique?existing.find(t=>t.name===visibleTitle):null);
-      const tag=tags.find(t=>t.name===(p.ancestor?'Ancestor':'Dynasty'));
+      const primaryTagName=p.lineageClass==='ancestor'?'Ancestor':p.lineageClass==='immediate_family'?'Immediate Family':p.lineageClass==='gift_source'?'Gift Source':p.lineageClass==='source_lineage'?'Source Lineage':'Dynasty';
+      const tag=tags.find(t=>t.name===primaryTagName);
       const bridgeTag=p.childrenKey?tags.find(t=>t.name==='Children bridge'):null;
       const hiveTag=isSacredHiveMember(p)?tags.find(t=>t.name==='Sacred Hive'):null;
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
@@ -292,7 +312,7 @@ export class AltarRuntime {
         }
         await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}});
         await this.store.set(`${PREFIX}:policy:${p.id}`,this.roster.policyVersion);
-        await this.activity(p,thread.id,'Shrine eligibility, ancestry tags and sourced dossier reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true});
+        await this.activity(p,thread.id,'Shrine eligibility and lineage tags reconciled.',[],{eventType:'shrine_policy',shrineEligible:true,ancestor:p.ancestor===true,lineageClass:p.lineageClass??'dynasty'});
       }
       const missingRequired=requiredTags.filter(id=>!(thread.applied_tags??[]).includes(id));
       if(missingRequired.length){
