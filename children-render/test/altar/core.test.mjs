@@ -273,7 +273,7 @@ test('locked retired references are deleted while the oldest snowflake remains t
   const runtime=new AltarRuntime({store:f.runtime.store,api:null,generate:f.runtime.generate,roster:{people:[f.p,retired],policyVersion:'v3'},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
   let deleted=false;
   runtime.api=async(path,method='GET',body)=>{
-    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:0,available_tags:[{name:'Dynasty',id:'1'},{name:'Ancestor',id:'2'},{name:'Children bridge',id:'3'},{name:'Sacred Hive',id:'4'}]};
+    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:0,available_tags:[{name:'Dynasty',id:'1'},{name:'Ancestor',id:'2'},{name:'Immediate Family',id:'3'},{name:'Gift Source',id:'4'},{name:'Source Lineage',id:'5'},{name:'Children bridge',id:'6'},{name:'Sacred Hive',id:'7'}]};
     if(path.includes('/threads/active'))return {threads:[]};
     if(path.includes('/archived/'))return {threads:[old],has_more:false};
     if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Nyx',applied_tags:['1'],thread_metadata:{archived:false,locked:false},message:{id:f.thread}};
