@@ -141,7 +141,7 @@ async function retconLegacyMaterialInterfaceActivity() {
     "356e712e-2758-41de-87c1-6b87c50c92cb",
     "fd2456f2-e766-4066-876b-68db4eba17e7",
   ]);
-  const raw = await redis.lrange(DISCORD_ACTIVITY_KEY, 0, 199);
+  const raw = await redis.lrange(DISCORD_ACTIVITY_KEY, 0, 49);
   const rewritten: string[] = [];
   let changed = 0;
 
@@ -178,7 +178,7 @@ async function retconLegacyMaterialInterfaceActivity() {
     for (let index = rewritten.length - 1; index >= 0; index -= 1) {
       await redis.lpush(DISCORD_ACTIVITY_KEY, rewritten[index]);
     }
-    await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 199);
+    await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 49);
   }
   await redis.set(LEGACY_RETCON_VERSION_KEY, "done");
   console.info("[children-legacy-retcon-applied]", JSON.stringify({ changed }));
@@ -198,6 +198,13 @@ const httpServer = createServer((request, response) => {
       snapshot: CHILDREN_NOTION_MEMORY_VERSION,
       altar: altarStatus,
       voughtInternational: voughtInternationalStatus,
+      stateOwnership: {
+        runtime: "render",
+        coordinationCache: "render_key_value_transient",
+        durableChildrenMemory: "canonical_children_memory_records",
+        originalConversationSource: "discord",
+        vercelRole: "web_edge_and_stateless_api_only",
+      },
     }));
     return;
   }

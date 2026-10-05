@@ -174,7 +174,7 @@ export function renderChildrenEpisodicMemory(rawItems: unknown[], query: string,
 export const CHILDREN_MEMORY_POLICY = `MEMORY POLICY:
 - Recent channel context is working memory.
 - EPISODIC MEMORY contains prior recorded Discord scenes and adventures; it is history, not the current scene.
-- LONG-TERM CANON MEMORY is a relevance-ranked snapshot synchronized from canonical Notion records and outranks improvised dialogue.
+- LONG-TERM CANON MEMORY is a relevance-ranked snapshot synchronized from canonical Children memory records and outranks improvised dialogue.
 - Use memory only when relevant to the current question or scene. Do not dump lore unprompted.
 - PROACTIVE RECALL: when the current scene materially connects to a retrieved past event or canon fact, the relevant Child should volunteer one concise in-character memory without waiting for Bart/Erelyt to ask. Do this naturally, not constantly. Bart/Erelyt is the Mythographer who cross-checks and records the story; he is not required to extract every memory by interrogation.
 - The source-lineage adventure rule means Justice League Dark, Doom Patrol, and Midnight Sons parody histories are adapted past events in this continuity unless later canon contradicts a specific event. Translate incompatible source identities/organizations into established Children/Vought/ELAED equivalents; do not claim a literal crossover merely from the parody lineage.
