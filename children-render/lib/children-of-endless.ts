@@ -1086,13 +1086,13 @@ export function getChildrenStatus(now = new Date()) {
       transport: "discord_attachment_to_gemini_inline_data",
     },
     memory: {
-      working_memory: "recent per-channel Redis context",
-      episodic_memory: "relevance-ranked Discord activity history",
-      long_term_memory: "relevance-ranked Notion bootstrap snapshot plus Redis runtime canon overlay",
+      working_memory: "recent per-channel Render Key Value context; disposable",
+      episodic_memory: "7-day / 50-event transient Render Key Value cache backed by native Discord history",
+      long_term_memory: "canonical Children memory snapshot synchronized for runtime retrieval",
       notion_snapshot_version: CHILDREN_NOTION_MEMORY_VERSION,
-      runtime_canon_backend: "redis",
+      runtime_canon_backend: "render_key_value_transient_cache",
       runtime_canon_key: RUNTIME_CANON_OVERRIDE_KEY,
-      max_activity_events_scanned: 200,
+      max_activity_events_scanned: 50,
     },
     dialogue_policy: {
       answer_current_message_first: true,
@@ -1108,7 +1108,7 @@ export function getChildrenStatus(now = new Date()) {
     },
     quiet_now: false,
     dream_window: { start: 6, end: 12, active: isChildrenDreamWindow(now), enabled: true, daily_sessions: 6, turns_per_session: 4, channels: locations.filter((row) => row.plane === "astral").map((row) => row.slug) },
-    activity_schedule: { driver: process.env.RAILWAY_ENVIRONMENT ? "railway_persistent_gateway_scheduler" : "legacy_gateway_scheduler", timezone: process.env.CHILDREN_TIMEZONE?.trim() || DEFAULT_TIMEZONE, sleep_hours: [6, 7, 8, 9, 10, 11], other_hours: [0, 3, 12, 15, 18, 21], other_turns_per_session: 2, max_scheduled_sessions_per_local_day: 12, max_scheduled_messages_per_local_day: 36 },
+    activity_schedule: { driver: process.env.CHILDREN_RUNTIME_HOST === "render" ? "render_persistent_gateway_scheduler" : "legacy_gateway_scheduler", timezone: process.env.CHILDREN_TIMEZONE?.trim() || DEFAULT_TIMEZONE, sleep_hours: [6, 7, 8, 9, 10, 11], other_hours: [0, 3, 12, 15, 18, 21], other_turns_per_session: 2, max_scheduled_sessions_per_local_day: 12, max_scheduled_messages_per_local_day: 36 },
     quiet_hours: null,
     cooldown_hours: isChildrenDreamWindow(now) ? 1 : 3,
     daily_cap: 12,
@@ -1129,7 +1129,7 @@ async function childrenMemoryContext(redis: Redis | null, query: string) {
   const longTerm = renderChildrenLongTermMemory(query, 5, 6500);
   const [rawActivity, runtimeCanonRaw, runtimeCanonVersionRaw] = redis
     ? await Promise.all([
-        redis.lrange(DISCORD_ACTIVITY_KEY, 0, 199),
+        redis.lrange(DISCORD_ACTIVITY_KEY, 0, 49),
         redis.get(RUNTIME_CANON_OVERRIDE_KEY),
         redis.get(RUNTIME_CANON_VERSION_KEY),
       ])
@@ -1143,20 +1143,20 @@ async function childrenMemoryContext(redis: Redis | null, query: string) {
   const runtimeCanon =
     typeof runtimeCanonRaw === "string" && runtimeCanonRaw.trim()
       ? runtimeCanonRaw.trim().slice(0, 8000)
-      : "No Redis runtime canon override is currently loaded; use the synchronized Notion bootstrap snapshot.";
+      : "No transient runtime canon cache is currently loaded; use the bundled Children canon snapshot.";
   const runtimeCanonVersion =
     typeof runtimeCanonVersionRaw === "string" && runtimeCanonVersionRaw.trim()
       ? runtimeCanonVersionRaw.trim()
       : "bootstrap";
   return `${CHILDREN_MEMORY_POLICY}
 
-RUNTIME CANON OVERRIDE (Redis; version ${runtimeCanonVersion}; synchronized from Notion; outranks the bootstrap snapshot when they conflict):
+RUNTIME CANON CACHE (Render Key Value; version ${runtimeCanonVersion}; transient projection of current configuration):
 ${runtimeCanon}
 
-LONG-TERM CANON MEMORY (relevance-ranked Notion bootstrap snapshot):
+LONG-TERM CHILDREN MEMORY (relevance-ranked canonical Children memory snapshot):
 ${longTerm}
 
-EPISODIC MEMORY (relevance-ranked prior Network activity; these are attributed event records, not automatic objective-fact assertions. Preserve who said/perceived/believed what unless controlling V-Workspace canon confirms the claim):
+EPISODIC CACHE (relevance-ranked recent Network activity from the transient Render Key Value cache. Native Discord history and canonical Children memory records remain the durable sources):
 ${episodic}`;
 }
 
@@ -1540,7 +1540,8 @@ async function recordDiscordActivity(
     durableCanon: true,
   };
   await redis.lpush(DISCORD_ACTIVITY_KEY, JSON.stringify(record));
-  await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 199);
+  await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 49);
+  await redis.expire(DISCORD_ACTIVITY_KEY, 7 * 24 * 60 * 60);
   console.info("[children-discord-activity]", JSON.stringify(record));
   return record;
 }
