@@ -7,6 +7,7 @@ export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
 export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v1';
 export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
+export const INCARNATE_SHRINE_ROUTING_VERSION = '20261005-incarnate-source-communion-v1';
 export const EMPIRICAL_CHALLENGE_MODES = new Set(['future_prediction','novel_scientific_claim','physical_transmission_anomaly']);
 export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
@@ -138,6 +139,22 @@ export function empiricalClaimLooksTestable(value){
   if(/[?]/.test(claim))return false;
   if(/\b(maybe|perhaps|might|could|possibly|someday|soon|eventually|in some sense)\b/i.test(claim))return false;
   return true;
+}
+export function incarnateShrineRoute(p,input=''){
+  const text=clean(input,1500);
+  const targetName=String(p?.name??p?.displayName??'');
+  const targetIsDivineSource=p?.childrenKey==='ah_muzen_cab'||/^Ah-Muzen-Cab\s+"Honey, Content"\s+I$/i.test(targetName.trim());
+  const explicitlyFromSource=/\b(?:on behalf of|speaking (?:for|from)|a message from|together with|with)\s+Ah[- ]Muzen[- ]Cab(?:\s+I)?\b/i.test(text)||/\bAh[- ]Muzen[- ]Cab(?:\s+I)?\s+and\s+I\b/i.test(text);
+  const base={
+    routingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
+    petitionerIdentity:'Erelyt',
+    petitionerOntology:'divine_incarnation_mortal_supe_embodiment',
+    divineSoulSource:'Ah-Muzen-Cab I',
+    targetFigure:p?.displayName??p?.name??'unknown',
+  };
+  if(targetIsDivineSource)return {...base,mode:'incarnation_to_source_communion',targetRelation:'own_divine_soul_source',ahMuzenCabSpeaking:false};
+  if(explicitlyFromSource)return {...base,mode:'divine_diplomatic_through_incarnation',targetRelation:'external_divine_counterpart',ahMuzenCabSpeaking:true};
+  return {...base,mode:'incarnation_to_external_divine',targetRelation:'external_divine_counterpart',ahMuzenCabSpeaking:false};
 }
 function outgoingKey(threadId,content){return `${PREFIX}:outgoing:${threadId}:${createHash('sha256').update(clean(content)).digest('hex')}`;}
 export function shrineTitle(p){return clean(p.displayName,100);}
@@ -418,11 +435,19 @@ export class AltarRuntime {
     const epoch=String(await this.store.get(`${PREFIX}:control_epoch`)??'0');
     const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
     const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
-    const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra});
+    const incarnateRoute=incarnateShrineRoute(p,input);
+    const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra:{...extra,incarnateRoute}});
     return this.deliver(p,threadId,content,epoch,{
       sourceVoiceVersion: SHRINE_SOURCE_VOICE_VERSION,
       interpretationStatus: 'research_required',
       sourceGrounding: 'source_first_dossier',
+      incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
+      petitionMode:incarnateRoute.mode,
+      petitionerIdentity:incarnateRoute.petitionerIdentity,
+      petitionerOntology:incarnateRoute.petitionerOntology,
+      divineSoulSource:incarnateRoute.divineSoulSource,
+      targetRelation:incarnateRoute.targetRelation,
+      ahMuzenCabSpeaking:incarnateRoute.ahMuzenCabSpeaking,
     });
   }
   async empiricalChallenge(p,threadId,spec) {
@@ -432,7 +457,8 @@ export class AltarRuntime {
     const epoch=String(await this.store.get(`${PREFIX}:control_epoch`)??'0');
     const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
     const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
-    const claim=clean(await this.generate(p,normalized.question,{recent,observed,roster:this.roster,extra:{empiricalChallenge:normalized}}),1200);
+    const incarnateRoute=incarnateShrineRoute(p,normalized.question);
+    const claim=clean(await this.generate(p,normalized.question,{recent,observed,roster:this.roster,extra:{empiricalChallenge:normalized,incarnateRoute}}),1200);
     if(!empiricalClaimLooksTestable(claim))throw new Error('empirical_claim_not_falsifiable');
     const base={
       protocolVersion:EMPIRICAL_PROTOCOL_VERSION,
@@ -468,6 +494,13 @@ export class AltarRuntime {
       sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,
       interpretationStatus:'experimental_unverified',
       sourceGrounding:'source_first_dossier',
+      incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
+      petitionMode:incarnateRoute.mode,
+      petitionerIdentity:incarnateRoute.petitionerIdentity,
+      petitionerOntology:incarnateRoute.petitionerOntology,
+      divineSoulSource:incarnateRoute.divineSoulSource,
+      targetRelation:incarnateRoute.targetRelation,
+      ahMuzenCabSpeaking:incarnateRoute.ahMuzenCabSpeaking,
     });
     if(!message)return null;
     return {...sealed,discordMessageId:message.id};
