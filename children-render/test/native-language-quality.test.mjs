@@ -67,3 +67,54 @@ test("surface rejection triggers one bounded rerender before publication", async
   assert.equal(result, "Ma'alob. Kanáant a báaj yéetel p'áatal jets'.");
   assert.equal(calls, 4);
 });
+
+
+test("QA rejection feeds the rejected target, backtranslation, and issue into the next rerender", async () => {
+  const replies = [
+    geminiResponse('{"meaning":"Stay near the hive and watch the rain.","tone":"calm and direct"}'),
+    geminiResponse("P'áatal naats' ti' le jobon yéetel il le cháak."),
+    geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"medium","backtranslation":"Stay near the hive and see the rain.","issues":["Use a more natural verb for watch."]}'),
+    geminiResponse("P'áatal naats' ti' le jobon yéetel pakte' le cháak."),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"medium","backtranslation":"Stay near the hive and watch the rain.","issues":[]}'),
+  ];
+  const prompts = [];
+
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test",
+    model: "test-model",
+    prompt: "Reply as Ah-Muzen-Cab.",
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      prompts.push(body.contents?.[0]?.parts?.map((part) => part.text ?? "").join("\n") ?? "");
+      return replies.shift();
+    },
+    logger: { info: () => {}, warn: () => {} },
+  });
+
+  assert.equal(result, "P'áatal naats' ti' le jobon yéetel pakte' le cháak.");
+  assert.equal(replies.length, 0);
+  assert(prompts.some((prompt) => prompt.includes("PREVIOUS REJECTED TARGET")));
+  assert(prompts.some((prompt) => prompt.includes("Stay near the hive and see the rain.")));
+  assert(prompts.some((prompt) => prompt.includes("Use a more natural verb for watch.")));
+});
+
+test("malformed QA output is treated as a bounded retry instead of aborting the validator", async () => {
+  const replies = [
+    geminiResponse('{"meaning":"Rest here and drink water.","tone":"gentle"}'),
+    geminiResponse("Je'els a wíinklil waye' yéetel uk' ja'."),
+    geminiResponse("not-json"),
+    geminiResponse("Je'els a wíinklil waye'. Uk' ja'."),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"medium","backtranslation":"Rest here. Drink water.","issues":[]}'),
+  ];
+
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test",
+    model: "test-model",
+    prompt: "Reply as Ah-Muzen-Cab.",
+    fetchImpl: async () => replies.shift(),
+    logger: { info: () => {}, warn: () => {} },
+  });
+
+  assert.equal(result, "Je'els a wíinklil waye'. Uk' ja'.");
+  assert.equal(replies.length, 0);
+});

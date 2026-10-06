@@ -5,6 +5,7 @@ import {
   CHILD_MEMBER_IDS,
   CHILDREN_PERSONAS,
   ON_VESSEL,
+  reserveChildrenActivitySlot,
   selectChildMembers,
   selectCrew,
   selectReactiveParticipants,
@@ -92,4 +93,58 @@ test("source-character bridge keeps published identities primary", () => {
   assert.match(CHILDREN_PERSONAS.john.sourceCanonBaseline ?? "", /"Son" of Destiny/i);
   assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /Despair III/i);
   assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /third incarnation/i);
+});
+
+
+test("scheduled activity retries are bounded and a released pre-publication claim can retry", async () => {
+  class FakeRedis {
+    values = new Map<string, string>();
+
+    async set(key: string, value: string, options?: { nx?: boolean }) {
+      if (options?.nx && this.values.has(key)) return null;
+      this.values.set(key, String(value));
+      return "OK";
+    }
+
+    async incr(key: string) {
+      const next = Number(this.values.get(key) ?? "0") + 1;
+      this.values.set(key, String(next));
+      return next;
+    }
+
+    async expire(_key: string, _seconds: number) {
+      return 1;
+    }
+
+    async del(key: string) {
+      return this.values.delete(key) ? 1 : 0;
+    }
+  }
+
+  const redis = new FakeRedis();
+  const now = new Date("2026-10-06T04:15:00.000Z");
+
+  const first = await reserveChildrenActivitySlot(redis as any, now);
+  assert.equal(first.ok, true);
+  if (!first.ok) return;
+  assert.equal(first.retryAttempt, 1);
+  await redis.del(first.claimKey);
+
+  const second = await reserveChildrenActivitySlot(redis as any, now);
+  assert.equal(second.ok, true);
+  if (!second.ok) return;
+  assert.equal(second.retryAttempt, 2);
+  await redis.del(second.claimKey);
+
+  const third = await reserveChildrenActivitySlot(redis as any, now);
+  assert.equal(third.ok, true);
+  if (!third.ok) return;
+  assert.equal(third.retryAttempt, 3);
+  await redis.del(third.claimKey);
+
+  const fourth = await reserveChildrenActivitySlot(redis as any, now);
+  assert.deepEqual(fourth, { ok: false, reason: "retry_limit" });
+
+  const fifth = await reserveChildrenActivitySlot(redis as any, now);
+  assert.deepEqual(fifth, { ok: false, reason: "duplicate_slot" });
 });

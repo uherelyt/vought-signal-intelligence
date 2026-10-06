@@ -759,17 +759,40 @@ export function getChildrenActivitySlot(now: Date) {
   return { dateKey, hour, dream, turns: dream ? 4 : 2 };
 }
 
-export async function reserveChildrenActivitySlot(redis: Pick<Redis, "set">, now: Date) {
+export async function reserveChildrenActivitySlot(
+  redis: Pick<Redis, "set" | "incr" | "expire">,
+  now: Date,
+) {
   const slot = getChildrenActivitySlot(now);
   if (!slot) return { ok: false, reason: "outside_activity_slot" } as const;
-  // Shared by Gateway and cron. One claim per local-hour slot; never replay missed hours.
+
+  // Shared by Gateway and cron. A successful publication keeps the slot claim.
+  // Pre-publication failures may release it so the persistent scheduler can retry
+  // within the same local hour, but retries remain bounded.
+  const claimKey = `${STATE_PREFIX}:activity:v2:${slot.dateKey}:${slot.hour}`;
   const claim = await redis.set(
-    `${STATE_PREFIX}:activity:v2:${slot.dateKey}:${slot.hour}`,
-    now.toISOString(), { nx: true, ex: 2 * 24 * 60 * 60 },
+    claimKey,
+    now.toISOString(),
+    { nx: true, ex: 2 * 24 * 60 * 60 },
   );
-  return claim === "OK"
-    ? { ok: true, dailyKey: `${STATE_PREFIX}:daily:${slot.dateKey}` } as const
-    : { ok: false, reason: "duplicate_slot" } as const;
+  if (claim !== "OK") return { ok: false, reason: "duplicate_slot" } as const;
+
+  const retryKey = `${STATE_PREFIX}:activity:v2:attempts:${slot.dateKey}:${slot.hour}`;
+  const retryAttempt = await redis.incr(retryKey);
+  if (retryAttempt === 1) await redis.expire(retryKey, 2 * 60 * 60);
+  const retryLimit = integerEnv("CHILDREN_SCHEDULED_RETRY_LIMIT", 3, 1, 6);
+  if (retryAttempt > retryLimit) {
+    // Keep the slot claim as a terminal lock for this hour so the 60-second
+    // scheduler does not churn forever after exhausting its bounded retries.
+    return { ok: false, reason: "retry_limit" } as const;
+  }
+
+  return {
+    ok: true,
+    dailyKey: `${STATE_PREFIX}:daily:${slot.dateKey}`,
+    claimKey,
+    retryAttempt,
+  } as const;
 }
 
 export function selectChildrenDreamLocation(seed: string, topic?: string, participants: PersonaId[] = []) {
@@ -1492,8 +1515,8 @@ async function postDiscordTurn(turn: ChildrenTurn, redis: Redis, channelId: stri
   }
 }
 
-async function movePersonas(
-  redis: Redis,
+async function inspectPersonaMovement(
+  redis: Pick<Redis, "get">,
   participants: PersonaId[],
   location: ChildrenLocation,
 ) {
@@ -1512,9 +1535,28 @@ async function movePersonas(
       movementFrom.push(`${persona.displayName}: ${previous?.slug ?? "unknown"}`);
       movementTo.push(`${persona.displayName}: ${location.slug}`);
     }
-    await redis.set(key, location.channelId);
   }
   return { movementFrom, movementTo };
+}
+
+async function commitPersonaLocations(
+  redis: Pick<Redis, "set">,
+  participants: PersonaId[],
+  location: ChildrenLocation,
+) {
+  for (const id of participants) {
+    await redis.set(`${PERSONA_LOCATION_PREFIX}:${id}`, location.channelId);
+  }
+}
+
+async function movePersonas(
+  redis: Redis,
+  participants: PersonaId[],
+  location: ChildrenLocation,
+) {
+  const movement = await inspectPersonaMovement(redis, participants, location);
+  await commitPersonaLocations(redis, participants, location);
+  return movement;
 }
 
 function movementCueForPersona(
@@ -1620,7 +1662,10 @@ export async function runChildrenPulse(input: ChildrenPulseInput): Promise<Child
     return { ok: false, skipped: true, reason: "discord_unconfigured", dryRun };
   }
 
-  let reservation: { ok: true; dailyKey: string } | { ok: false; reason: string } | null = null;
+  let reservation:
+    | { ok: true; dailyKey: string; claimKey?: string; retryAttempt?: number }
+    | { ok: false; reason: string }
+    | null = null;
   if (!dryRun && redis) {
     reservation = await reserveLivePulse(redis, now, input.force === true, dream, input.mode === "cron");
     if (!reservation.ok) {
@@ -1638,28 +1683,53 @@ export async function runChildrenPulse(input: ChildrenPulseInput): Promise<Child
   const transcript: ChildrenTurn[] = [];
   const discordMessageIds: string[] = [];
   const movement = !dryRun && redis
-    ? await movePersonas(redis, participants, location)
+    ? await inspectPersonaMovement(redis, participants, location)
     : { movementFrom: [] as string[], movementTo: [] as string[] };
 
-  for (let index = 0; index < turns; index += 1) {
-    const speaker = participants[index % participants.length];
-    const persona = CHILDREN_PERSONAS[speaker];
-    const content = await generateTurn(
-      persona,
-      topic,
-      transcript,
-      recent,
-      location,
-      memory,
-      movementCueForPersona(persona, movement, location),
-    );
-    const turn: ChildrenTurn = { speaker, displayName: persona.displayName, content };
-    transcript.push(turn);
+  // Generate the complete scheduled transcript before mutating location state or
+  // publishing any turn. This keeps language validation fail-closed at the
+  // session boundary instead of leaving a visible partial conversation with no
+  // structured activity receipt.
+  try {
+    for (let index = 0; index < turns; index += 1) {
+      const speaker = participants[index % participants.length];
+      const persona = CHILDREN_PERSONAS[speaker];
+      const content = await generateTurn(
+        persona,
+        topic,
+        transcript,
+        recent,
+        location,
+        memory,
+        movementCueForPersona(persona, movement, location),
+      );
+      transcript.push({ speaker, displayName: persona.displayName, content });
+    }
+  } catch (error) {
+    if (!dryRun && redis && reservation?.ok && reservation.claimKey) {
+      try {
+        await redis.del(reservation.claimKey);
+        console.warn("[children-scheduled-activity-retry-release]", JSON.stringify({
+          claimKey: reservation.claimKey,
+          retryAttempt: reservation.retryAttempt ?? null,
+          reason: error instanceof Error ? error.message : String(error),
+        }));
+      } catch (releaseError) {
+        console.warn(
+          "[children-scheduled-activity-retry-release-error]",
+          releaseError instanceof Error ? releaseError.message : String(releaseError),
+        );
+      }
+    }
+    throw error;
+  }
 
-    if (!dryRun && redis) {
-      const messageId = await postDiscordTurn(turn, redis, location.channelId);
+  if (!dryRun && redis) {
+    await commitPersonaLocations(redis, participants, location);
+    for (let index = 0; index < transcript.length; index += 1) {
+      const messageId = await postDiscordTurn(transcript[index], redis, location.channelId);
       if (messageId) discordMessageIds.push(messageId);
-      if (index < turns - 1) await sleep(650);
+      if (index < transcript.length - 1) await sleep(650);
     }
   }
 
