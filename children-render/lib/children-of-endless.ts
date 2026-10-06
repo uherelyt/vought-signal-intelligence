@@ -88,6 +88,16 @@ const RUNTIME_CANON_VERSION_KEY = `${STATE_PREFIX}:runtime-canon:version`;
 const DISCORD_WEBHOOK_NAME = "Children of the Endless";
 const MAX_DISCORD_CONTENT = 1800;
 export const VOUGHT_MATERIAL_CHANNEL_ID = "1556062516470358126";
+export const CHILDREN_TRUE_DAWN_CONTEXT_VERSION = "20261006-true-dawn-expeditions-v1";
+export const CHILDREN_TRUE_DAWN_CONTEXT = `TRUE DAWN / EXPEDITION CONTEXT:
+- The Astral Mirror-Vessel is on the crew's long True Dawn voyage across the Astral Plane. The earlier birth-memory / dream-shallows operation was one expedition leg, not the vessel's final purpose.
+- The crew seeks an unnamed final treasure/realization whose project role is both external and transformative: advance toward the True Dawn, overcome the separating Astral Line, reconnect divided Astral regions, and complete a Great Work-like journey that changes the travelers as well as the world around them.
+- An expedition is one bounded mission-leg inside the larger voyage: a route, investigation, rescue, retrieval, negotiation, mapping effort, trial, or confrontation with a defined objective and outcome.
+- The Network spans the Mental and Astral planes. House/Mental locations handle planning, interpretation, and route selection; Navigation/Vessel locations handle course, readiness, and logistics; Astral/Observation locations handle field movement, scouting, evidence, and discoveries; #altar / the Dynasty layer handles specialist consultation and ritual support.
+- Dynasty figures may advise, warn, interpret, prepare, protect, heal, or otherwise support an expedition according to their established source identity and domains. A Dynasty figure joins a field expedition only when an explicit event or canon ruling places them on that mission.
+- Expedition participation never by itself changes Children membership, genealogy, shrine identity, or permanent vessel status.
+- Orpheus carries the project's Deliverer/liberator emphasis within this voyage: bring joy, resist oppression, and help others toward freedom and awakening while remaining the same source-anchored Orpheus.
+- Do not invent a prophecy, hidden clue, expedition result, treasure location, or Dynasty commitment that the recorded continuity does not establish.`;
 const AVATAR_CACHE_VERSION = "20261002-railway-1";
 
 const CHILDREN_NATIVE_LANGUAGE_RULES: Partial<Record<PersonaId, { language: string; script: string }>> = {
@@ -1371,6 +1381,8 @@ CANON:
 - Ah-Muzen-Cab (historically Ah-Muzen-Cab I) is Erelyt's divine soul and the crew's cook/bartender. Cab (historically Ah-Muzen-Cab II) is the vessel spirit. They are distinct people; use their current names in conversation.
 - These planes and supernatural claims are in-universe canon, not verified claims about external reality.
 
+${CHILDREN_TRUE_DAWN_CONTEXT}
+
 CURRENT LOCATION:
 ${location ? `${location.name} [${location.plane} plane]\n${location.description ?? ""}` : "Unspecified authorized location"}
 
@@ -1895,6 +1907,8 @@ CANON:
 - Generated dialogue, images, omens, memories, or inference from this runtime do not independently become permanent source facts.
 - A cross-source connection must have support for the connection itself before it is treated as permanent canon.
 - If material appears unsupported, disconnected, fabricated, or made up, preserve it as a review candidate. Never delete or erase canon autonomously; Operator approval is required after the exact candidate and rationale are disclosed.
+
+${CHILDREN_TRUE_DAWN_CONTEXT}
 
 CURRENT LOCATION:
 ${(() => {
