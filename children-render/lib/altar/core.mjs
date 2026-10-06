@@ -472,6 +472,33 @@ export class AltarRuntime {
     if(!message)return null;
     return {...sealed,discordMessageId:message.id};
   }
+  async recordEmpiricalOutcome(threadId,challengeId,outcome,evidenceUrl) {
+    const id=String(challengeId??'').trim();
+    if(!/^[0-9a-f-]{36}$/i.test(id))throw new Error('invalid_empirical_challenge_id');
+    const raw=await this.store.get(`${PREFIX}:empirical:${id}`);
+    if(!raw)throw new Error('empirical_challenge_not_found');
+    const record=JSON.parse(raw);
+    if(record.shrineThreadId!==threadId)throw new Error('empirical_challenge_wrong_shrine');
+    if(record.status!=='PREREGISTERED_UNVERIFIED')throw new Error('empirical_outcome_already_recorded');
+    const observed=clean(outcome,1200),evidence=String(evidenceUrl??'').trim();
+    if(observed.length<12)throw new Error('empirical_outcome_too_vague');
+    let parsed;try{parsed=new URL(evidence);}catch{throw new Error('empirical_evidence_url_required');}
+    if(parsed.protocol!=='https:')throw new Error('empirical_evidence_https_required');
+    const updated={...record,outcome:observed,evidenceUrl:evidence,outcomeRecordedAt:new Date(this.now()).toISOString(),status:'OUTCOME_RECORDED_PENDING_REVIEW'};
+    await this.store.set(`${PREFIX}:empirical:${id}`,JSON.stringify(updated),{ex:31536000});
+    const p=this.people.get(record.figureId)??this.visitors.get(record.figureId);
+    await this.activity(p??null,threadId,`Empirical outcome recorded for ${id}: ${observed} Evidence: ${evidence}`,[],{
+      speakers:['Operator'],
+      eventType:'empirical_outcome_recorded',
+      empiricalProtocolVersion:record.protocolVersion,
+      empiricalChallengeId:id,
+      empiricalMode:record.mode,
+      empiricalStatus:updated.status,
+      empiricalSha256:record.sha256,
+      empiricalEvidenceUrl:evidence,
+    });
+    return updated;
+  }
   async message(m) {
     if(m.guild_id!==this.guildId||!m.content?.trim())return;
     const child=m.webhook_id&&this.trustedChildHooks.has(m.webhook_id)?[...this.people.values(),...this.visitors.values()].find(p=>p.childrenKey&&(p.senderName??p.displayName)===m.author?.username):null;
