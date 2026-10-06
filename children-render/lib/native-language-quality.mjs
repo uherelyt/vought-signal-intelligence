@@ -62,7 +62,8 @@ export async function generateValidatedYucatecMayaReply({
   temperature = 0.75,
   fetchImpl = fetch,
   logger = console,
-  maxAttempts = 2,
+  // Three bounded render/QA passes improve scheduler resilience while preserving fail-closed publication.
+  maxAttempts = 3,
 }) {
   if (!apiKey) throw new Error("Gemini generation is not configured");
 
