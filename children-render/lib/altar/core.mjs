@@ -6,6 +6,8 @@ export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
 export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v1';
+export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
+export const EMPIRICAL_CHALLENGE_MODES = new Set(['future_prediction','novel_scientific_claim','physical_transmission_anomaly']);
 export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
@@ -116,6 +118,27 @@ export function drawOracle(method, rng=randomInt) {
   return {method,index,symbol:pool[index],orientation:method==='tarot'?(rng(2)?'reversed':'upright'):null,source:method==='tarot'?'78-card Rider–Waite–Smith naming':'24 Elder Futhark names',interpretationStatus:'symbolic'};
 }
 export function clean(value,max=1800){return String(value??'').replace(/@everyone|@here/gi,'').trim().slice(0,max);}
+export function validateEmpiricalChallengeSpec(spec,now=Date.now()){
+  const mode=String(spec?.mode??'').trim();
+  if(!EMPIRICAL_CHALLENGE_MODES.has(mode))throw new Error('invalid_empirical_mode');
+  const question=clean(spec?.question,900),successCriterion=clean(spec?.successCriterion,900),failureCriterion=clean(spec?.failureCriterion,900),deadline=String(spec?.deadline??'').trim();
+  if(question.length<12||successCriterion.length<12||failureCriterion.length<12)throw new Error('empirical_criteria_too_vague');
+  if(successCriterion.toLowerCase()===failureCriterion.toLowerCase())throw new Error('empirical_criteria_not_discriminating');
+  const deadlineMs=Date.parse(deadline);
+  if(!Number.isFinite(deadlineMs)||deadlineMs<=now)throw new Error('empirical_deadline_must_be_future_iso_date');
+  return {mode,question,successCriterion,failureCriterion,deadline:new Date(deadlineMs).toISOString()};
+}
+export function sealEmpiricalChallenge(record){
+  const frozen=JSON.stringify(record);
+  return {...record,sha256:createHash('sha256').update(frozen).digest('hex')};
+}
+export function empiricalClaimLooksTestable(value){
+  const claim=clean(value,1200);
+  if(claim.length<12||claim==='NO TESTABLE CLAIM')return false;
+  if(/[?]/.test(claim))return false;
+  if(/\b(maybe|perhaps|might|could|possibly|someday|soon|eventually|in some sense)\b/i.test(claim))return false;
+  return true;
+}
 function outgoingKey(threadId,content){return `${PREFIX}:outgoing:${threadId}:${createHash('sha256').update(clean(content)).digest('hex')}`;}
 export function shrineTitle(p){return clean(p.displayName,100);}
 export function shrineReference(p) {
@@ -401,6 +424,53 @@ export class AltarRuntime {
       interpretationStatus: 'research_required',
       sourceGrounding: 'source_first_dossier',
     });
+  }
+  async empiricalChallenge(p,threadId,spec) {
+    if(p.humanControlled||!await this.enabled(p))return null;
+    await this.checkThread(threadId,p);
+    const normalized=validateEmpiricalChallengeSpec(spec,this.now());
+    const epoch=String(await this.store.get(`${PREFIX}:control_epoch`)??'0');
+    const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
+    const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
+    const claim=clean(await this.generate(p,normalized.question,{recent,observed,roster:this.roster,extra:{empiricalChallenge:normalized}}),1200);
+    if(!empiricalClaimLooksTestable(claim))throw new Error('empirical_claim_not_falsifiable');
+    const base={
+      protocolVersion:EMPIRICAL_PROTOCOL_VERSION,
+      challengeId:randomUUID(),
+      createdAt:new Date(this.now()).toISOString(),
+      figureId:p.id,
+      figure:p.displayName,
+      shrineThreadId:threadId,
+      mode:normalized.mode,
+      question:normalized.question,
+      claim,
+      deadline:normalized.deadline,
+      successCriterion:normalized.successCriterion,
+      failureCriterion:normalized.failureCriterion,
+      antiSelfFulfillment:'Operator action materially causing the stated outcome disqualifies a future-prediction result.',
+      knowledgeExclusion:normalized.mode==='novel_scientific_claim'?'Known human literature, model training/memorization, prompt/context leakage, or prior public availability disqualifies novelty.':'Not applicable beyond ordinary information-leakage review.',
+      status:'PREREGISTERED_UNVERIFIED',
+    };
+    const sealed=sealEmpiricalChallenge(base);
+    await this.store.set(`${PREFIX}:empirical:${sealed.challengeId}`,JSON.stringify(sealed),{ex:31536000});
+    await this.store.lpush(`${PREFIX}:empirical:index`,sealed.challengeId);
+    await this.store.ltrim(`${PREFIX}:empirical:index`,0,199);
+    const message=await this.deliver(p,threadId,claim,epoch,{
+      eventType:'empirical_challenge_preregistered',
+      empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,
+      empiricalChallengeId:sealed.challengeId,
+      empiricalMode:sealed.mode,
+      empiricalDeadline:sealed.deadline,
+      empiricalStatus:sealed.status,
+      empiricalSha256:sealed.sha256,
+      empiricalSuccessCriterion:sealed.successCriterion,
+      empiricalFailureCriterion:sealed.failureCriterion,
+      sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,
+      interpretationStatus:'experimental_unverified',
+      sourceGrounding:'source_first_dossier',
+    });
+    if(!message)return null;
+    return {...sealed,discordMessageId:message.id};
   }
   async message(m) {
     if(m.guild_id!==this.guildId||!m.content?.trim())return;
