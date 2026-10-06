@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   CHILD_MEMBER_IDS,
+  CHILDREN_PERSONAS,
   ON_VESSEL,
   selectChildMembers,
   selectCrew,
@@ -73,4 +74,19 @@ test("slash registry includes /children and /crew", () => {
   assert(names.includes("children"));
   assert(names.includes("crew"));
   assert.equal(names.length, 9);
+});
+
+
+test("source-character bridge keeps published identities primary", () => {
+  assert.match(CHILDREN_PERSONAS.john.sourceCanonBaseline ?? "", /John Ryder.*Destiny: A Chronicle of Deaths Foretold/);
+  assert.doesNotMatch(CHILDREN_PERSONAS.john.chronologicalAge, /primordial|ageless/i);
+  assert.match(CHILDREN_PERSONAS.john.chronologicalAge, /Byzantine/i);
+
+  assert.match(CHILDREN_PERSONAS.orpheus.sourceCanonBaseline ?? "", /son of Dream\/Oneiros and Calliope/i);
+  assert.match(CHILDREN_PERSONAS.orpheus.projectContinuityLayer ?? "", /post-source additive continuity/i);
+
+  assert.match(CHILDREN_PERSONAS.rose.sourceCanonBaseline ?? "", /human Dream Vortex/i);
+  assert.match(CHILDREN_PERSONAS.rose.sourceCanonBaseline ?? "", /Jed Walker/i);
+
+  assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /No direct published Sandman\/DC source character/i);
 });
