@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -60,6 +60,13 @@ test('wrong guild, webhook and bot events cannot trigger shrine replies',async()
 test('forum delivery includes exact thread ID and suppresses mass mentions',async()=>{
  const f=fixture();await f.runtime.deliver(f.p,f.thread,'An omen. @everyone','0');const send=f.calls.find(c=>c.method==='POST');assert(send.path.includes(`thread_id=${f.thread}`));assert.deepEqual(send.body.allowed_mentions,{parse:[]});assert(!send.body.content.includes('@everyone'));
  assert.equal(f.lists.get(`${PREFIX}:durable-outbox`).length,1);
+});
+test('generated shrine replies are marked source-first and research-required',async()=>{
+ const f=fixture();await f.runtime.reply(f.p,f.thread,'What should I notice?');
+ const event=JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]);
+ assert.equal(event.sourceVoiceVersion,SHRINE_SOURCE_VOICE_VERSION);
+ assert.equal(event.interpretationStatus,'research_required');
+ assert.equal(event.sourceGrounding,'source_first_dossier');
 });
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
