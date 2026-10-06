@@ -104,6 +104,18 @@ test('empirical challenge posts one sealed unverified claim with durable metadat
  assert.equal(event.empiricalStatus,'PREREGISTERED_UNVERIFIED');
  assert.equal(event.interpretationStatus,'experimental_unverified');
 });
+test('empirical outcomes remain pending review and preserve the original seal',async()=>{
+ const f=fixture();
+ f.runtime.generate=async()=> 'Candidate X receives exactly 51.2 percent of certified votes.';
+ const sealed=await f.runtime.empiricalChallenge(f.p,f.thread,{mode:'future_prediction',question:'State the exact certified vote share for Candidate X.',successCriterion:'The official certified result is exactly 51.2 percent.',failureCriterion:'The official certified result is any value other than exactly 51.2 percent.',deadline:'2030-01-01T00:00:00Z'});
+ const updated=await f.runtime.recordEmpiricalOutcome(f.thread,sealed.challengeId,'The official certified result was 51.2 percent.','https://example.org/certified-result');
+ assert.equal(updated.status,'OUTCOME_RECORDED_PENDING_REVIEW');
+ assert.equal(updated.sha256,sealed.sha256);
+ const event=JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]);
+ assert.equal(event.eventType,'empirical_outcome_recorded');
+ assert.equal(event.empiricalStatus,'OUTCOME_RECORDED_PENDING_REVIEW');
+ await assert.rejects(f.runtime.recordEmpiricalOutcome(f.thread,sealed.challengeId,'Duplicate result.','https://example.org/duplicate'),/already_recorded/);
+});
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const {shrineTitle}=await import('../../lib/altar/core.mjs');const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p)};
