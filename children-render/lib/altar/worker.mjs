@@ -272,7 +272,7 @@ ${JSON.stringify(empirical)}`:'';
     try{
       const registered=await api(`/applications/${c.applicationId}/guilds/${guildId}/commands`);
       const names=registered.map(x=>x.name).sort().join(',');
-      if(names!=='altar,banish,candle,offer,resume,rune,tarot,verify')throw new Error('acceptance_commands_mismatch');
+      if(names!=='altar,banish,candle,offer,resume,rune,tarot,verify,verify-result')throw new Error('acceptance_commands_mismatch');
       const inaccessible=[];
       for(const id of OBSERVE_IDS){try{const channel=await api(`/channels/${id}`);if(channel.guild_id!==guildId)inaccessible.push(id);}catch(e){if(e.status===403||e.status===404)inaccessible.push(id);else throw e;}}
       if(runtime.persesDedicatedPostRemoved!==true||await store.get(`${PREFIX}:resident:perses`))throw new Error('perses_dedicated_post_not_removed');
@@ -453,6 +453,11 @@ ${JSON.stringify(empirical)}`:'';
     {name:'failure',description:'Exact condition that will count as failure',type:3,required:true},
     {name:'deadline',description:'Future ISO date/time or YYYY-MM-DD evaluation deadline',type:3,required:true},
   ]});
+  commands.push({name:'verify-result',description:'Record an observed outcome for a preregistered challenge',type:1,options:[
+    {name:'challenge',description:'Preregistered challenge UUID',type:3,required:true},
+    {name:'outcome',description:'Observed outcome, stated plainly',type:3,required:true},
+    {name:'evidence',description:'HTTPS URL to independent evidence or instrument record',type:3,required:true},
+  ]});
   await api(`/applications/${c.applicationId}/guilds/${guildId}/commands`,'PUT',commands);
   async function callback(i,type,data){return api(`/interactions/${i.id}/${i.token}/callback`,'POST',{type,data},false);}
   async function interaction(i){
@@ -491,6 +496,9 @@ ${JSON.stringify(empirical)}`:'';
           const sealed=await runtime.empiricalChallenge(p,threadId,{mode:options.mode,question:options.question,successCriterion:options.success,failureCriterion:options.failure,deadline:options.deadline});
           if(!sealed)return finish('The selected figure is silent.');
           return finish(`Experimental challenge sealed. ID: ${sealed.challengeId}\nStatus: ${sealed.status}\nSHA-256: ${sealed.sha256}\nDeadline: ${sealed.deadline}\nThe hash detects later alteration of the preregistered record; it does not establish supernatural origin.`);
+        }else if(i.data.name==='verify-result'){
+          const recorded=await runtime.recordEmpiricalOutcome(threadId,options.challenge,options.outcome,options.evidence);
+          return finish(`Outcome recorded for ${recorded.challengeId}.\nStatus: ${recorded.status}\nOriginal SHA-256: ${recorded.sha256}\nNo causal or supernatural attribution has been made; independent review is still required.`);
         }else await runtime.ritual(p,threadId,i.data.name,value);
         await finish(`Recorded in <#${threadId}>.`);
       }catch(e){await finish(`Altar status: ${errorCode(e)}.`);}
