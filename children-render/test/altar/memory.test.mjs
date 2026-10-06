@@ -16,7 +16,7 @@ test('Children genealogy recall distinguishes the full tree, active shrines and 
 });
 test('character recall uses relevant sourced profiles and preserves the adaptation boundary',()=>{
  const memory=formatAltarCanonMemory('Tell me about Nyx',roster);
- assert(memory.includes('Sourced concerns: night'));assert(memory.includes('Adaptation, not a documented hobby'));
+ assert(memory.includes('Sourced concerns: night'));assert(memory.includes('Fallback performance direction: grave'));assert(memory.includes('secondary to the sourced concerns'));assert(memory.includes('Adaptation, not a documented hobby'));
  assert(!memory.includes('living vessel'));assert.equal(formatAltarCanonMemory('A completely unrelated topic',roster),'');
 });
 test('private altar data is not exposed by disabled or invalid configuration',()=>{

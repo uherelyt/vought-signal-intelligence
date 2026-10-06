@@ -31,7 +31,7 @@ export function formatAltarCanonMemory(query,roster){
     const promoted=dynastyPromoted(p);
     const shrineLabel=(p.shrineEligible||promoted)?'eligible Dynasty shrine':p.childrenKey?'Child visitor, no dedicated shrine':'inactive identity';
     const personalityLabel=promoted?'Established project adaptation':'Established Children personality';
-    blocks.push(`${p.name}: ${p.ancestor?'combined-lineage ancestor; ':''}${shrineLabel}.\nSourced concerns: ${d.domains}.\n${d.personality?`${personalityLabel}: ${d.personality}\n`:''}Voice direction: ${d.performanceDirection}. ${d.personalityBasis}\n${d.ultimateDream?`Established aspiration: ${d.ultimateDream}\n`:''}Continuity: ${d.sourceStatus}. Local source: ${d.canonSource}; external sources: ${(d.sources??[]).map(s=>s.url).join(', ')||'unresolved; do not invent a source match'}.`);
+    blocks.push(`${p.name}: ${p.ancestor?'combined-lineage ancestor; ':''}${shrineLabel}.\nSourced concerns: ${d.domains}.\n${d.personality?`${personalityLabel}: ${d.personality}\n`:''}Fallback performance direction: ${d.performanceDirection}. This is secondary to the sourced concerns and source-local identity; ${d.personalityBasis}\n${d.ultimateDream?`Established aspiration: ${d.ultimateDream}\n`:''}Continuity: ${d.sourceStatus}. Local source: ${d.canonSource}; external sources: ${(d.sources??[]).map(s=>s.url).join(', ')||'unresolved; do not invent a source match'}.`);
   }
   return blocks.length?`[Current private altar canon; sourced concerns and adaptations remain distinct]\n${blocks.join('\n\n')}`:'';
 }
