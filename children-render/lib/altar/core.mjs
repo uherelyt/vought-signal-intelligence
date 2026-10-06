@@ -5,6 +5,7 @@ export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
 export const PREFIX = 'vought:elaed-altar';
 export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
+export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v1';
 export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
 export const OBSERVE_IDS = new Set(['1555308025525440584','1555307934702112909','1555308123873616022','1555340240867172353','1555340274023010494','1555340315525648455','1555340353035444315','1555340406185656350','1555340450573852722','1555340490570731590','1555340558270996561','1555340597546459198']);
@@ -199,11 +200,11 @@ export class AltarRuntime {
     await this.store.ltrim(`${PREFIX}:recent:${threadId}`,0,19);
     this.record(event);return event;
   }
-  async deliver(p,threadId,content,epoch) {
-    const send=()=>this.deliverUnlocked(p,threadId,content,epoch);
+  async deliver(p,threadId,content,epoch,activityExtra={}) {
+    const send=()=>this.deliverUnlocked(p,threadId,content,epoch,activityExtra);
     const result=this.deliveryLane.then(send);this.deliveryLane=result.catch(()=>{});return result;
   }
-  async deliverUnlocked(p,threadId,content,epoch) {
+  async deliverUnlocked(p,threadId,content,epoch,activityExtra={}) {
     await this.checkThread(threadId,p);
     if(p.humanControlled||!await this.enabled(p)||String(await this.store.get(`${PREFIX}:control_epoch`)??'0')!==epoch)return null;
     const api=p.childrenKey?this.childApi:this.api;
@@ -216,7 +217,7 @@ export class AltarRuntime {
     await this.store.set(outgoingKey(threadId,content),'1',{ex:60});
     const m=await api(`/webhooks/${webhook.id}/${webhook.token}?wait=true&thread_id=${threadId}`,'POST',{content:clean(content),username:clean(p.senderName??p.displayName,80),allowed_mentions:{parse:[]}},false);
     await this.store.set(`${PREFIX}:message:${m.id}`,'1',{ex:172800});
-    await this.activity(p,threadId,`${p.senderName??p.displayName}: ${clean(content)}`,[m.id],{speakers:[p.senderName??p.displayName],childrenKey:p.childrenKey,deliveryApplicationId:p.childrenKey?this.childrenApplicationId:this.applicationId});return m;
+    await this.activity(p,threadId,`${p.senderName??p.displayName}: ${clean(content)}`,[m.id],{speakers:[p.senderName??p.displayName],childrenKey:p.childrenKey,deliveryApplicationId:p.childrenKey?this.childrenApplicationId:this.applicationId,...activityExtra});return m;
   }
   async webhook(child=false) {
     const api=child?this.childApi:this.api,id=child?this.childrenApplicationId:this.applicationId;
@@ -395,7 +396,11 @@ export class AltarRuntime {
     const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
     const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
     const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra});
-    return this.deliver(p,threadId,content,epoch);
+    return this.deliver(p,threadId,content,epoch,{
+      sourceVoiceVersion: SHRINE_SOURCE_VOICE_VERSION,
+      interpretationStatus: 'research_required',
+      sourceGrounding: 'source_first_dossier',
+    });
   }
   async message(m) {
     if(m.guild_id!==this.guildId||!m.content?.trim())return;
