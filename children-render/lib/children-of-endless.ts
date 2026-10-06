@@ -1521,7 +1521,7 @@ function activityLocationLabel(location: ChildrenLocation) {
   return `#${location.slug} — ${location.name} (${location.channelId})`;
 }
 
-async function recordDiscordActivity(
+export async function recordDiscordActivity(
   redis: Redis,
   activity: Omit<ChildrenDiscordActivity, "eventId" | "timestamp" | "durableCanon"> &
     Partial<Pick<ChildrenDiscordActivity, "eventId" | "timestamp" | "durableCanon">>,
@@ -1539,10 +1539,26 @@ async function recordDiscordActivity(
     discordMessageIds: [...new Set(activity.discordMessageIds.filter(Boolean))],
     durableCanon: true,
   };
-  await redis.lpush(DISCORD_ACTIVITY_KEY, JSON.stringify(record));
-  await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 49);
-  await redis.expire(DISCORD_ACTIVITY_KEY, 7 * 24 * 60 * 60);
+
+  // The structured log is the monitor's durable ingestion source. Emit it before
+  // touching Render Key Value so disposable cache failures cannot hide a
+  // successfully observed Discord event from downstream reconciliation.
   console.info("[children-discord-activity]", JSON.stringify(record));
+
+  try {
+    await redis.lpush(DISCORD_ACTIVITY_KEY, JSON.stringify(record));
+    await redis.ltrim(DISCORD_ACTIVITY_KEY, 0, 49);
+    await redis.expire(DISCORD_ACTIVITY_KEY, 7 * 24 * 60 * 60);
+  } catch (error) {
+    console.error(
+      "[children-discord-activity-cache-error]",
+      JSON.stringify({
+        eventId: record.eventId,
+        message: error instanceof Error ? error.message : String(error),
+      }),
+    );
+  }
+
   return record;
 }
 
