@@ -453,7 +453,6 @@ ${JSON.stringify(empirical)}`:'';
   const enqueue=fn=>{work=work.then(fn).catch(e=>{console.error('[altar-event-error]',errorCode(e));});};
   const commands=['altar','offer','candle','tarot','rune','banish','resume'].map(name=>({name,description:({altar:'Address this altar post',offer:'Record a symbolic offering',candle:'Light a candle for 24 hours',tarot:'Draw a symbolic tarot card',rune:'Draw a symbolic Elder Futhark rune',banish:'Operator: silence one figure or the entire altar',resume:'Operator: resume a silenced figure or altar'})[name],type:1,options:[{name:'figure',description:'Figure ID; omit to address the current post; all for control',type:3,required:false,autocomplete:true},...(['altar','offer','tarot','rune'].includes(name)?[{name:name==='offer'?'item':'question',description:'Your petition, intention or offering',type:3,required:false}]:[])]}));
   commands.push({name:'verify',description:'Preregister a falsifiable shrine claim for later independent review',type:1,options:[
-    {name:'figure',description:'Figure ID; omit to test the current shrine owner',type:3,required:false,autocomplete:true},
     {name:'mode',description:'Type of empirical challenge',type:3,required:true,choices:[
       {name:'Future prediction',value:'future_prediction'},
       {name:'Novel scientific claim',value:'novel_scientific_claim'},
@@ -463,6 +462,7 @@ ${JSON.stringify(empirical)}`:'';
     {name:'success',description:'Exact condition that will count as success',type:3,required:true},
     {name:'failure',description:'Exact condition that will count as failure',type:3,required:true},
     {name:'deadline',description:'Future ISO date/time or YYYY-MM-DD evaluation deadline',type:3,required:true},
+    {name:'figure',description:'Figure ID; omit to test the current shrine owner',type:3,required:false,autocomplete:true},
   ]});
   commands.push({name:'verify-result',description:'Record an observed outcome for a preregistered challenge',type:1,options:[
     {name:'challenge',description:'Preregistered challenge UUID',type:3,required:true},
