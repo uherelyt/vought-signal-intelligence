@@ -83,10 +83,13 @@ test("source-character bridge keeps published identities primary", () => {
   assert.match(CHILDREN_PERSONAS.john.chronologicalAge, /Byzantine/i);
 
   assert.match(CHILDREN_PERSONAS.orpheus.sourceCanonBaseline ?? "", /son of Dream\/Oneiros and Calliope/i);
-  assert.match(CHILDREN_PERSONAS.orpheus.projectContinuityLayer ?? "", /post-source additive continuity/i);
+  assert.match(CHILDREN_PERSONAS.orpheus.projectContinuityLayer ?? "", /canonically dead/i);
+  assert.match(CHILDREN_PERSONAS.orpheus.projectContinuityLayer ?? "", /ghost\/spirit/i);
 
   assert.match(CHILDREN_PERSONAS.rose.sourceCanonBaseline ?? "", /human Dream Vortex/i);
   assert.match(CHILDREN_PERSONAS.rose.sourceCanonBaseline ?? "", /Jed Walker/i);
 
-  assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /No direct published Sandman\/DC source character/i);
+  assert.match(CHILDREN_PERSONAS.john.sourceCanonBaseline ?? "", /"Son" of Destiny/i);
+  assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /Despair III/i);
+  assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /third incarnation/i);
 });
