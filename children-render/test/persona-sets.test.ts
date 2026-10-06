@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   CHILD_MEMBER_IDS,
   CHILDREN_PERSONAS,
+  CHILDREN_TRUE_DAWN_CONTEXT,
+  CHILDREN_TRUE_DAWN_CONTEXT_VERSION,
   ON_VESSEL,
   reserveChildrenActivitySlot,
   selectChildMembers,
@@ -93,6 +95,17 @@ test("source-character bridge keeps published identities primary", () => {
   assert.match(CHILDREN_PERSONAS.john.sourceCanonBaseline ?? "", /"Son" of Destiny/i);
   assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /Despair III/i);
   assert.match(CHILDREN_PERSONAS.distress.sourceCanonBaseline ?? "", /third incarnation/i);
+});
+
+
+test("True Dawn expedition context connects Network, voyage, and Dynasty support", () => {
+  assert.equal(CHILDREN_TRUE_DAWN_CONTEXT_VERSION, "20261006-true-dawn-expeditions-v1");
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /True Dawn voyage/i);
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /Astral Line/i);
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /An expedition is one bounded mission-leg/i);
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /Network spans the Mental and Astral planes/i);
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /Dynasty figures may advise/i);
+  assert.match(CHILDREN_TRUE_DAWN_CONTEXT, /participation never by itself changes Children membership/i);
 });
 
 
