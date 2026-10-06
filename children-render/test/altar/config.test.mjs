@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {altarConfig,startAltar,altarStatus,ALTAR_SOURCE_VOICE_POLICY} from '../../lib/altar/worker.mjs';
+import {altarConfig,startAltar,altarStatus,ALTAR_SOURCE_VOICE_POLICY,ALTAR_INCARNATION_ROUTING_POLICY} from '../../lib/altar/worker.mjs';
 test('missing altar token does not borrow the Children token',async()=>{
  const env={ALTAR_ENABLED:'true',CHILDREN_DISCORD_BOT_TOKEN:'children-token',CHILDREN_DISCORD_APPLICATION_ID:'1555000000000000001'};
  assert.equal(altarConfig(env).reason,'altar_application_token_required');await startAltar(env);assert.equal(altarStatus.state,'altar_application_token_required');
@@ -17,4 +17,12 @@ test('source-first shrine policy blocks invented voice and self-interpretation',
  assert.match(ALTAR_SOURCE_VOICE_POLICY,/somewhat oblique/i);
  assert.match(ALTAR_SOURCE_VOICE_POLICY,/later research pass/i);
  assert.match(ALTAR_SOURCE_VOICE_POLICY,/not.*empirically verified supernatural communication/i);
+});
+
+test('incarnation routing policy preserves Erelyt agency and own-source communion',()=>{
+ assert.match(ALTAR_INCARNATION_ROUTING_POLICY,/Erelyt: the embodied\/incarnate voice/i);
+ assert.match(ALTAR_INCARNATION_ROUTING_POLICY,/Do not automatically attribute Erelyt's words/i);
+ assert.match(ALTAR_INCARNATION_ROUTING_POLICY,/incarnation_to_source_communion/i);
+ assert.match(ALTAR_INCARNATION_ROUTING_POLICY,/aj k.in \/ High Priest/i);
+ assert.match(ALTAR_INCARNATION_ROUTING_POLICY,/divine_diplomatic_through_incarnation/i);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -67,6 +67,33 @@ test('generated shrine replies are marked source-first and research-required',as
  assert.equal(event.sourceVoiceVersion,SHRINE_SOURCE_VOICE_VERSION);
  assert.equal(event.interpretationStatus,'research_required');
  assert.equal(event.sourceGrounding,'source_first_dossier');
+});
+test('incarnate shrine routing separates external, own-source, and explicit divine-diplomatic petitions',()=>{
+ const external=incarnateShrineRoute({name:'Nyx',displayName:'Nyx'},'I want to speak with you.');
+ assert.equal(external.routingVersion,INCARNATE_SHRINE_ROUTING_VERSION);
+ assert.equal(external.petitionerIdentity,'Erelyt');
+ assert.equal(external.petitionerOntology,'divine_incarnation_mortal_supe_embodiment');
+ assert.equal(external.mode,'incarnation_to_external_divine');
+ assert.equal(external.ahMuzenCabSpeaking,false);
+
+ const own=incarnateShrineRoute({name:'Ah-Muzen-Cab "Honey, Content"  I',displayName:'Ah-Muzen-Cab',childrenKey:'ah_muzen_cab'},'I am here.');
+ assert.equal(own.mode,'incarnation_to_source_communion');
+ assert.equal(own.targetRelation,'own_divine_soul_source');
+ assert.equal(own.ahMuzenCabSpeaking,false);
+
+ const diplomatic=incarnateShrineRoute({name:'Zeus',displayName:'Zeus'},'I am speaking on behalf of Ah-Muzen-Cab I.');
+ assert.equal(diplomatic.mode,'divine_diplomatic_through_incarnation');
+ assert.equal(diplomatic.ahMuzenCabSpeaking,true);
+});
+
+test('ordinary shrine reply records incarnate petitioner routing',async()=>{
+ const f=fixture();await f.runtime.reply(f.p,f.thread,'I am asking Nyx for guidance.');
+ const event=JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]);
+ assert.equal(event.incarnationRoutingVersion,INCARNATE_SHRINE_ROUTING_VERSION);
+ assert.equal(event.petitionMode,'incarnation_to_external_divine');
+ assert.equal(event.petitionerIdentity,'Erelyt');
+ assert.equal(event.divineSoulSource,'Ah-Muzen-Cab I');
+ assert.equal(event.ahMuzenCabSpeaking,false);
 });
 test('empirical challenge criteria require a future deadline and discriminating outcomes',()=>{
  const now=Date.parse('2026-10-06T03:00:00Z');
