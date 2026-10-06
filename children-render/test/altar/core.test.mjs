@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -67,6 +67,54 @@ test('generated shrine replies are marked source-first and research-required',as
  assert.equal(event.sourceVoiceVersion,SHRINE_SOURCE_VOICE_VERSION);
  assert.equal(event.interpretationStatus,'research_required');
  assert.equal(event.sourceGrounding,'source_first_dossier');
+});
+test('empirical challenge criteria require a future deadline and discriminating outcomes',()=>{
+ const now=Date.parse('2026-10-06T03:00:00Z');
+ const valid=validateEmpiricalChallengeSpec({mode:'future_prediction',question:'Which exact event will occur?',successCriterion:'The named event occurs before the frozen deadline.',failureCriterion:'The named event does not occur before the frozen deadline.',deadline:'2026-10-10T00:00:00Z'},now);
+ assert.equal(valid.mode,'future_prediction');
+ assert.equal(valid.deadline,'2026-10-10T00:00:00.000Z');
+ assert.throws(()=>validateEmpiricalChallengeSpec({...valid,deadline:'2026-10-05T00:00:00Z'},now),/deadline/);
+ assert.throws(()=>validateEmpiricalChallengeSpec({...valid,successCriterion:'same criterion',failureCriterion:'same criterion'},now),/not_discriminating/);
+});
+
+test('empirical seals change whenever the frozen record changes',()=>{
+ const base={protocolVersion:EMPIRICAL_PROTOCOL_VERSION,challengeId:'x',claim:'Event A occurs.',status:'PREREGISTERED_UNVERIFIED'};
+ const one=sealEmpiricalChallenge(base),two=sealEmpiricalChallenge({...base,claim:'Event B occurs.'});
+ assert.match(one.sha256,/^[a-f0-9]{64}$/);
+ assert.notEqual(one.sha256,two.sha256);
+});
+
+test('vague or interrogative empirical claims fail closed',()=>{
+ assert(empiricalClaimLooksTestable('Candidate X receives exactly 51.2 percent of certified votes.'));
+ assert(!empiricalClaimLooksTestable('Maybe something important will happen soon.'));
+ assert(!empiricalClaimLooksTestable('Will the river rise?'));
+ assert(!empiricalClaimLooksTestable('NO TESTABLE CLAIM'));
+});
+
+test('empirical challenge posts one sealed unverified claim with durable metadata',async()=>{
+ const f=fixture();
+ f.runtime.generate=async()=> 'Candidate X receives exactly 51.2 percent of certified votes.';
+ const result=await f.runtime.empiricalChallenge(f.p,f.thread,{mode:'future_prediction',question:'State the exact certified vote share for Candidate X.',successCriterion:'The official certified result is exactly 51.2 percent.',failureCriterion:'The official certified result is any value other than exactly 51.2 percent.',deadline:'2030-01-01T00:00:00Z'});
+ assert.equal(result.status,'PREREGISTERED_UNVERIFIED');
+ assert.equal(result.protocolVersion,EMPIRICAL_PROTOCOL_VERSION);
+ assert.match(result.sha256,/^[a-f0-9]{64}$/);
+ const event=JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]);
+ assert.equal(event.eventType,'empirical_challenge_preregistered');
+ assert.equal(event.empiricalChallengeId,result.challengeId);
+ assert.equal(event.empiricalStatus,'PREREGISTERED_UNVERIFIED');
+ assert.equal(event.interpretationStatus,'experimental_unverified');
+});
+test('empirical outcomes remain pending review and preserve the original seal',async()=>{
+ const f=fixture();
+ f.runtime.generate=async()=> 'Candidate X receives exactly 51.2 percent of certified votes.';
+ const sealed=await f.runtime.empiricalChallenge(f.p,f.thread,{mode:'future_prediction',question:'State the exact certified vote share for Candidate X.',successCriterion:'The official certified result is exactly 51.2 percent.',failureCriterion:'The official certified result is any value other than exactly 51.2 percent.',deadline:'2030-01-01T00:00:00Z'});
+ const updated=await f.runtime.recordEmpiricalOutcome(f.thread,sealed.challengeId,'The official certified result was 51.2 percent.','https://example.org/certified-result');
+ assert.equal(updated.status,'OUTCOME_RECORDED_PENDING_REVIEW');
+ assert.equal(updated.sha256,sealed.sha256);
+ const event=JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]);
+ assert.equal(event.eventType,'empirical_outcome_recorded');
+ assert.equal(event.empiricalStatus,'OUTCOME_RECORDED_PENDING_REVIEW');
+ await assert.rejects(f.runtime.recordEmpiricalOutcome(f.thread,sealed.challengeId,'Duplicate result.','https://example.org/duplicate'),/already_recorded/);
 });
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
