@@ -27,6 +27,8 @@ const DIVINE_SHRINE_STATUS = new Map([
   ['Harmonia','goddess'],
   ['Kratos','god_or_daimon'],
   ['Phobos','god'],
+  ['Belial','infernal_king'],
+  ['Abaddon','angel_of_the_abyss'],
 ]);
 
 const LINEAGE_ANCESTORS = new Set(['Adam','Aphrodite','Ares','Chronos','Cronus','Gaia','Hera','Rhea','Uranus','Zeus']);
@@ -50,8 +52,16 @@ const FOUR_OCT_ADDITIONS = [
   {name:'Phobos',gender:'Male',relationships:['Mother: Aphrodite','Father: Ares'],divineStatus:'god'},
 ];
 
+const SEVEN_OCT_DYNASTY_ADDITIONS = [
+  {name:'Belial',gender:'Male',relationships:['Dynasty counterpart: Abaddon'],divineStatus:'infernal_king',canonOffice:'Throne of Lawlessness / Corrupt Sovereignty',relationshipReview:['Distinct from Lucifer and Satan. Source-grounded layers remain biblical beliyyaʿal, Qumran personification, and later Goetic kingship; Vought synthesis uses organized lawlessness/corrupt sovereignty.']},
+  {name:'Abaddon',gender:'Male',relationships:['Dynasty counterpart: Belial'],divineStatus:'angel_of_the_abyss',canonOffice:'Steward of the Abyss / Authorized Conclusion',relationshipReview:['Distinct from Lucifer, Satan, Beelzebub, Thanatos, and Destruction. Hebrew Abaddon/destruction, Revelation 9:11 angel/king of the abyss, and later Abbaton traditions remain source-local; Vought synthesis uses containment, threshold, key, mandate, and authorized conclusion.']},
+];
+
 function fourOctId(name){
   return `elaed-${createHash('sha256').update(`familyecho-2026-10-04-0520:${name}`).digest('hex').slice(0,12)}-1`;
+}
+function sevenOctDynastyId(name){
+  return `elaed-${createHash('sha256').update(`dynasty-2026-10-07:${name}`).digest('hex').slice(0,12)}-1`;
 }
 function patchRelationships(p,name,relationships){
   if(p.name===name)return {...p,relationships};
@@ -59,7 +69,7 @@ function patchRelationships(p,name,relationships){
 }
 export function migrateRosterTo4Oct(input){
   const doc={...input,people:input.people.map(p=>({...p,relationships:[...p.relationships]})),visitors:(input.visitors??[]).map(p=>({...p}))};
-  if(doc.people.length!==239&&doc.people.length!==245)throw new Error('roster_count_or_identity_mismatch');
+  if(![239,245,247].includes(doc.people.length))throw new Error('roster_count_or_identity_mismatch');
   let laufey=doc.people.find(p=>p.name==='Laufey');
   if(laufey){laufey.name='Laufey "Faye"';laufey.displayName='Laufey "Faye"';laufey.relationships=['Late partner: Loki "Ikol" Laufeyson'];}
   doc.people=doc.people.map(p=>{
@@ -88,8 +98,11 @@ export function migrateRosterTo4Oct(input){
   for(const add of FOUR_OCT_ADDITIONS){
     if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:fourOctId(add.name),displayName:add.name,humanControlled:false,shrineEligible:!!add.divineStatus,...add});
   }
-  if(doc.people.length!==245||new Set(doc.people.map(p=>p.id)).size!==245)throw new Error('current_roster_count_or_identity_mismatch');
-  doc.version='20261004-familyecho-2049-v3';
+  for(const add of SEVEN_OCT_DYNASTY_ADDITIONS){
+    if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:sevenOctDynastyId(add.name),displayName:add.name,humanControlled:false,shrineEligible:true,...add});
+  }
+  if(doc.people.length!==247||new Set(doc.people.map(p=>p.id)).size!==247)throw new Error('current_roster_count_or_identity_mismatch');
+  doc.version='20261007-familyecho-2049-plus-belial-abaddon-v4';
   doc.policyVersion='20261004-lineage-classes-v4';
   doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
   doc.requestedAncestorCount=11;
