@@ -11,6 +11,7 @@ import {
   selectChildMembers,
   selectCrew,
   selectReactiveParticipants,
+  selectScheduledParticipants,
 } from "../lib/children-of-endless.ts";
 import {
   CHILDREN_SLASH_COMMANDS,
@@ -70,6 +71,18 @@ test("selector contracts preserve ontology", () => {
   );
   assert(selectReactiveParticipants("m1", "children, answer me").every((id) => CHILD_MEMBER_IDS.includes(id)));
   assert(selectReactiveParticipants("m2", "crew, answer me").every((id) => ON_VESSEL.includes(id)));
+});
+
+test("autonomous scheduled selection excludes Ah-Muzen-Cab without changing manual crew selection", () => {
+  for (let hour = 0; hour < 24; hour += 1) {
+    const selected = selectScheduledParticipants(`scheduled-${hour}`, 4);
+    assert.equal(selected.includes("ah_muzen_cab"), false);
+    assert(selected.every((id) => ON_VESSEL.includes(id)));
+  }
+  assert.deepEqual(
+    selectCrew("manual-yucatec", 1, ["ah_muzen_cab"]),
+    ["ah_muzen_cab"],
+  );
 });
 
 test("slash registry includes /children and /crew", () => {
