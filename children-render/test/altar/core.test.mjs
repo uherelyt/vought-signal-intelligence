@@ -53,6 +53,8 @@ test('Delphic oracle spec is Apollo-linked, versioned, and interpretive',()=>{
  assert.equal(spec.oracle,'Pythia');
  assert.equal(spec.patron,'Apollo');
  assert.equal(spec.interpretationStatus,'symbolic_research_required');
+ assert.deepEqual(spec.allowedInterpretiveThemes,['katabasis','divine_mania','the_gods_collectively','divine_immanence','mystery_current_symbolism']);
+ assert.equal(spec.charonCoinSubstitute,'us_quarter_symbolic_coin_for_passage');
  assert.match(spec.style,/ambiguous/);
  assert.throws(()=>delphicOracleSpec(' '),/oracle_question_required/);
 });
