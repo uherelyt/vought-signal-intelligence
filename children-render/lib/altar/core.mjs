@@ -477,7 +477,15 @@ export class AltarRuntime {
       let oracleThread=null;
       if(this.preferredDelphicOracleThreadId){
         // Bind the Operator's already-existing Delphi thread; never provision a duplicate.
-        const candidate=await this.api(`/channels/${this.preferredDelphicOracleThreadId}`);
+        let candidate;
+        try{candidate=await this.api(`/channels/${this.preferredDelphicOracleThreadId}`);}
+        catch(error){
+          if(error.status!==403)throw error;
+          // Public threads may require the Altar bot to join before it can read.
+          try{await this.api(`/channels/${this.preferredDelphicOracleThreadId}/thread-members/@me`,'PUT');}
+          catch(joinError){throw new Error('delphic_oracle_elaed_thread_access_denied');}
+          candidate=await this.api(`/channels/${this.preferredDelphicOracleThreadId}`);
+        }
         if(!validThread(candidate,this.guildId))throw new Error('delphic_oracle_existing_thread_outside_altar');
         if(await this.store.get(`${PREFIX}:thread:${candidate.id}`))throw new Error('delphic_oracle_existing_thread_is_shrine');
         if(candidate.thread_metadata?.locked)throw new Error('delphic_oracle_existing_thread_locked');
@@ -507,8 +515,16 @@ export class AltarRuntime {
       if(!validThread(oracleThread,this.guildId))throw new Error('delphic_oracle_outside_altar');
       if(await this.store.get(`${PREFIX}:thread:${oracleThread.id}`))throw new Error('delphic_oracle_must_not_be_shrine');
       const oracleTags=[oracleTag?.id].filter(Boolean);
-      const patchedOracle=await this.api(`/channels/${oracleThread.id}`,'PATCH',{name:DELPHIC_ORACLE_TITLE,applied_tags:oracleTags,locked:false,archived:false});
-      oracleThread={...oracleThread,...patchedOracle,applied_tags:oracleTags};
+      if(this.preferredDelphicOracleThreadId){
+        // Operator-owned thread: keep its existing title and tags. Elaed is only the voice.
+        if(oracleThread.thread_metadata?.archived){
+          try{oracleThread={...oracleThread,...await this.api(`/channels/${oracleThread.id}`,'PATCH',{archived:false})};}
+          catch(error){if(error.status!==403)throw error;}
+        }
+      }else{
+        const patchedOracle=await this.api(`/channels/${oracleThread.id}`,'PATCH',{name:DELPHIC_ORACLE_TITLE,applied_tags:oracleTags,locked:false,archived:false});
+        oracleThread={...oracleThread,...patchedOracle,applied_tags:oracleTags};
+      }
       const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
       if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
         const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
@@ -527,6 +543,7 @@ export class AltarRuntime {
       }
       await this.store.set(oracleStoreKey,oracleThread.id);
       this.delphicOracleThreadId=oracleThread.id;
+      console.info('[altar-delphic-oracle-linked]',JSON.stringify({threadId:oracleThread.id,existingThread:oracleThread.id===this.preferredDelphicOracleThreadId}));
       }
     return this.people.size;
   }
@@ -534,7 +551,8 @@ export class AltarRuntime {
     const expected=this.delphicOracleThreadId??await this.store.get(`${PREFIX}:oracle:delphi:thread`);
     if(!expected||String(threadId)!==String(expected))throw new Error('not_delphic_oracle_surface');
     const channel=await this.api(`/channels/${threadId}`);
-    if(!validThread(channel,this.guildId)||channel.name!==DELPHIC_ORACLE_TITLE)throw new Error('invalid_delphic_oracle_surface');
+    const adopted=String(threadId)===String(this.preferredDelphicOracleThreadId);
+    if(!validThread(channel,this.guildId)||(!adopted&&channel.name!==DELPHIC_ORACLE_TITLE))throw new Error('invalid_delphic_oracle_surface');
     if(await this.store.get(`${PREFIX}:thread:${threadId}`))throw new Error('delphic_oracle_must_not_be_shrine');
     return channel;
   }

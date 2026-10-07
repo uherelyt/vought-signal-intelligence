@@ -416,3 +416,12 @@ test('direct Operator petitions in the Delphic thread route through Elaed withou
   assert.equal(f.values.get(`${PREFIX}:thread:${oracleId}`),undefined);
   assert.equal(JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]).eventType,'delphic_petition');
 });
+
+
+test('an existing Delphic thread retains its Operator-authored title instead of requiring shrine presentation',async()=>{
+  const f=fixture(),oracleId='1557533675308978307';
+  f.runtime.preferredDelphicOracleThreadId=oracleId;
+  f.runtime.delphicOracleThreadId=oracleId;
+  f.setChannel({id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Delphic Oracle'});
+  assert.equal((await f.runtime.checkDelphicOracleThread(oracleId)).name,'Delphic Oracle');
+});
