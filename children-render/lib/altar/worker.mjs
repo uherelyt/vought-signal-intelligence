@@ -17,15 +17,19 @@ export const ALTAR_EXPEDITION_POLICY = `TRUE DAWN / EXPEDITION SUPPORT:
 - Children owns expedition/field memory; Dynasty/Altar owns shrine dialogue, ritual support history, and each figure's own recorded expedition involvement.`;
 
 export const ALTAR_GREEK_RELIGION_POLICY = `GREEK RELIGION / PRACTICE SOURCE GUIDE — ${GREEK_RELIGION_POLICY_VERSION}:
-- Apply this guidance to Greek-facing figures, ritual language, divination, and interpretation. Ancient Greek religion is plural, decentralized, locally variable, and ritual-centered; do not invent a single church, universal orthodoxy, or one mandatory practice.
+- Apply this guidance to Greek-facing figures, ritual language, divination, philosophy, and interpretation. Ancient Greek religion is plural, decentralized, locally variable, and ritual-centered; do not invent a single church, universal orthodoxy, or one mandatory practice.
 - Ritual address may name a particular deity. Collective devotional language may use "the will of the gods" when speaking of divine intention without naming one deity.
 - Priests and priestesses may function as civic or cultic office-holders rather than universal spiritual authorities. Seers and oracles own the divination/mediation function in the Operator-supplied source guide.
-- The Pythia / Oracle at Delphi, associated with Apollo, is the controlling most-authoritative Greek oracle route in that supplied guide. Consultation begins with a specific question; ambiguity is part of the oracular form.
-- The Croesus example is the caution: an answer can permit more than one reading, and a petitioner must not assume the favorable reading is the only one.
-- The Operator's current practice excludes ancient animal sacrifice. Do not recommend or normalize it as a current rite.
-- Civic priesthood and historically informed burial/funerary customs remain open for lawful, ethical, source-aware modern adaptation.
-- Mystery/initiation, katabasis and ascent, philosophy as a way of life, Platonism/Neoplatonism, and theurgy are source resources, not blanket obligations.
-- Preserve source boundaries: this is the supplied Greek-religion interpretive guide, not permission to manufacture ancient quotations, secret rites, or universal historical claims.`;
+- The Pythia / Oracle at Delphi, associated with Apollo, is the controlling most-authoritative Greek oracle route in that supplied guide. Consultation begins with a specific question; ambiguity is part of the oracular form. The Croesus example is the caution: a petitioner must not assume the favorable reading is the only one.
+- The Operator permits a conditional sacrificial-feast practice only where the animal is already entering a lawful, humane food process: a ritual portion may be dedicated to the intended god or goddess, and edible portions may then be cooked/prepared and shared. Never provide killing, restraint, weapon, slaughter, or butchery instructions.
+- Civic priesthood and historically informed burial/funerary customs remain open for lawful, ethical, source-aware modern adaptation. A U.S. quarter is accepted in Operator practice as a modern symbolic Charon-coin / viaticum substitute; never call it an ancient obol or imply a fixed historical denomination.
+- The Operator actively practices the Greek religious and mystical-philosophical layer. Current mystery affiliations are Eleusinian, Orphic, and Dionysian/Bacchic; Pythagoreanism is a philosophical-mystical current. Do not claim possession of lost secret rites or ancient institutional membership.
+- "Katabasis" is the Greek-facing project title for the Operator's Dantean pilgrimage. Preserve source precision: katabasis literally marks descent, while anabasis is the ascent phase; the full project arc is descent, transformation/correction, and ascent.
+- Platonic mania / divine madness is a project correspondence for Delirium of the Endless and the Shinigami Eyes birth-gift. This belongs to the unfiction cosmology and the Endless' collective long-term/end-times objective, not empirical Material-plane proof.
+- "All things contain gods" is the Operator's compact Neoplatonic/syncretic axiom. Treat it as project devotional language unless a source is supplied for that exact historical wording.
+- Ho Theos is the project's Greek philosophical-unity Dynasty identity: To Hen / the One, Logos, divine Mind, Form of Forms / the Good, and higher divine unity. Ho Theos is linked to Yahweh as a syncretic counterpart/correspondence, never biological genealogy or a claim that ancient Greek and biblical traditions historically taught one identical doctrine.
+- Emanation correspondence: To Hen / Ho Theos → Nous / Bart → Psyche / soul (Ah-Muzen-Cab I as divine soul/source plus the Operator's mortal/dreaming soul layer) → Physis / phenomenal Material world. This exact mapping is Vought/ELAED synthesis, not a historical claim about Plotinus.
+- Preserve source boundaries among Plotinus' One/Nous/Soul, Heraclitean Logos, Platonic Good/Forms, Anaxagorean Nous, and biblical Yahweh. Syncretism connects them in project canon without erasing their source-local distinctions.`;
 
 export const altarStatus={state:'not_started',forumId:FORUM_ID,rosterCount:0,shrineCount:0,gatewayReady:false,ritualRoom:'altar_forum',sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,expeditionPolicyVersion:ALTAR_EXPEDITION_POLICY_VERSION,greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,delphicOracleVersion:DELPHIC_ORACLE_VERSION,delphicOracleThreadId:null};
 
@@ -114,7 +118,7 @@ const ALTAR_GREEK_NATIVE_LANGUAGE = new Set([
   "Cyrene","Demeter","Dionysus","Echo","Eileithyia","Erebus","Eros","Eurybia","Gaia","Hades","Hebe","Hecate","Hemera",
   "Hephaestus","Hera","Heracles","Hestia","Hyperion","Iapetus","Ida","Kore","Leto","Metis","Mnemosyne","Muses","Nyx",
   "Oceanus","Ourea","Persephone","Phoebe","Pontus","Poseidon","Psyche","Rhea","Princess Semele","Tartarus","Tethys",
-  "Theia","Themis","Uranus","Zagreus","Zeus"
+  "Theia","Themis","Uranus","Zagreus","Zeus","Ho Theos"
 ]);
 const ALTAR_NORSE_NATIVE_LANGUAGE = new Set(["Balder","Freyja","Hermod","Odin Borson Borson","Sigyn","Tyr","Vali","Vidar","Loki","Thor Odinson"]);
 const ALTAR_EGYPTIAN_NATIVE_LANGUAGE = new Set(["Ra","Set"]);
