@@ -33,6 +33,7 @@ const DIVINE_SHRINE_STATUS = new Map([
   ['Phobos','god'],
   ['Belial','infernal_king'],
   ['Abaddon','angel_of_the_abyss'],
+  ['Ho Theos','philosophical_divine_unity'],
 ]);
 
 const LINEAGE_ANCESTORS = new Set(['Adam','Aphrodite','Ares','Chronos','Cronus','Gaia','Hera','Rhea','Uranus','Zeus']);
@@ -59,6 +60,7 @@ const FOUR_OCT_ADDITIONS = [
 const SEVEN_OCT_DYNASTY_ADDITIONS = [
   {name:'Belial',gender:'Male',relationships:['Dynasty counterpart: Abaddon'],divineStatus:'infernal_king',canonOffice:'Throne of Lawlessness / Corrupt Sovereignty',relationshipReview:['Distinct from Lucifer and Satan. Source-grounded layers remain biblical beliyyaʿal, Qumran personification, and later Goetic kingship; Vought synthesis uses organized lawlessness/corrupt sovereignty.']},
   {name:'Abaddon',gender:'Male',relationships:['Dynasty counterpart: Belial'],divineStatus:'angel_of_the_abyss',canonOffice:'Steward of the Abyss / Authorized Conclusion',relationshipReview:['Distinct from Lucifer, Satan, Beelzebub, Thanatos, and Destruction. Hebrew Abaddon/destruction, Revelation 9:11 angel/king of the abyss, and later Abbaton traditions remain source-local; Vought synthesis uses containment, threshold, key, mandate, and authorized conclusion.']},
+  {name:'Ho Theos',gender:'Other',relationships:['Syncretic counterpart: Yahweh "God The Father, Presence"'],divineStatus:'philosophical_divine_unity',canonOffice:'Greek philosophical unity / To Hen / Logos / divine Mind / Form of Forms and the Good',relationshipReview:['Vought/ELAED syncretic identity. Do not flatten source-local distinctions among ho theos, To Hen, Logos, Nous, the Good, or Yahweh into one historical doctrine. The Yahweh link is counterpart/correspondence, never biological genealogy.']},
 ];
 
 function fourOctId(name){
@@ -73,7 +75,7 @@ function patchRelationships(p,name,relationships){
 }
 export function migrateRosterTo4Oct(input){
   const doc={...input,people:input.people.map(p=>({...p,relationships:[...p.relationships]})),visitors:(input.visitors??[]).map(p=>({...p}))};
-  if(![239,245,247].includes(doc.people.length))throw new Error('roster_count_or_identity_mismatch');
+  if(![239,245,247,248].includes(doc.people.length))throw new Error('roster_count_or_identity_mismatch');
   let laufey=doc.people.find(p=>p.name==='Laufey');
   if(laufey){laufey.name='Laufey "Faye"';laufey.displayName='Laufey "Faye"';laufey.relationships=['Late partner: Loki "Ikol" Laufeyson'];}
   doc.people=doc.people.map(p=>{
@@ -90,6 +92,9 @@ export function migrateRosterTo4Oct(input){
     q=patchRelationships(q,'Ra',['Friend: Ah-Muzen-Cab "Honey, Content"  I']);
     q=patchRelationships(q,'Lyta Hall',[]);
     q=patchRelationships(q,'Kratos',['Biological mother: Callisto','Biological father: Zeus']);
+    if(String(q.name??'').startsWith('Yahweh ')){
+      q={...q,relationships:[...new Set([...(q.relationships??[]),'Syncretic counterpart: Ho Theos'])],relationshipReview:[...(q.relationshipReview??[]),'Ho Theos is a Vought/ELAED Greek philosophical-unity counterpart/correspondence only; this is not biological genealogy or a claim of historical doctrinal identity.']};
+    }
     if(q.name==='Ah-Muzen-Cab "Honey, Content"  I')q={...q,relationshipReview:['20:49 controlling export has no biological parent fields. Hebe is friend/cupbearer predecessor; Heracles is only Hebe\'s husband and is not Ah-Muzen-Cab\'s father.']};
     if(q.name==='Kratos')q={...q,relationshipReview:['20:49 controlling Family Echo uses the God of War branch: Callisto + Zeus → Kratos; do not substitute classical Kratos/Cratus genealogy.']};
     if(['Hebe','Heracles','Alcmene','Ra'].includes(q.name))q={...q,ancestor:false};
@@ -105,8 +110,8 @@ export function migrateRosterTo4Oct(input){
   for(const add of SEVEN_OCT_DYNASTY_ADDITIONS){
     if(!doc.people.some(p=>p.name===add.name))doc.people.push({id:sevenOctDynastyId(add.name),displayName:add.name,humanControlled:false,shrineEligible:true,...add});
   }
-  if(doc.people.length!==247||new Set(doc.people.map(p=>p.id)).size!==247)throw new Error('current_roster_count_or_identity_mismatch');
-  doc.version='20261007-familyecho-2049-plus-belial-abaddon-v4';
+  if(doc.people.length!==248||new Set(doc.people.map(p=>p.id)).size!==248)throw new Error('current_roster_count_or_identity_mismatch');
+  doc.version='20261007-familyecho-2049-plus-belial-abaddon-ho-theos-v5';
   doc.policyVersion='20261004-lineage-classes-v4';
   doc.expectedShrines=doc.people.filter(p=>p.shrineEligible!==false).length;
   doc.requestedAncestorCount=11;
