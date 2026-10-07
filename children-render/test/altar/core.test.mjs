@@ -277,11 +277,13 @@ test('4 Oct migration adds current Family Echo records and promotes only sourced
   people[1]={...people[1],name:`Ah-Muzen-Cab "'Cab"  II`,displayName:`Ah-Muzen-Cab "'Cab"  II`};
   people[2]={...people[2],name:'Distress of The Endless "Despair of The Endless, Aponoia" Endless',displayName:'Distress of The Endless "Despair of The Endless, Aponoia" Endless'};
   const migrated=migrateRosterTo4Oct({people,visitors:[],requestedAncestorCount:0});
-  assert.equal(migrated.people.length,245);
-  for(const name of ['Anteros','Deimos','Harmonia','Kratos','Phobos',`Ah-Muzen-Cab "'Cab"  II`,'Distress of The Endless "Despair of The Endless, Aponoia" Endless']){
+  assert.equal(migrated.people.length,247);
+  for(const name of ['Anteros','Deimos','Harmonia','Kratos','Phobos','Belial','Abaddon',`Ah-Muzen-Cab "'Cab"  II`,'Distress of The Endless "Despair of The Endless, Aponoia" Endless']){
     assert.equal(migrated.people.find(p=>p.name===name)?.shrineEligible,true,name);
   }
   assert.equal(migrated.people.find(p=>p.name==='Atreus')?.shrineEligible,false);
+  assert.equal(migrated.people.find(p=>p.name==='Belial')?.divineStatus,'infernal_king');
+  assert.equal(migrated.people.find(p=>p.name==='Abaddon')?.divineStatus,'angel_of_the_abyss');
   const kratos=migrated.people.find(p=>p.name==='Kratos');
   assert.deepEqual(kratos.relationships,['Biological mother: Callisto','Biological father: Zeus']);
   assert.match(kratos.relationshipReview[0],/God of War branch/);
