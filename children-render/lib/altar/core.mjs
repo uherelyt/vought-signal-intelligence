@@ -677,6 +677,21 @@ export class AltarRuntime {
       await this.store.ltrim(`${PREFIX}:observed`,0,39);return;
     }
     if(!validThread(c,this.guildId))return;
+    // The existing Delphi thread is an Elaed-delivered voice, not a shrine mapping.
+    const oracleThreadId=this.delphicOracleThreadId??await this.store.get(`${PREFIX}:oracle:delphi:thread`);
+    if(oracleThreadId&&String(m.channel_id)===String(oracleThreadId)){
+      const claimed=await this.store.set(`${PREFIX}:message:${m.id}`,'1',{nx:true,ex:172800});
+      if(claimed!=='OK')return;
+      await this.activity(null,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{
+        speakers:[m.author?.username??'Human'],eventType:'delphic_petition',
+        sourceKind:'elaed_delphic_oracle',location:`#altar — Oracle at Delphi (${m.channel_id})`,
+      });
+      if(m.author?.id!==this.operatorId)return;
+      const cooldown=await this.store.set(`${PREFIX}:oracle:delphi:reply-cooldown`,'1',{nx:true,ex:15});
+      if(cooldown!=='OK')return;
+      await this.consultDelphi(m.content);
+      return;
+    }
     const id=await this.store.get(`${PREFIX}:thread:${m.channel_id}`);
     const p=this.people.get(id);
     if(!p)return;

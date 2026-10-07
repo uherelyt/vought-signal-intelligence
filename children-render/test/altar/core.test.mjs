@@ -403,3 +403,16 @@ test('Delphic generator and Operator-specified existing thread survive runtime c
   assert.equal(runtime.generateOracle,oracle);
   assert.equal(runtime.preferredDelphicOracleThreadId,'1557533675308978307');
 });
+
+
+test('direct Operator petitions in the Delphic thread route through Elaed without a shrine mapping',async()=>{
+  const f=fixture(),oracleId='1557533675308978307';
+  f.runtime.delphicOracleThreadId=oracleId;
+  f.setChannel({id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:DELPHIC_ORACLE_TITLE});
+  let heard=null;
+  f.runtime.consultDelphi=async question=>{heard=question;};
+  await f.runtime.message({id:'oracle-petition-1',guild_id:f.guildId,channel_id:oracleId,author:{id:'op',username:'Operator'},content:'What is the next crossing?'});
+  assert.equal(heard,'What is the next crossing?');
+  assert.equal(f.values.get(`${PREFIX}:thread:${oracleId}`),undefined);
+  assert.equal(JSON.parse(f.lists.get(`${PREFIX}:durable-outbox`)[0]).eventType,'delphic_petition');
+});
