@@ -394,3 +394,12 @@ test('locked retired references are deleted while the oldest snowflake remains t
   assert.equal(f.values.get(`${PREFIX}:order:${retired.id}`),oldId);
   assert.equal(runtime.retiredReferencesDeleted,1);
 });
+
+
+test('Delphic generator and Operator-specified existing thread survive runtime construction',()=>{
+  const f=fixture();
+  const oracle=async()=> 'The way opens twice.';
+  const runtime=new AltarRuntime({store:f.runtime.store,api:f.runtime.api,generate:f.runtime.generate,generateOracle:oracle,preferredDelphicOracleThreadId:'1557533675308978307',roster:{people:[f.p]},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
+  assert.equal(runtime.generateOracle,oracle);
+  assert.equal(runtime.preferredDelphicOracleThreadId,'1557533675308978307');
+});

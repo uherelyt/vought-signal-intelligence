@@ -210,8 +210,8 @@ export function isSacredHiveMember(p){
 }
 
 export class AltarRuntime {
-  constructor({store,api,childApi,childrenApplicationId,generate,generateOracle,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
-    Object.assign(this,{store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now,record,progress});
+  constructor({store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId=null,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
+    Object.assign(this,{store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId,roster,guildId,operatorId,applicationId,now,record,progress});
     const promoteFormerChild=(childrenKey,name)=>{
       const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
       const visitor=(roster.visitors??[]).find(p=>p.childrenKey===childrenKey);
@@ -475,7 +475,15 @@ export class AltarRuntime {
       const oracleStoreKey=`${PREFIX}:oracle:delphi:thread`;
       const storedOracle=await this.store.get(oracleStoreKey);
       let oracleThread=null;
-      if(storedOracle){
+      if(this.preferredDelphicOracleThreadId){
+        // Bind the Operator's already-existing Delphi thread; never provision a duplicate.
+        const candidate=await this.api(`/channels/${this.preferredDelphicOracleThreadId}`);
+        if(!validThread(candidate,this.guildId))throw new Error('delphic_oracle_existing_thread_outside_altar');
+        if(await this.store.get(`${PREFIX}:thread:${candidate.id}`))throw new Error('delphic_oracle_existing_thread_is_shrine');
+        if(candidate.thread_metadata?.locked)throw new Error('delphic_oracle_existing_thread_locked');
+        oracleThread=candidate;
+      }
+      if(storedOracle&&!oracleThread){
         try{
           const candidate=await this.api(`/channels/${storedOracle}`);
           if(validThread(candidate,this.guildId)&&candidate.name===DELPHIC_ORACLE_TITLE&&!await this.store.get(`${PREFIX}:thread:${candidate.id}`)&&!(candidate.thread_metadata?.archived&&candidate.thread_metadata?.locked))oracleThread=candidate;
@@ -504,9 +512,17 @@ export class AltarRuntime {
       const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
       if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
         const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
-        await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
-        const receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
-        if(receipt.id!==oracleThread.id||receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
+        let receipt;
+        try{
+          // Elaed can edit its own starter, but not a pre-existing Operator-authored one.
+          await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
+          receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
+        }catch(error){
+          if(error.status!==403&&error.status!==404)throw error;
+          const introduced=await this.api(`/channels/${oracleThread.id}/messages`,'POST',body);
+          receipt=await this.api(`/channels/${oracleThread.id}/messages/${introduced.id}`);
+        }
+        if(receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
         await this.store.set(oraclePresentationKey,DELPHIC_ORACLE_VERSION);
       }
       await this.store.set(oracleStoreKey,oracleThread.id);

@@ -274,7 +274,7 @@ export async function startAltar(env=process.env) {
     altarStatus.state='gateway_lease_wait';await wait(10000);
   }
   if(!leaseAcquired){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
-  const runtime=new AltarRuntime({store,api,childApi,childrenApplicationId:env.CHILDREN_DISCORD_APPLICATION_ID,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify(event)),generateOracle:async(spec)=>{
+  const runtime=new AltarRuntime({store,api,childApi,childrenApplicationId:env.CHILDREN_DISCORD_APPLICATION_ID,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,preferredDelphicOracleThreadId:'1557533675308978307',progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify(event)),generateOracle:async(spec)=>{
     const epoch=await store.get(`${PREFIX}:control_epoch`);
     const prompt=`Write one brief response for the dedicated Oracle at Delphi station in the ELAED #altar Ritual Chamber.
 
