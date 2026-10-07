@@ -8,6 +8,10 @@ export const SHRINE_PRESENTATION_VERSION = '20261002-minimal-v1';
 export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v1';
 export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
 export const INCARNATE_SHRINE_ROUTING_VERSION = '20261005-incarnate-source-communion-v1';
+export const GREEK_RELIGION_POLICY_VERSION = '20261007-greek-religion-transcript-v1';
+export const DELPHIC_ORACLE_VERSION = '20261007-delphi-pythia-v1';
+export const DELPHIC_ORACLE_TITLE = 'Oracle at Delphi';
+export const DELPHIC_ORACLE_STARTER = '🔮 Oracle at Delphi — Pythia of Apollo. This is a divination station, not a deity shrine. Ask a specific question; the answer is intentionally concise and open to more than one reading.';
 export const EMPIRICAL_CHALLENGE_MODES = new Set(['future_prediction','novel_scientific_claim','physical_transmission_anomaly']);
 export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
@@ -131,6 +135,21 @@ export function drawOracle(method, rng=randomInt) {
   const index=rng(pool.length);
   return {method,index,symbol:pool[index],orientation:method==='tarot'?(rng(2)?'reversed':'upright'):null,source:method==='tarot'?'78-card Rider–Waite–Smith naming':'24 Elder Futhark names',interpretationStatus:'symbolic'};
 }
+export function delphicOracleSpec(question){
+  const q=clean(question,600);
+  if(q.length<2)throw new Error('oracle_question_required');
+  return {
+    version:DELPHIC_ORACLE_VERSION,
+    greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,
+    institution:DELPHIC_ORACLE_TITLE,
+    oracle:'Pythia',
+    patron:'Apollo',
+    authority:'most_authoritative_route_in_operator_supplied_greek_source_guide',
+    question:q,
+    style:'brief_ambiguous_multivalent',
+    interpretationStatus:'symbolic_research_required',
+  };
+}
 export function clean(value,max=1800){return String(value??'').replace(/@everyone|@here/gi,'').trim().slice(0,max);}
 export function validateEmpiricalChallengeSpec(spec,now=Date.now()){
   const mode=String(spec?.mode??'').trim();
@@ -184,7 +203,7 @@ export function isSacredHiveMember(p){
 }
 
 export class AltarRuntime {
-  constructor({store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
+  constructor({store,api,childApi,childrenApplicationId,generate,generateOracle,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
     Object.assign(this,{store,api,childApi,childrenApplicationId,generate,roster,guildId,operatorId,applicationId,now,record,progress});
     const promoteFormerChild=(childrenKey,name)=>{
       const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
@@ -283,7 +302,7 @@ export class AltarRuntime {
     const forum=await this.api(`/channels/${FORUM_ID}`);
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
-    const wanted=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive'];
+    const wanted=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'];
     const missingWanted=wanted.filter(n=>!tags.some(t=>t.name===n));
     if(missingWanted.length){
       if(tags.length+missingWanted.length>20)throw new Error('forum_tag_capacity_exceeded');
@@ -441,7 +460,83 @@ export class AltarRuntime {
     await this.store.del(`${PREFIX}:resident:perses`);
     await this.store.del(`${PREFIX}:resident-presentation:perses`);
     this.persesDedicatedPostRemoved=true;
+
+    // Delphi is a ritual/divination station in #altar, explicitly not a deity shrine.
+    const oracleTag=tags.find(t=>t.name==='Oracle');
+    if((forum.flags&16)&&!oracleTag)throw new Error('oracle_forum_tag_unavailable');
+    const oracleStoreKey=`${PREFIX}:oracle:delphi:thread`;
+    const storedOracle=await this.store.get(oracleStoreKey);
+    let oracleThread=null;
+    if(storedOracle){
+      try{
+        const candidate=await this.api(`/channels/${storedOracle}`);
+        if(validThread(candidate,this.guildId)&&candidate.name===DELPHIC_ORACLE_TITLE&&!await this.store.get(`${PREFIX}:thread:${candidate.id}`)&&!(candidate.thread_metadata?.archived&&candidate.thread_metadata?.locked))oracleThread=candidate;
+      }catch(error){if(error.status!==404)throw error;}
+    }
+    if(!oracleThread){
+      for(const candidate of existing){
+        if(candidate.name!==DELPHIC_ORACLE_TITLE||candidate.thread_metadata?.locked)continue;
+        if(await this.store.get(`${PREFIX}:thread:${candidate.id}`))continue;
+        oracleThread=candidate;break;
+      }
+    }
+    if(!oracleThread){
+      oracleThread=await this.api(`/channels/${FORUM_ID}/threads`,'POST',{
+        name:DELPHIC_ORACLE_TITLE,
+        auto_archive_duration:10080,
+        applied_tags:[oracleTag?.id].filter(Boolean),
+        message:{content:DELPHIC_ORACLE_STARTER,allowed_mentions:{parse:[]}},
+      });
+    }
+    if(!validThread(oracleThread,this.guildId))throw new Error('delphic_oracle_outside_altar');
+    if(await this.store.get(`${PREFIX}:thread:${oracleThread.id}`))throw new Error('delphic_oracle_must_not_be_shrine');
+    const oracleTags=[oracleTag?.id].filter(Boolean);
+    const patchedOracle=await this.api(`/channels/${oracleThread.id}`,'PATCH',{name:DELPHIC_ORACLE_TITLE,applied_tags:oracleTags,locked:false,archived:false});
+    oracleThread={...oracleThread,...patchedOracle,applied_tags:oracleTags};
+    const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
+    if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
+      const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
+      await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
+      const receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
+      if(receipt.id!==oracleThread.id||receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
+      await this.store.set(oraclePresentationKey,DELPHIC_ORACLE_VERSION);
+    }
+    await this.store.set(oracleStoreKey,oracleThread.id);
+    this.delphicOracleThreadId=oracleThread.id;
     return this.people.size;
+  }
+  async checkDelphicOracleThread(threadId){
+    const expected=this.delphicOracleThreadId??await this.store.get(`${PREFIX}:oracle:delphi:thread`);
+    if(!expected||String(threadId)!==String(expected))throw new Error('not_delphic_oracle_surface');
+    const channel=await this.api(`/channels/${threadId}`);
+    if(!validThread(channel,this.guildId)||channel.name!==DELPHIC_ORACLE_TITLE)throw new Error('invalid_delphic_oracle_surface');
+    if(await this.store.get(`${PREFIX}:thread:${threadId}`))throw new Error('delphic_oracle_must_not_be_shrine');
+    return channel;
+  }
+  async consultDelphi(question){
+    if(typeof this.generateOracle!=='function')throw new Error('delphic_oracle_generator_unavailable');
+    const threadId=this.delphicOracleThreadId??await this.store.get(`${PREFIX}:oracle:delphi:thread`);
+    await this.checkDelphicOracleThread(threadId);
+    const spec=delphicOracleSpec(question);
+    const content=clean(await this.generateOracle(spec),700);
+    if(!content)throw new Error('delphic_oracle_empty');
+    const message=await this.api(`/channels/${threadId}/messages`,'POST',{
+      content:`🔮 **Pythia at Delphi**\n${content}`,
+      allowed_mentions:{parse:[]},
+    });
+    await this.activity(null,threadId,`Pythia at Delphi: ${content}`,[message.id],{
+      speakers:['Pythia / Oracle at Delphi'],
+      eventType:'delphic_oracle',
+      sourceKind:'elaed_delphic_oracle',
+      location:`#altar — Oracle at Delphi (${threadId})`,
+      oracleVersion:DELPHIC_ORACLE_VERSION,
+      greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,
+      patron:'Apollo',
+      question:spec.question,
+      interpretationStatus:spec.interpretationStatus,
+      authority:spec.authority,
+    });
+    return {threadId,messageId:message.id,text:content,spec};
   }
   async reply(p,threadId,input,extra={}) {
     if(p.humanControlled||!await this.enabled(p))return null;
