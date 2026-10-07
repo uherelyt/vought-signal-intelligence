@@ -853,6 +853,17 @@ export function selectParticipants(seed: string, count = 3, requested?: PersonaI
   return selectFromPersonaSet(seed, ON_VESSEL, count, requested);
 }
 
+export function selectScheduledParticipants(seed: string, count = 3) {
+  // Ah-Muzen-Cab remains available for direct/reactive and explicitly requested
+  // scenes. Exclude him only from autonomous pulses so a probabilistic native-
+  // language render cannot block the entire scheduled Network scene.
+  return selectFromPersonaSet(
+    seed,
+    ON_VESSEL.filter((id) => id !== "ah_muzen_cab"),
+    count,
+  );
+}
+
 export function selectChildMembers(seed: string, count = 3, requested?: PersonaId[]) {
   return selectFromPersonaSet(seed, CHILD_MEMBER_IDS, count, requested);
 }
@@ -1647,11 +1658,10 @@ export async function runChildrenPulse(input: ChildrenPulseInput): Promise<Child
   }
   const subject = topicFor(baseSeed, input.topic);
   const participantCount = input.participants?.length || scheduledSlot?.turns || 3;
-  const participants = selectParticipants(
-    `${baseSeed}:${dream ? "dream" : "ambient"}`,
-    participantCount,
-    input.participants,
-  );
+  const participantSeed = `${baseSeed}:${dream ? "dream" : "ambient"}`;
+  const participants = input.mode === "cron" && !input.participants?.length
+    ? selectScheduledParticipants(participantSeed, participantCount)
+    : selectParticipants(participantSeed, participantCount, input.participants);
   const requested = input.location ? resolveChildrenLocation(input.location) : null;
   const location = dream
     ? requested?.plane === "astral"
