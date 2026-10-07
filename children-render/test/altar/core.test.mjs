@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -45,6 +45,18 @@ test('randomized methods use full decks and publish an attributable actual draw'
  const d=drawOracle('tarot',n=>n-1);assert.equal(d.symbol,'King of Pentacles');assert.equal(d.orientation,'reversed');
  assert.equal(drawOracle('rune',()=>0).symbol,'Fehu');assert.throws(()=>drawOracle('unknown'));
 });
+test('Delphic oracle spec is Apollo-linked, versioned, and interpretive',()=>{
+ const spec=delphicOracleSpec('Should I cross the river?');
+ assert.equal(spec.version,DELPHIC_ORACLE_VERSION);
+ assert.equal(spec.greekReligionPolicyVersion,GREEK_RELIGION_POLICY_VERSION);
+ assert.equal(spec.institution,DELPHIC_ORACLE_TITLE);
+ assert.equal(spec.oracle,'Pythia');
+ assert.equal(spec.patron,'Apollo');
+ assert.equal(spec.interpretationStatus,'symbolic_research_required');
+ assert.match(spec.style,/ambiguous/);
+ assert.throws(()=>delphicOracleSpec(' '),/oracle_question_required/);
+});
+
 test('candle expiry removes only own reaction and preserves concurrent candles',async()=>{
  const f=fixture();const old=JSON.stringify({figureId:f.p.id,threadId:f.thread,messageId:'1555666568409653333',expires:1});const future=JSON.stringify({figureId:f.p.id,threadId:f.thread,messageId:'1555666568409653444',expires:9999999999999});
  f.lists.set(`${PREFIX}:candles`,[old,future]);await f.runtime.expireCandles();
