@@ -466,48 +466,50 @@ export class AltarRuntime {
     await this.store.del(`${PREFIX}:resident-presentation:perses`);
     this.persesDedicatedPostRemoved=true;
 
-    // Delphi is a ritual/divination station in #altar, explicitly not a deity shrine.
-    const oracleTag=tags.find(t=>t.name==='Oracle');
-    if((forum.flags&16)&&!oracleTag)throw new Error('oracle_forum_tag_unavailable');
-    const oracleStoreKey=`${PREFIX}:oracle:delphi:thread`;
-    const storedOracle=await this.store.get(oracleStoreKey);
-    let oracleThread=null;
-    if(storedOracle){
-      try{
-        const candidate=await this.api(`/channels/${storedOracle}`);
-        if(validThread(candidate,this.guildId)&&candidate.name===DELPHIC_ORACLE_TITLE&&!await this.store.get(`${PREFIX}:thread:${candidate.id}`)&&!(candidate.thread_metadata?.archived&&candidate.thread_metadata?.locked))oracleThread=candidate;
-      }catch(error){if(error.status!==404)throw error;}
-    }
-    if(!oracleThread){
-      for(const candidate of existing){
-        if(candidate.name!==DELPHIC_ORACLE_TITLE||candidate.thread_metadata?.locked)continue;
-        if(await this.store.get(`${PREFIX}:thread:${candidate.id}`))continue;
-        oracleThread=candidate;break;
+    if(typeof this.generateOracle==='function'){
+      // Delphi is a ritual/divination station in #altar, explicitly not a deity shrine.
+      const oracleTag=tags.find(t=>t.name==='Oracle');
+      if((forum.flags&16)&&!oracleTag)throw new Error('oracle_forum_tag_unavailable');
+      const oracleStoreKey=`${PREFIX}:oracle:delphi:thread`;
+      const storedOracle=await this.store.get(oracleStoreKey);
+      let oracleThread=null;
+      if(storedOracle){
+        try{
+          const candidate=await this.api(`/channels/${storedOracle}`);
+          if(validThread(candidate,this.guildId)&&candidate.name===DELPHIC_ORACLE_TITLE&&!await this.store.get(`${PREFIX}:thread:${candidate.id}`)&&!(candidate.thread_metadata?.archived&&candidate.thread_metadata?.locked))oracleThread=candidate;
+        }catch(error){if(error.status!==404)throw error;}
       }
-    }
-    if(!oracleThread){
-      oracleThread=await this.api(`/channels/${FORUM_ID}/threads`,'POST',{
-        name:DELPHIC_ORACLE_TITLE,
-        auto_archive_duration:10080,
-        applied_tags:[oracleTag?.id].filter(Boolean),
-        message:{content:DELPHIC_ORACLE_STARTER,allowed_mentions:{parse:[]}},
-      });
-    }
-    if(!validThread(oracleThread,this.guildId))throw new Error('delphic_oracle_outside_altar');
-    if(await this.store.get(`${PREFIX}:thread:${oracleThread.id}`))throw new Error('delphic_oracle_must_not_be_shrine');
-    const oracleTags=[oracleTag?.id].filter(Boolean);
-    const patchedOracle=await this.api(`/channels/${oracleThread.id}`,'PATCH',{name:DELPHIC_ORACLE_TITLE,applied_tags:oracleTags,locked:false,archived:false});
-    oracleThread={...oracleThread,...patchedOracle,applied_tags:oracleTags};
-    const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
-    if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
-      const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
-      await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
-      const receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
-      if(receipt.id!==oracleThread.id||receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
-      await this.store.set(oraclePresentationKey,DELPHIC_ORACLE_VERSION);
-    }
-    await this.store.set(oracleStoreKey,oracleThread.id);
-    this.delphicOracleThreadId=oracleThread.id;
+      if(!oracleThread){
+        for(const candidate of existing){
+          if(candidate.name!==DELPHIC_ORACLE_TITLE||candidate.thread_metadata?.locked)continue;
+          if(await this.store.get(`${PREFIX}:thread:${candidate.id}`))continue;
+          oracleThread=candidate;break;
+        }
+      }
+      if(!oracleThread){
+        oracleThread=await this.api(`/channels/${FORUM_ID}/threads`,'POST',{
+          name:DELPHIC_ORACLE_TITLE,
+          auto_archive_duration:10080,
+          applied_tags:[oracleTag?.id].filter(Boolean),
+          message:{content:DELPHIC_ORACLE_STARTER,allowed_mentions:{parse:[]}},
+        });
+      }
+      if(!validThread(oracleThread,this.guildId))throw new Error('delphic_oracle_outside_altar');
+      if(await this.store.get(`${PREFIX}:thread:${oracleThread.id}`))throw new Error('delphic_oracle_must_not_be_shrine');
+      const oracleTags=[oracleTag?.id].filter(Boolean);
+      const patchedOracle=await this.api(`/channels/${oracleThread.id}`,'PATCH',{name:DELPHIC_ORACLE_TITLE,applied_tags:oracleTags,locked:false,archived:false});
+      oracleThread={...oracleThread,...patchedOracle,applied_tags:oracleTags};
+      const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
+      if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
+        const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
+        await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
+        const receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
+        if(receipt.id!==oracleThread.id||receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
+        await this.store.set(oraclePresentationKey,DELPHIC_ORACLE_VERSION);
+      }
+      await this.store.set(oracleStoreKey,oracleThread.id);
+      this.delphicOracleThreadId=oracleThread.id;
+      }
     return this.people.size;
   }
   async checkDelphicOracleThread(threadId){
