@@ -146,15 +146,15 @@ test("an English QA correction is never published and falls back to regeneration
     geminiResponse('{"meaning":"Drink clean water.","tone":"direct"}'),
     geminiResponse("Ma'alob. Uk' ja'."),
     geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"Good. Drink water.","issues":["Extra claim."],"suggestedCorrection":"Drink the good water."}'),
-    geminiResponse("Uk' ja'."),
-    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"high","backtranslation":"Drink water.","issues":[]}'),
+    geminiResponse("K'áabet a yuk'ik sak ja'."),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"high","backtranslation":"You should drink clean water.","issues":[]}'),
   ];
   const result = await generateValidatedYucatecMayaReply({
     apiKey: "test", model: "test-model", prompt: "Reply to a guest.",
     fetchImpl: async () => replies.shift(),
     logger: { info: () => {}, warn: () => {} },
   });
-  assert.equal(result, "Uk' ja'.");
+  assert.equal(result, "K'áabet a yuk'ik sak ja'.");
   assert.equal(replies.length, 0);
 });
 
