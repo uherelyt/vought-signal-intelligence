@@ -635,9 +635,10 @@ export class AltarRuntime {
   async reply(p,threadId,input,extra={}) {
     if(p.humanControlled||!await this.enabled(p))return null;
     const epoch=String(await this.store.get(`${PREFIX}:control_epoch`)??'0');
-    const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
-    const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
     const incarnateRoute=extra.incarnateRoute??incarnateShrineRoute(p,input);
+    const isVisitor=incarnateRoute.petitionerOntology==='external_human_visitor';
+    const recent=isVisitor?[]:await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
+    const observed=isVisitor?[]:await this.store.lrange(`${PREFIX}:observed`,0,9);
     const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra:{...extra,incarnateRoute}});
     return this.deliver(p,threadId,content,epoch,{
       sourceVoiceVersion: SHRINE_SOURCE_VOICE_VERSION,
