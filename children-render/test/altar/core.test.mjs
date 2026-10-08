@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,DELPHIC_ORACLE_STARTER,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,DELPHIC_ORACLE_STARTER,DELPHIC_ORACLE_PORTRAIT_URL,DELPHIC_ORACLE_PORTRAIT_VERSION,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -62,6 +62,9 @@ test('Delphic oracle spec is Apollo-linked, versioned, and interpretive',()=>{
  assert.match(DELPHIC_ORACLE_STARTER,/Phemonoe/);
  assert.match(DELPHIC_ORACLE_STARTER,/Strabo/);
  assert.match(DELPHIC_ORACLE_STARTER,/Pindar/);
+ assert.equal(spec.portraitUrl,DELPHIC_ORACLE_PORTRAIT_URL);
+ assert.equal(spec.portraitVersion,DELPHIC_ORACLE_PORTRAIT_VERSION);
+ assert.match(DELPHIC_ORACLE_PORTRAIT_URL,/phemonoe-pythia-portrait\.jpg$/);
  assert.equal(spec.patron,'Apollo');
  assert.equal(spec.interpretationStatus,'symbolic_research_required');
  assert.deepEqual(spec.allowedInterpretiveThemes,['katabasis','divine_mania','the_gods_collectively','divine_immanence','mystery_current_symbolism']);
@@ -452,7 +455,8 @@ test('trusted Child initiates a Delphic petition and receives one response throu
   f.runtime.generateOracle=async spec=>{specs.push(spec);return 'The path has two thresholds.';};
   f.runtime.api=async(path,method='GET',body)=>{
     if(path===`/channels/${oracleId}`)return {id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Delphic Oracle'};
-    if(path===`/channels/${oracleId}/messages`&&method==='POST'){
+    if(path===`/channels/${FORUM_ID}/webhooks`&&method==='GET')return [{id:'altarhook',token:'test',application_id:'altar'}];
+    if(path===`/webhooks/altarhook/test?wait=true&thread_id=${oracleId}`&&method==='POST'){
       sent.push(body);return {id:'1557533675308978400',channel_id:oracleId,content:body.content};
     }
     throw new Error('unexpected_api_path: '+path);
@@ -460,7 +464,8 @@ test('trusted Child initiates a Delphic petition and receives one response throu
   const petition={id:'1557533675308978350',channel_id:oracleId,guild_id:f.guildId,webhook_id:'trusted-children-hook',author:{id:'child-webhook',username:'Orpheus',bot:true},content:'Where does the road divide?'};
   await f.runtime.message(petition);
   assert.equal(sent.length,1);
-  assert.match(sent[0].content,/Pythia \(Phemonoe\) at Delphi/);
+  assert.equal(sent[0].username,'Pythia (Phemonoe)');
+  assert.equal(sent[0].avatar_url,DELPHIC_ORACLE_PORTRAIT_URL);
   assert.equal(specs.length,1);
   assert.equal(specs[0].petitionerIdentity,'Orpheus');
   assert.equal(specs[0].petitionerKind,'child');

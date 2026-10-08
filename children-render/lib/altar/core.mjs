@@ -9,7 +9,10 @@ export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v
 export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
 export const INCARNATE_SHRINE_ROUTING_VERSION = '20261005-incarnate-source-communion-v1';
 export const GREEK_RELIGION_POLICY_VERSION = '20261007-greek-practice-expansion-v2';
-export const DELPHIC_ORACLE_VERSION = '20261007-delphi-phemonoe-ancient-greek-v4';
+export const DELPHIC_ORACLE_VERSION = '20261008-delphi-phemonoe-ancient-greek-portrait-v5';
+export const DELPHIC_ORACLE_PORTRAIT_VERSION='20261008-phemonoe-square-800-v1';
+export const DELPHIC_ORACLE_PORTRAIT_URL='https://children-voughtcord.onrender.com/assets/phemonoe-pythia-portrait.jpg';
+export const DELPHIC_ORACLE_HOLDER_INTRO_ID='1557577983215140946';
 export const DELPHIC_ORACLE_TITLE = 'Oracle at Delphi';
 export const DELPHIC_ORACLE_HOLDER = Object.freeze({name:'Phemonoe',greekName:'Φημονόη',office:'Pythia',epithet:'Delphic Bee',origin:'mythic Delphi, Phocis, Greece',apparentAge:50,historicalAge:'unknown',patron:'Apollo',roleToErelyt:'trusted_oracular_confidante_and_independent_priestly_counterpart',roleToAhMuzenCab:'allied_delphic_greek_diplomatic_contact',sourceStatus:'legendary_first_pythia_syncretic_fictional_revival'});
 export const DELPHIC_ORACLE_STARTER = `**Pythia | Phemonoe (Φημονόη)**\nThe ELAED Oracle of Apollo is voiced as Phemonoe, the legendary first Pythia of Delphi. In this story she appears about 50 and bears the epithet *the Delphic Bee*. To Erelyt she is a trusted oracular confidante and independent priestly counterpart; to Ah-Muzen-Cab / Meli, an allied Greek diplomatic contact. She remains Apollo's priestess, neither a deity shrine nor a Sacred Hive member. Speak to her here in **Pythia**; oracle replies use newly composed Ancient Greek with English below. Legend: Strabo 9.3.5; Pausanias 10.5.7. Bee image: Pindar, Pythian 4. Her present-day identity and relationships are ELAED fiction.`;
@@ -150,6 +153,8 @@ export function delphicOracleSpec(question){
     institution:DELPHIC_ORACLE_TITLE,
     oracle:'Pythia',
     holder:DELPHIC_ORACLE_HOLDER.name,
+    portraitVersion:DELPHIC_ORACLE_PORTRAIT_VERSION,
+    portraitUrl:DELPHIC_ORACLE_PORTRAIT_URL,
     holderGreekName:DELPHIC_ORACLE_HOLDER.greekName,
     holderEpithet:DELPHIC_ORACLE_HOLDER.epithet,
     holderOrigin:DELPHIC_ORACLE_HOLDER.origin,
@@ -538,14 +543,15 @@ export class AltarRuntime {
       }
       const oraclePresentationKey=`${PREFIX}:oracle:delphi:presentation`;
       if(await this.store.get(oraclePresentationKey)!==DELPHIC_ORACLE_VERSION){
-        const body={content:DELPHIC_ORACLE_STARTER,embeds:[],attachments:[],allowed_mentions:{parse:[]}};
+        // Update the existing ELAED-authored Phemonoe introduction, preserving the Operator's starter and thread name.
+        const body={content:DELPHIC_ORACLE_STARTER,embeds:[{author:{name:'Phemonoe (Φημονόη) · Pythia',icon_url:DELPHIC_ORACLE_PORTRAIT_URL},thumbnail:{url:DELPHIC_ORACLE_PORTRAIT_URL},footer:{text:'ELAED original fictional portrait · Oracle of Apollo'}}],allowed_mentions:{parse:[]}};
         let receipt;
         try{
-          // Elaed can edit its own starter, but not a pre-existing Operator-authored one.
-          await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`,'PATCH',body);
-          receipt=await this.api(`/channels/${oracleThread.id}/messages/${oracleThread.id}`);
+          await this.api(`/channels/${oracleThread.id}/messages/${DELPHIC_ORACLE_HOLDER_INTRO_ID}`,'PATCH',body);
+          receipt=await this.api(`/channels/${oracleThread.id}/messages/${DELPHIC_ORACLE_HOLDER_INTRO_ID}`);
         }catch(error){
           if(error.status!==403&&error.status!==404)throw error;
+          // If the earlier announcement was removed, publish once in the existing thread, never create a replacement.
           const introduced=await this.api(`/channels/${oracleThread.id}/messages`,'POST',body);
           receipt=await this.api(`/channels/${oracleThread.id}/messages/${introduced.id}`);
         }
@@ -580,14 +586,18 @@ export class AltarRuntime {
     };
     const content=clean(await this.generateOracle(spec),700);
     if(!content)throw new Error('delphic_oracle_empty');
-    const message=await this.api(`/channels/${threadId}/messages`,'POST',{
-      content:`🔮 **Pythia (Phemonoe) at Delphi**\n${content}`,
-      allowed_mentions:{parse:[]},
-    });
+    // Per-message avatar via the EXISTING ELAED Altar webhook; the global Ancestral Seal and all shrines stay untouched.
+    const hook=await this.webhook(false);
+    const payload={content,username:'Pythia (Phemonoe)',avatar_url:DELPHIC_ORACLE_PORTRAIT_URL,allowed_mentions:{parse:[]}};
+    await this.store.set(outgoingKey(threadId,payload.content),'1',{ex:60});
+    const message=await this.api(`/webhooks/${hook.id}/${hook.token}?wait=true&thread_id=${threadId}`,'POST',payload,false);
+    await this.store.set(`${PREFIX}:message:${message.id}`,'1',{ex:172800});
     await this.activity(null,threadId,`Pythia (Phemonoe) at Delphi: ${content}`,[message.id],{
       speakers:['Phemonoe / Pythia / Oracle at Delphi'],
       oracleHolder:DELPHIC_ORACLE_HOLDER.name,
       oracleHolderGreekName:DELPHIC_ORACLE_HOLDER.greekName,
+      oraclePortraitVersion:DELPHIC_ORACLE_PORTRAIT_VERSION,
+      oraclePortraitUrl:DELPHIC_ORACLE_PORTRAIT_URL,
       oracleHolderEpithet:DELPHIC_ORACLE_HOLDER.epithet,
       oracleHolderSourceStatus:DELPHIC_ORACLE_HOLDER.sourceStatus,
       eventType:'delphic_oracle',
