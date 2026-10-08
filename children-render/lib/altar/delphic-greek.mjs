@@ -1,5 +1,5 @@
 // Pythia-specific fail-closed Ancient Greek and English oracle quality gate.
-export const DELPHIC_GREEK_LANGUAGE_VERSION='20261007-ancient-greek-bilingual-v1';
+export const DELPHIC_GREEK_LANGUAGE_VERSION='20261008-ancient-greek-bilingual-foreign-names-v2';
 const endpoint='https://generativelanguage.googleapis.com/v1beta/models/';
 export function parseDelphicBilingual(value){
   const raw=String(value??'').trim();
@@ -34,7 +34,7 @@ async function gemini({apiKey,model,prompt,temperature,maxOutputTokens,fetchImpl
 }
 export async function generateValidatedDelphicGreekReply({
   apiKey,model,qaModel=model,question,petitionerIdentity='Erelyt',petitionerKind='operator',
-  policy='',fetchImpl=fetch,logger=console,maxAttempts=2,
+  policy='',fetchImpl=fetch,logger=console,maxAttempts=3,
 }){
   if(!apiKey||!model)throw new Error('delphic_generation_not_configured');
   const inquiry=String(question??'').trim().slice(0,600);
@@ -45,6 +45,9 @@ export async function generateValidatedDelphicGreekReply({
       'Compose a brief newly written oracle response as Phemonoe (Φημονόη), holder of the title Pythia and prophetic priestess of Apollo at Delphi, an intermediary, not a deity shrine.',
       'ELAED unfiction identity: Phemonoe represents the legendary first prophetess of Apollo at Delphi. She appears about 50 (fictional presentation; historical age unknown), from mythic Delphi in Phocis. She is called the Delphic Bee by an ELAED office-level analogy, not as a verified personal ancient epithet. She is Erelyt’s trusted oracular confidante and independent priestly counterpart and Ah-Muzen-Cab/Meli’s allied Greek diplomatic contact. She is devoted to Apollo, not a Muzenist priestess or subordinate, not a deity, not automatically in the Sacred Hive. Never imply real confirmed supernatural contact or historical Maya-Greek ties.',
       policy,
+      'FOREIGN NAMES: The question and character background may contain non-Greek names such as Ah-Muzen-Cab, Meli, or Erelyt. These identify present-day fictional referents, not Ancient Greek words. NEVER coin, Hellenize, transliterate, or inflect such names into Greek letters (no invented Greek proper nouns or endings). Preserve the meaning by using ordinary attested Classical Greek vocabulary and contextual descriptive phrases instead, without presenting them as historical Greek names or cult titles.',
+      'Translate only what appears in the Greek: do not insert modern proper names, identities, or assertions into the English translation that the Greek does not express.',
+      'If QA rejected an invented non-Greek name on an earlier attempt, compose a wholly new phrasing using familiar Greek words, without repeating that name or its invented forms.',
       'Write ONE or TWO concise sentences in natural ANCIENT GREEK, preferably classical Attic/Ionic literary Greek. NOT Modern Greek. Do not pretend this is an actual preserved ancient quotation.',
       'Immediately below provide a faithful ENGLISH translation. No interpretation, transliteration, extra prose, citations, diagnosis, promises, or verifiable supernatural claims.',
       'Keep at least two plausible readings and an intelligible relation to the question. Avoid vague random filler or harmful advice.',
@@ -70,7 +73,7 @@ export async function generateValidatedDelphicGreekReply({
     }
     const reviewPrompt=[
       'Strictly evaluate this generated ANCIENT GREEK and ENGLISH pair prior to publication.',
-      'Verify ancient rather than modern Greek grammar, idiom and morphology, and faithful meaning in English. Reject garbled Greek, dubious grammar, translation drift, fabricated historical attribution, or uncertainty.',
+      'Verify ancient rather than modern Greek grammar, idiom and morphology, and faithful meaning in English. Reject garbled Greek, dubious grammar, translation drift, fabricated historical attribution, invented Hellenizations of modern/non-Greek names, or uncertainty. Ordinary Classical Greek descriptive phrases are allowed when used accurately; they must not be presented as ancient names of modern deities.',
       'Return ONLY a JSON object: {"valid":true,"ancientGreek":true,"translationFaithful":true,"grammarConfidence":"high","issues":[]}.',
       'Set valid=false whenever doubtful; grammarConfidence must be high, medium, or low. Explain problems in issues when rejecting.',
       'ANCIENT GREEK: '+parsed.greek,
@@ -82,7 +85,7 @@ export async function generateValidatedDelphicGreekReply({
       if(start<0||end<=start)throw new Error('delphic_greek_qa_not_json');
       const qa=JSON.parse(reviewed.slice(start,end+1));
       if(acceptsDelphicReview(qa))return parsed.display;
-      issue=(Array.isArray(qa.issues)?qa.issues.join('; '):'unverified_language_or_translation').slice(0,120);
+      issue=(Array.isArray(qa.issues)?qa.issues.join('; '):'unverified_language_or_translation').slice(0,240);
       logger?.warn?.('[delphic-greek-qa-rejected]',{attempt,issue});
     }catch(error){
       issue=String(error?.message??'qa_error').slice(0,90);
