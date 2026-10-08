@@ -57,10 +57,10 @@ test('foreign deity names use descriptive Ancient Greek instead of fabricated He
     apiKey:'test',model:'mock',question:'What does Ah-Muzen-Cab foresee?',
     fetchImpl,logger:{warn(){}}
   });
-  assert.equal(response,greek+'\\n'+english);
+  assert.equal(response,greek+'\n'+english);
   assert.equal(requests.length,4);
   assert.match(requests[0],/NEVER coin, Hellenize, transliterate, or inflect/);
   assert.match(requests[0],/ordinary attested Classical Greek vocabulary/);
-  assert.match(requests[1],/invented Hellenizations of modern\\/non-Greek names/);
+  assert.match(requests[1],/invented Hellenizations of modern\/non-Greek names/);
   assert.match(requests[2],/Fabricated Greek rendering of Ah-Muzen-Cab/);
 });
