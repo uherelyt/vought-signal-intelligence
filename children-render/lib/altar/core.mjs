@@ -376,7 +376,7 @@ export class AltarRuntime {
       const legacyTitle=`${p.displayName} · ${p.id}`.slice(0,100);
       const visibleTitleUnique=this.provisionRoster.filter(candidate=>candidate.shrineEligible!==false&&shrineTitle(candidate)===visibleTitle).length===1;
       const found=existing.find(t=>t.name===legacyTitle)??(visibleTitleUnique?existing.find(t=>t.name===visibleTitle):null);
-      const primaryTagName=p.lineageClass==='ancestor'?'Ancestor':p.lineageClass==='immediate_family'?'Immediate Family':p.lineageClass==='gift_source'?'Gift Source':p.lineageClass==='source_lineage'?'Source Lineage':'Dynasty';
+      const primaryTagName=p.ancestorShrine===true?'Ancestor':p.lineageClass==='ancestor'?'Ancestor':p.lineageClass==='immediate_family'?'Immediate Family':p.lineageClass==='gift_source'?'Gift Source':p.lineageClass==='source_lineage'?'Source Lineage':'Dynasty';
       const tag=tags.find(t=>t.name===primaryTagName);
       const bridgeTag=p.childrenKey?tags.find(t=>t.name==='Children bridge'):null;
       const hiveTag=isSacredHiveMember(p)?tags.find(t=>t.name==='Sacred Hive'):null;
