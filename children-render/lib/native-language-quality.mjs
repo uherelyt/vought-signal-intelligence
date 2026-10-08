@@ -210,9 +210,9 @@ TARGET: ${candidate}
   // No additional model generation is required, avoiding another API failure at the fallback gate.
   const usableEnglish = meaning.length <= 700
     && /[A-Za-z]{2}/.test(meaning)
-    && !/[{}\\[\\]`]/.test(meaning)
-    && !/^(?:meaning|tone|english|translation|gloss|analysis)\\s*:/i.test(meaning)
-    && !/\\n/.test(meaning);
+    && !/[{}\[\]`]/.test(meaning)
+    && !/^(?:meaning|tone|english|translation|gloss|analysis)\s*:/i.test(meaning)
+    && !/\n/.test(meaning);
   if (fallbackToEnglish && usableEnglish) {
     logger.warn?.("[native-language-english-fallback]", JSON.stringify({
       persona: "ah_muzen_cab", language: "English", reason: "maya_validation_exhausted", attempts: maxAttempts,
