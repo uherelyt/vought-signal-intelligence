@@ -195,6 +195,23 @@ export function empiricalClaimLooksTestable(value){
   if(/\b(maybe|perhaps|might|could|possibly|someday|soon|eventually|in some sense)\b/i.test(claim))return false;
   return true;
 }
+// Public shrine access never grants administrative control or the Operator's identity.
+export const PUBLIC_SHRINE_COMMANDS = new Set(['altar','offer','candle','tarot','rune','oracle']);
+export function altarCommandAllowed(command,authorId,operatorId){
+  return Boolean(authorId)&&(authorId===operatorId||PUBLIC_SHRINE_COMMANDS.has(command));
+}
+export function visitorShrineRoute(p,identity='Visitor'){
+  return {
+    routingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
+    petitionerIdentity:clean(identity,80)||'Visitor',
+    petitionerOntology:'external_human_visitor',
+    divineSoulSource:null,
+    targetFigure:p?.displayName??p?.name??'unknown',
+    mode:'external_human_petition',
+    targetRelation:'external_devotional_counterpart',
+    ahMuzenCabSpeaking:false,
+  };
+}
 export function incarnateShrineRoute(p,input=''){
   const text=clean(input,1500);
   const targetName=String(p?.name??p?.displayName??'');
@@ -618,9 +635,10 @@ export class AltarRuntime {
   async reply(p,threadId,input,extra={}) {
     if(p.humanControlled||!await this.enabled(p))return null;
     const epoch=String(await this.store.get(`${PREFIX}:control_epoch`)??'0');
-    const recent=await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
-    const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
-    const incarnateRoute=incarnateShrineRoute(p,input);
+    const incarnateRoute=extra.incarnateRoute??incarnateShrineRoute(p,input);
+    const isVisitor=incarnateRoute.petitionerOntology==='external_human_visitor';
+    const recent=isVisitor?[]:await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
+    const observed=isVisitor?[]:await this.store.lrange(`${PREFIX}:observed`,0,9);
     const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra:{...extra,incarnateRoute}});
     return this.deliver(p,threadId,content,epoch,{
       sourceVoiceVersion: SHRINE_SOURCE_VOICE_VERSION,
@@ -744,20 +762,27 @@ export class AltarRuntime {
         petitionerIdentity,petitionerKind:child?'child':isOperator?'operator':'visitor',
         ...(child?{childrenKey:child.childrenKey,deliveryApplicationId:this.childrenApplicationId}:{}),
       });
-      if(!isOperator&&!child)return;
+      if(!isOperator&&!child){
+        const access=await this.store.set(`${PREFIX}:visitor-cooldown:${m.author.id}`,'1',{nx:true,ex:45});
+        if(access!=='OK')return;
+      }
       const cooldown=await this.store.set(`${PREFIX}:oracle:delphi:reply-cooldown`,'1',{nx:true,ex:15});
       if(cooldown!=='OK')return;
-      await this.consultDelphi(m.content,{identity:petitionerIdentity,kind:child?'child':'operator',childrenKey:child?.childrenKey??null});
+      await this.consultDelphi(m.content,{identity:petitionerIdentity,kind:child?'child':isOperator?'operator':'visitor',childrenKey:child?.childrenKey??null});
       return;
     }
     const id=await this.store.get(`${PREFIX}:thread:${m.channel_id}`);
     const p=this.people.get(id);
     if(!p)return;
     const claimed=await this.store.set(`${PREFIX}:message:${m.id}`,'1',{nx:true,ex:172800});if(claimed!=='OK')return;
-    await this.activity(p,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{speakers:[m.author?.username??'Human'],eventType:'petition'});
-    if(m.author.id!==this.operatorId&&!child)return;
+    const isOperator=m.author.id===this.operatorId;
+    await this.activity(p,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{speakers:[m.author?.username??'Human'],eventType:'petition',petitionerKind:child?'child':isOperator?'operator':'visitor'});
+    if(!isOperator&&!child){
+      const access=await this.store.set(`${PREFIX}:visitor-cooldown:${m.author.id}`,'1',{nx:true,ex:45});
+      if(access!=='OK')return;
+    }
     const cooldown=await this.store.set(`${PREFIX}:reply-cooldown:${p.id}`,'1',{nx:true,ex:15});if(cooldown!=='OK')return;
-    await this.reply(p,m.channel_id,m.content);
+    await this.reply(p,m.channel_id,m.content,isOperator||child?{}:{incarnateRoute:visitorShrineRoute(p,m.author?.username)});
   }
   async converseWithChild(child,threadId,input){
     await this.checkThread(threadId,child);
