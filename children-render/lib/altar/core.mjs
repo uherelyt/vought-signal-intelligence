@@ -556,11 +556,16 @@ export class AltarRuntime {
     if(await this.store.get(`${PREFIX}:thread:${threadId}`))throw new Error('delphic_oracle_must_not_be_shrine');
     return channel;
   }
-  async consultDelphi(question){
+  async consultDelphi(question,petitioner={}){
     if(typeof this.generateOracle!=='function')throw new Error('delphic_oracle_generator_unavailable');
     const threadId=this.delphicOracleThreadId??await this.store.get(`${PREFIX}:oracle:delphi:thread`);
     await this.checkDelphicOracleThread(threadId);
-    const spec=delphicOracleSpec(question);
+    const spec={
+      ...delphicOracleSpec(question),
+      petitionerIdentity:petitioner.identity??'Erelyt',
+      petitionerKind:petitioner.kind??'operator',
+      ...(petitioner.childrenKey?{petitionerChildrenKey:petitioner.childrenKey}:{}),
+    };
     const content=clean(await this.generateOracle(spec),700);
     if(!content)throw new Error('delphic_oracle_empty');
     const message=await this.api(`/channels/${threadId}/messages`,'POST',{
@@ -576,6 +581,9 @@ export class AltarRuntime {
       greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,
       patron:'Apollo',
       question:spec.question,
+      petitionerIdentity:spec.petitionerIdentity,
+      petitionerKind:spec.petitionerKind,
+      ...(spec.petitionerChildrenKey?{childrenKey:spec.petitionerChildrenKey,petitionerChildrenKey:spec.petitionerChildrenKey,deliveryApplicationId:this.childrenApplicationId}:{}),
       interpretationStatus:spec.interpretationStatus,
       authority:spec.authority,
     });
@@ -685,7 +693,9 @@ export class AltarRuntime {
   }
   async message(m) {
     if(m.guild_id!==this.guildId||!m.content?.trim())return;
-    const child=m.webhook_id&&this.trustedChildHooks.has(m.webhook_id)?[...this.people.values(),...this.visitors.values()].find(p=>p.childrenKey&&(p.senderName??p.displayName)===m.author?.username):null;
+    // A Child may petition first through the existing Children-application webhook.
+    // Verify both the known webhook and the roster identity; arbitrary bot names cannot impersonate Children.
+    const child=m.webhook_id&&this.trustedChildHooks.has(m.webhook_id)?[...this.people.values(),...this.visitors.values()].find(p=>p.childrenKey&&!p.humanControlled&&(p.senderName??p.displayName)===m.author?.username):null;
     if((m.author?.bot||m.webhook_id)&&!child)return;
     if(child&&await this.store.get(outgoingKey(m.channel_id,m.content)))return;
     if(await this.store.get(`${PREFIX}:message:${m.id}`))return;
@@ -700,14 +710,18 @@ export class AltarRuntime {
     if(oracleThreadId&&String(m.channel_id)===String(oracleThreadId)){
       const claimed=await this.store.set(`${PREFIX}:message:${m.id}`,'1',{nx:true,ex:172800});
       if(claimed!=='OK')return;
-      await this.activity(null,m.channel_id,`${m.author?.username??'Human'}: ${clean(m.content)}`,[m.id],{
-        speakers:[m.author?.username??'Human'],eventType:'delphic_petition',
+      const isOperator=m.author?.id===this.operatorId;
+      const petitionerIdentity=child?(child.senderName??child.displayName):isOperator?'Erelyt':(m.author?.username??'Human');
+      await this.activity(null,m.channel_id,`${petitionerIdentity}: ${clean(m.content)}`,[m.id],{
+        speakers:[petitionerIdentity],eventType:'delphic_petition',
         sourceKind:'elaed_delphic_oracle',location:`#altar — Oracle at Delphi (${m.channel_id})`,
+        petitionerIdentity,petitionerKind:child?'child':isOperator?'operator':'visitor',
+        ...(child?{childrenKey:child.childrenKey,deliveryApplicationId:this.childrenApplicationId}:{}),
       });
-      if(m.author?.id!==this.operatorId)return;
+      if(!isOperator&&!child)return;
       const cooldown=await this.store.set(`${PREFIX}:oracle:delphi:reply-cooldown`,'1',{nx:true,ex:15});
       if(cooldown!=='OK')return;
-      await this.consultDelphi(m.content);
+      await this.consultDelphi(m.content,{identity:petitionerIdentity,kind:child?'child':'operator',childrenKey:child?.childrenKey??null});
       return;
     }
     const id=await this.store.get(`${PREFIX}:thread:${m.channel_id}`);

@@ -283,7 +283,8 @@ This is the Pythia / Oracle at Delphi, associated with Apollo. It is a divinatio
 ${ALTAR_GREEK_RELIGION_POLICY}
 
 DELPHIC RESPONSE RULES:
-- Answer the specific question supplied below.
+- Answer the specific question supplied below, addressed to the named petitioner.
+- A trusted Child of the Endless may approach Delphi first through the existing Children application; answer that Child as the petitioner, without assuming Erelyt asked the question.
 - Return only 1–3 short sentences under 700 characters.
 - Be concise, concrete, and deliberately ambiguous or multivalent: preserve at least two plausible readings without explaining them.
 - The answer should be interpretable, not random mystical filler.
@@ -295,6 +296,9 @@ DELPHIC RESPONSE RULES:
 - Do not append an interpretation or explanation. Interpretation happens later.
 - Do not command spending money, surrendering control, self-harm, illegal acts, or harmful ritual behavior.
 - Use English for this human-oracle station under the current runtime language policy.
+
+PETITIONER: ${spec.petitionerIdentity??'Erelyt'}
+PETITIONER KIND: ${spec.petitionerKind??'operator'}
 
 QUESTION:
 ${spec.question}`;
@@ -635,6 +639,13 @@ ${JSON.stringify(empirical)}`:'';
           if(m.guild_id!==guildId)return;
           if(m.author?.bot||m.webhook_id){
             enqueue(async()=>{
+              // Trusted Children webhook messages can address the Oracle first.
+              // Runtime validates the sender and suppresses its own generated echoes.
+              const delphiId=runtime.delphicOracleThreadId??await store.get(`${PREFIX}:oracle:delphi:thread`);
+              if(delphiId&&String(m.channel_id)===String(delphiId)){
+                await runtime.message(m);
+                return;
+              }
               const shrineOwner=await store.get(`${PREFIX}:thread:${m.channel_id}`);
               if(!shrineOwner){
                 const upload=parseVoughtTubeUploadNotification(m);

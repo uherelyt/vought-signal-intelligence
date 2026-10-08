@@ -425,3 +425,59 @@ test('an existing Delphic thread retains its Operator-authored title instead of 
   f.setChannel({id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Delphic Oracle'});
   assert.equal((await f.runtime.checkDelphicOracleThread(oracleId)).name,'Delphic Oracle');
 });
+
+
+test('trusted Child initiates a Delphic petition and receives one response through Elaed',async()=>{
+  const f=fixture(),oracleId='1557533675308978307';
+  const child={id:'child:orpheus',childrenKey:'orpheus',name:'Orpheus',displayName:'Orpheus',humanControlled:false};
+  f.runtime.visitors.set(child.id,child);
+  f.runtime.childrenApplicationId='children-app';
+  f.runtime.trustedChildHooks.add('trusted-children-hook');
+  f.runtime.delphicOracleThreadId=oracleId;
+  f.runtime.preferredDelphicOracleThreadId=oracleId;
+  const sent=[],specs=[];
+  f.runtime.generateOracle=async spec=>{specs.push(spec);return 'The path has two thresholds.';};
+  f.runtime.api=async(path,method='GET',body)=>{
+    if(path===`/channels/${oracleId}`)return {id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Delphic Oracle'};
+    if(path===`/channels/${oracleId}/messages`&&method==='POST'){
+      sent.push(body);return {id:'1557533675308978400',channel_id:oracleId,content:body.content};
+    }
+    throw new Error('unexpected_api_path: '+path);
+  };
+  const petition={id:'1557533675308978350',channel_id:oracleId,guild_id:f.guildId,webhook_id:'trusted-children-hook',author:{id:'child-webhook',username:'Orpheus',bot:true},content:'Where does the road divide?'};
+  await f.runtime.message(petition);
+  assert.equal(sent.length,1);
+  assert.match(sent[0].content,/Pythia at Delphi/);
+  assert.equal(specs.length,1);
+  assert.equal(specs[0].petitionerIdentity,'Orpheus');
+  assert.equal(specs[0].petitionerKind,'child');
+  assert.equal(specs[0].petitionerChildrenKey,'orpheus');
+  assert.equal(f.values.get(`${PREFIX}:thread:${oracleId}`),undefined);
+  const records=f.lists.get(`${PREFIX}:durable-outbox`).map(x=>JSON.parse(x));
+  assert.equal(records.filter(x=>x.eventType==='delphic_petition').length,1);
+  assert.equal(records.find(x=>x.eventType==='delphic_petition').childrenKey,'orpheus');
+  assert.equal(records.find(x=>x.eventType==='delphic_oracle').petitionerChildrenKey,'orpheus');
+  await f.runtime.message(petition);
+  assert.equal(sent.length,1);
+  // Oracle's own bot response cannot create a second petition.
+  await f.runtime.message({id:'1557533675308978400',guild_id:f.guildId,channel_id:oracleId,author:{id:'altar-app',bot:true,username:'ELAED'},content:sent[0].content});
+  assert.equal(sent.length,1);
+});
+
+test('untrusted or spoofed Child posts cannot activate Delphi',async()=>{
+  const f=fixture(),oracleId='1557533675308978307';
+  f.runtime.delphicOracleThreadId=oracleId;
+  f.runtime.visitors.set('child:orpheus',{id:'child:orpheus',childrenKey:'orpheus',name:'Orpheus',displayName:'Orpheus',humanControlled:false});
+  f.runtime.trustedChildHooks.add('real-children-hook');
+  let generated=0;
+  f.runtime.api=async()=>{generated++;return {id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId};};
+  for(const [id,webhook,username] of [
+    ['impostor1','unknown-hook','Orpheus'],
+    ['impostor2','real-children-hook','Not Orpheus'],
+    ['impostor3','real-children-hook','ELAED'],
+  ]){
+    await f.runtime.message({id,channel_id:oracleId,guild_id:f.guildId,webhook_id:webhook,author:{id:'bot',bot:true,username},content:'Give me an oracle.'});
+  }
+  assert.equal(generated,0);
+  assert.equal(f.lists.get(`${PREFIX}:durable-outbox`),undefined);
+});
