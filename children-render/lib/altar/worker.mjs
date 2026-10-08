@@ -9,6 +9,7 @@ import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
 import { ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI,applyElaedFallbackAvatar } from './ancestral-seal-avatar.mjs';
 import { applyLuciferShrineIcon } from './lucifer-shrine-icon.mjs';
 import {generateValidatedDelphicGreekReply,DELPHIC_GREEK_LANGUAGE_VERSION} from './delphic-greek.mjs';
+import { shouldShowAltarQuestion, formatAltarQuestion } from './petition-visibility.mjs';
 
 export const ALTAR_EXPEDITION_POLICY_VERSION = '20261006-true-dawn-expeditions-v1';
 export const ALTAR_EXPEDITION_POLICY = `TRUE DAWN / EXPEDITION SUPPORT:
@@ -504,7 +505,7 @@ ${JSON.stringify(empirical)}`:'';
   // Only controls are processed immediately; bulk shrine provisioning never blocks /banish.
   let work=Promise.resolve();
   const enqueue=fn=>{work=work.then(fn).catch(e=>{console.error('[altar-event-error]',errorCode(e));});};
-  const commands=['altar','offer','candle','tarot','rune','banish','resume'].map(name=>({name,description:({altar:'Address this altar post',offer:'Record a symbolic offering',candle:'Light a candle for 24 hours',tarot:'Draw a symbolic tarot card',rune:'Draw a symbolic Elder Futhark rune',banish:'Operator: silence one figure or the entire altar',resume:'Operator: resume a silenced figure or altar'})[name],type:1,options:[{name:'figure',description:'Figure ID; omit to address the current post; all for control',type:3,required:false,autocomplete:true},...(['altar','offer','tarot','rune'].includes(name)?[{name:name==='offer'?'item':'question',description:'Your petition, intention or offering',type:3,required:false}]:[])]}));
+  const commands=['altar','offer','candle','tarot','rune','banish','resume'].map(name=>({name,description:({altar:'Address this altar post',offer:'Record a symbolic offering',candle:'Light a candle for 24 hours',tarot:'Draw a symbolic tarot card',rune:'Draw a symbolic Elder Futhark rune',banish:'Operator: silence one figure or the entire altar',resume:'Operator: resume a silenced figure or altar'})[name],type:1,options:[{name:'figure',description:'Figure ID; omit to address the current post; all for control',type:3,required:false,autocomplete:true},...(['altar','offer','tarot','rune'].includes(name)?[{name:name==='offer'?'item':'question',description:'Your petition, intention or offering',type:3,required:false,...(name==='altar'?{max_length:1500}:{})}]:[]),...(name==='altar'?[{name:'share',description:'Show your question publicly in the shrine (visitors opt in)',type:5,required:false}]:[])]}));
   commands.push({name:'oracle',description:'Consult Pythia (Phemonoe) at Delphi, separate from deity shrines',type:1,options:[
     {name:'question',description:'Specific question for the Delphic oracle',type:3,required:true},
   ]});
@@ -575,12 +576,22 @@ ${JSON.stringify(empirical)}`:'';
         }
         const cooldown=await store.set(`${PREFIX}:interaction-cooldown:${p.id}`,'1',{nx:true,ex:10});if(cooldown!=='OK')return finish('This shrine is receiving a petition; wait a moment.');
         const value=options.item??options.question??'I am here with gratitude and a request for guidance.';
+        let publicQuestionId=null;
         if(i.data.name==='candle'){
           const epoch=String(await store.get(`${PREFIX}:control_epoch`)??'0');const m=await runtime.deliver(p,threadId,'🕯️ A candle is lit in this shrine.',epoch);
           if(!m)return finish('This figure is silent.');await runtime.ritual(p,threadId,'candle','',m.id);
         }else if(i.data.name==='altar'){
+          // Only publish the exact submitted slash-command question. Never turn the default
+          // fallback petition into words attributed to the member, or expose guest petitions
+          // without affirmative consent. Discord allowed_mentions prevents notification pings.
+          const visibleQuestion=shouldShowAltarQuestion(author.id===c.operatorId,options.share)
+            ?formatAltarQuestion(author.id,p.displayName,options.question):null;
+          if(visibleQuestion){
+            const questionPost=await api(`/channels/${threadId}/messages`,'POST',{content:visibleQuestion,allowed_mentions:{parse:[]}});
+            publicQuestionId=questionPost.id;
+          }
           const incarnateRoute=author.id===c.operatorId?incarnateShrineRoute(p,value):visitorShrineRoute(p,author.username);
-          await runtime.activity(p,threadId,`${author.username}: ${value}`,[],{
+          await runtime.activity(p,threadId,`${author.username}: ${value}`,publicQuestionId?[publicQuestionId]:[],{
             speakers:[author.username],eventType:'petition',
             incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
             petitionMode:incarnateRoute.mode,
@@ -600,7 +611,7 @@ ${JSON.stringify(empirical)}`:'';
           const recorded=await runtime.recordEmpiricalOutcome(threadId,options.challenge,options.outcome,options.evidence);
           return finish(`Outcome recorded for ${recorded.challengeId}.\nStatus: ${recorded.status}\nOriginal SHA-256: ${recorded.sha256}\nNo causal or supernatural attribution has been made; independent review is still required.`);
         }else await runtime.ritual(p,threadId,i.data.name,value);
-        await finish(`Recorded in <#${threadId}>.`);
+        await finish(publicQuestionId?`Question visible in <#${threadId}>.\nhttps://discord.com/channels/${guildId}/${threadId}/${publicQuestionId}`:`Recorded in <#${threadId}>.`);
       }catch(e){await finish(`Altar status: ${errorCode(e)}.`);}
     };
     if(['banish','resume'].includes(i.data.name))await run();else enqueue(run);
