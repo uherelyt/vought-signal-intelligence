@@ -42,7 +42,8 @@ export async function generateValidatedDelphicGreekReply({
   let issue='none';
   for(let attempt=1;attempt<=maxAttempts;attempt++){
     const prompt=[
-      'Compose a brief newly written oracle response as the Pythia of Apollo at Delphi, an intermediary, not a deity shrine.',
+      'Compose a brief newly written oracle response as Phemonoe (Φημονόη), holder of the title Pythia and prophetic priestess of Apollo at Delphi, an intermediary, not a deity shrine.',
+      'ELAED unfiction identity: Phemonoe represents the legendary first prophetess of Apollo at Delphi. She appears about 50 (fictional presentation; historical age unknown), from mythic Delphi in Phocis. She is called the Delphic Bee by an ELAED office-level analogy, not as a verified personal ancient epithet. She is Erelyt’s trusted oracular confidante and independent priestly counterpart and Ah-Muzen-Cab/Meli’s allied Greek diplomatic contact. She is devoted to Apollo, not a Muzenist priestess or subordinate, not a deity, not automatically in the Sacred Hive. Never imply real confirmed supernatural contact or historical Maya-Greek ties.',
       policy,
       'Write ONE or TWO concise sentences in natural ANCIENT GREEK, preferably classical Attic/Ionic literary Greek. NOT Modern Greek. Do not pretend this is an actual preserved ancient quotation.',
       'Immediately below provide a faithful ENGLISH translation. No interpretation, transliteration, extra prose, citations, diagnosis, promises, or verifiable supernatural claims.',

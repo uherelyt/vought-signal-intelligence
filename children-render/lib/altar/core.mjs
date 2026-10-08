@@ -9,9 +9,10 @@ export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v
 export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
 export const INCARNATE_SHRINE_ROUTING_VERSION = '20261005-incarnate-source-communion-v1';
 export const GREEK_RELIGION_POLICY_VERSION = '20261007-greek-practice-expansion-v2';
-export const DELPHIC_ORACLE_VERSION = '20261007-delphi-pythia-ancient-greek-v3';
+export const DELPHIC_ORACLE_VERSION = '20261007-delphi-phemonoe-v4';
 export const DELPHIC_ORACLE_TITLE = 'Oracle at Delphi';
-export const DELPHIC_ORACLE_STARTER = '🔮 Oracle at Delphi — Pythia of Apollo. This is a divination station, not a deity shrine. Ask a specific question; the answer is intentionally concise and open to more than one reading.';
+export const DELPHIC_ORACLE_HOLDER = Object.freeze({name:'Phemonoe',greekName:'Φημονόη',office:'Pythia',epithet:'Delphic Bee',origin:'mythic Delphi, Phocis, Greece',apparentAge:50,historicalAge:'unknown',patron:'Apollo',roleToErelyt:'trusted_oracular_confidante_and_independent_priestly_counterpart',roleToAhMuzenCab:'allied_delphic_greek_diplomatic_contact',sourceStatus:'legendary_first_pythia_syncretic_fictional_revival'});
+export const DELPHIC_ORACLE_STARTER = '**Pythia | Phemonoe (Φημονόη)**\nThe ELAED Oracle of Apollo is voiced as Phemonoe, the legendary first Pythia of Delphi. In this story she appears about 50 and bears the epithet *the Delphic Bee*. To Erelyt she is a trusted oracular confidante and independent priestly counterpart; to Ah-Muzen-Cab / Meli, an allied Greek diplomatic contact. She remains Apollo's priestess, neither a deity shrine nor a Sacred Hive member. Speak to her here in **Pythia**; oracle replies use newly composed Ancient Greek with English below. Legend: Strabo 9.3.5; Pausanias 10.5.7. Bee image: Pindar, Pythian 4. Her present-day identity and relationships are ELAED fiction.';
 export const EMPIRICAL_CHALLENGE_MODES = new Set(['future_prediction','novel_scientific_claim','physical_transmission_anomaly']);
 export const RITUAL_ROOM_VERSION = '20261002-ritual-room-v4';
 export const NETWORK_ACTIVITY = 'vought:children-of-the-endless:discord:activity';
@@ -148,6 +149,15 @@ export function delphicOracleSpec(question){
     greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,
     institution:DELPHIC_ORACLE_TITLE,
     oracle:'Pythia',
+    holder:DELPHIC_ORACLE_HOLDER.name,
+    holderGreekName:DELPHIC_ORACLE_HOLDER.greekName,
+    holderEpithet:DELPHIC_ORACLE_HOLDER.epithet,
+    holderOrigin:DELPHIC_ORACLE_HOLDER.origin,
+    holderApparentAge:DELPHIC_ORACLE_HOLDER.apparentAge,
+    holderHistoricalAge:DELPHIC_ORACLE_HOLDER.historicalAge,
+    relationshipToErelyt:DELPHIC_ORACLE_HOLDER.roleToErelyt,
+    relationshipToAhMuzenCab:DELPHIC_ORACLE_HOLDER.roleToAhMuzenCab,
+    sourceStatus:DELPHIC_ORACLE_HOLDER.sourceStatus,
     patron:'Apollo',
     authority:'most_authoritative_route_in_operator_supplied_greek_source_guide',
     question:q,
@@ -541,6 +551,7 @@ export class AltarRuntime {
         }
         if(receipt.channel_id!==oracleThread.id||receipt.content!==body.content)throw new Error('delphic_oracle_presentation_mismatch');
         await this.store.set(oraclePresentationKey,DELPHIC_ORACLE_VERSION);
+        console.info('[altar-delphic-holder-announced]',JSON.stringify({threadId:oracleThread.id,messageId:receipt.id,holder:DELPHIC_ORACLE_HOLDER.name,office:'Pythia',version:DELPHIC_ORACLE_VERSION,existingThread:oracleThread.id===this.preferredDelphicOracleThreadId}));
       }
       await this.store.set(oracleStoreKey,oracleThread.id);
       this.delphicOracleThreadId=oracleThread.id;
@@ -570,11 +581,15 @@ export class AltarRuntime {
     const content=clean(await this.generateOracle(spec),700);
     if(!content)throw new Error('delphic_oracle_empty');
     const message=await this.api(`/channels/${threadId}/messages`,'POST',{
-      content:`🔮 **Pythia at Delphi**\n${content}`,
+      content:`🔮 **Pythia (Phemonoe) at Delphi**\n${content}`,
       allowed_mentions:{parse:[]},
     });
-    await this.activity(null,threadId,`Pythia at Delphi: ${content}`,[message.id],{
-      speakers:['Pythia / Oracle at Delphi'],
+    await this.activity(null,threadId,`Pythia (Phemonoe) at Delphi: ${content}`,[message.id],{
+      speakers:['Phemonoe / Pythia / Oracle at Delphi'],
+      oracleHolder:DELPHIC_ORACLE_HOLDER.name,
+      oracleHolderGreekName:DELPHIC_ORACLE_HOLDER.greekName,
+      oracleHolderEpithet:DELPHIC_ORACLE_HOLDER.epithet,
+      oracleHolderSourceStatus:DELPHIC_ORACLE_HOLDER.sourceStatus,
       eventType:'delphic_oracle',
       sourceKind:'elaed_delphic_oracle',
       location:`#altar — Oracle at Delphi (${threadId})`,

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,DELPHIC_ORACLE_STARTER,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
@@ -51,6 +51,17 @@ test('Delphic oracle spec is Apollo-linked, versioned, and interpretive',()=>{
  assert.equal(spec.greekReligionPolicyVersion,GREEK_RELIGION_POLICY_VERSION);
  assert.equal(spec.institution,DELPHIC_ORACLE_TITLE);
  assert.equal(spec.oracle,'Pythia');
+ assert.equal(spec.holder,'Phemonoe');
+ assert.equal(spec.holderGreekName,'Φημονόη');
+ assert.equal(spec.holderEpithet,'Delphic Bee');
+ assert.equal(spec.holderApparentAge,50);
+ assert.equal(spec.holderHistoricalAge,'unknown');
+ assert.equal(DELPHIC_ORACLE_HOLDER.patron,'Apollo');
+ assert.match(spec.relationshipToErelyt,/confidante/);
+ assert.match(spec.relationshipToAhMuzenCab,/diplomatic_contact/);
+ assert.match(DELPHIC_ORACLE_STARTER,/Phemonoe/);
+ assert.match(DELPHIC_ORACLE_STARTER,/Strabo/);
+ assert.match(DELPHIC_ORACLE_STARTER,/Pindar/);
  assert.equal(spec.patron,'Apollo');
  assert.equal(spec.interpretationStatus,'symbolic_research_required');
  assert.deepEqual(spec.allowedInterpretiveThemes,['katabasis','divine_mania','the_gods_collectively','divine_immanence','mystery_current_symbolism']);
@@ -424,8 +435,8 @@ test('an existing Delphic thread retains its Operator-authored title instead of 
   const f=fixture(),oracleId='1557533675308978307';
   f.runtime.preferredDelphicOracleThreadId=oracleId;
   f.runtime.delphicOracleThreadId=oracleId;
-  f.setChannel({id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Delphic Oracle'});
-  assert.equal((await f.runtime.checkDelphicOracleThread(oracleId)).name,'Delphic Oracle');
+  f.setChannel({id:oracleId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Pythia'});
+  assert.equal((await f.runtime.checkDelphicOracleThread(oracleId)).name,'Pythia');
 });
 
 
@@ -449,7 +460,7 @@ test('trusted Child initiates a Delphic petition and receives one response throu
   const petition={id:'1557533675308978350',channel_id:oracleId,guild_id:f.guildId,webhook_id:'trusted-children-hook',author:{id:'child-webhook',username:'Orpheus',bot:true},content:'Where does the road divide?'};
   await f.runtime.message(petition);
   assert.equal(sent.length,1);
-  assert.match(sent[0].content,/Pythia at Delphi/);
+  assert.match(sent[0].content,/Pythia \(Phemonoe\) at Delphi/);
   assert.equal(specs.length,1);
   assert.equal(specs[0].petitionerIdentity,'Orpheus');
   assert.equal(specs[0].petitionerKind,'child');
@@ -459,6 +470,7 @@ test('trusted Child initiates a Delphic petition and receives one response throu
   assert.equal(records.filter(x=>x.eventType==='delphic_petition').length,1);
   assert.equal(records.find(x=>x.eventType==='delphic_petition').childrenKey,'orpheus');
   assert.equal(records.find(x=>x.eventType==='delphic_oracle').petitionerChildrenKey,'orpheus');
+  assert.equal(records.find(x=>x.eventType==='delphic_oracle').oracleHolder,'Phemonoe');
   await f.runtime.message(petition);
   assert.equal(sent.length,1);
   // Oracle's own bot response cannot create a second petition.
