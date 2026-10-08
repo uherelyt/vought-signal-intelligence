@@ -144,7 +144,8 @@ test("a rejected Maya draft can be repaired by QA only after independent revalid
 test("an English QA correction is never published and falls back to regeneration", async () => {
   const replies = [
     geminiResponse('{"meaning":"Drink clean water.","tone":"direct"}'),
-    geminiResponse("Ma'alob yéetel the good water."),
+    geminiResponse("Ma'alob. Uk' ja'."),
+    geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"Good. Drink water.","issues":["Extra claim."],"suggestedCorrection":"Drink the good water."}'),
     geminiResponse("Uk' ja'."),
     geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"high","backtranslation":"Drink water.","issues":[]}'),
   ];
