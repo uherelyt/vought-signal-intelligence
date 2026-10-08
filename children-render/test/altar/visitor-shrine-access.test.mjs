@@ -31,7 +31,7 @@ test('visitor does not inherit Erelyt identity, divine soul or source-communion 
 
 test('ordinary external shrine message receives a bounded reply while retaining operator routing',async()=>{
   const state=new Map([[ `${PREFIX}:thread:${THREAD}`, FIGURE.id ]]);
-  const events=[], generated=[], sent=[];
+  const events=[], generated=[], contexts=[], sent=[];
   const store={
     get:async key=>state.get(key)??null,
     set:async(key,value,opts={})=>{
@@ -40,7 +40,7 @@ test('ordinary external shrine message receives a bounded reply while retaining 
     },
     lpush:async()=>1,
     ltrim:async()=>1,
-    lrange:async()=>[],
+    lrange:async()=>['private_operator_history'],
   };
   const runtime=new AltarRuntime({
     store,roster:{people:[FIGURE],visitors:[]},guildId:GUILD,operatorId:OPERATOR,applicationId:'1',
@@ -51,6 +51,7 @@ test('ordinary external shrine message receives a bounded reply while retaining 
     record:record=>events.push(record),
     generate:async(_p,_input,context)=>{
       generated.push(context.extra.incarnateRoute);
+      contexts.push({recent:context.recent,observed:context.observed});
       return 'A source-grounded response';
     },
   });
@@ -61,6 +62,7 @@ test('ordinary external shrine message receives a bounded reply while retaining 
   assert.equal(generated[0].mode,'external_human_petition');
   assert.equal(generated[0].petitionerIdentity,'marvin');
   assert.equal(sent.length,1);
+  assert.deepEqual(contexts[0],{recent:[],observed:[]},'guest generation excludes private context');
   assert.equal(events.at(-1).petitionerKind,'visitor');
 
   await runtime.message({...marvin,id:'1555000000000000002'});
@@ -70,4 +72,5 @@ test('ordinary external shrine message receives a bounded reply while retaining 
   assert.equal(generated.length,2);
   assert.equal(generated[1].petitionerIdentity,'Erelyt');
   assert.equal(generated[1].mode,'incarnation_to_external_divine');
+  assert.deepEqual(contexts[1],{recent:['private_operator_history'],observed:['private_operator_history']},'operator keeps established recall');
 });
