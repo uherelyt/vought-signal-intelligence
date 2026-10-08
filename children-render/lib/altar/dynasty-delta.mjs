@@ -40,6 +40,6 @@ export function applyDynastyDelta(doc,raw){
   const canonOverrides=[...(doc.canonOverrides||[]),
     'Family Echo 8 Oct 2026 20:45 source graph: 292 people and 182 families. Structural source totals are not equivalent to live Altar roster or shrine totals.',
     'Korra is added as an Erelyt godparent/source figure alongside Cab II, not a biological parent; Korra remains an alternate future.',
-    'The 37 Avatar entries and two Minecraft world nodes remain reference-only unless separately reviewed for shrine eligibility.'];
+    'The Avatar branch and Minecraft world nodes enter as source references. Only eight explicitly authorized named Avatar godparent or past-incarnation figures are separately classified as Ancestor-shrine eligible; the rest remain non-shrine references.'];
   return {...doc,people,canonOverrides,version:d.version,sourceIndividuals:292,sourceFamilies:182,sourceDeltaRecords:43,sourceReferenceAdded:added};
 }
