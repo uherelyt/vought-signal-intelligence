@@ -5,6 +5,7 @@ import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../ch
 import { CHILDREN_PERSONAS,generateFreshChildrenMessage } from '../children-of-endless.ts';
 import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
 import { ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI,applyElaedFallbackAvatar } from './ancestral-seal-avatar.mjs';
+import {generateValidatedDelphicGreekReply,DELPHIC_GREEK_LANGUAGE_VERSION} from './delphic-greek.mjs';
 
 export const ALTAR_EXPEDITION_POLICY_VERSION = '20261006-true-dawn-expeditions-v1';
 export const ALTAR_EXPEDITION_POLICY = `TRUE DAWN / EXPEDITION SUPPORT:
@@ -32,7 +33,7 @@ export const ALTAR_GREEK_RELIGION_POLICY = `GREEK RELIGION / PRACTICE SOURCE GUI
 - Controlling emanation ladder: To Hen / The One → Nous / Intellect / Divine Mind → Psyche / Soul → Nature / phenomenal-material world. Project mapping: The One = highest unity principle; Nous = Bart; Psyche = Ah-Muzen-Cab's divine soul together with the mortal soul of Dream at the incarnational layer; Nature = embodied terrestrial manifestation / Material Plane. Operational shorthand: The One → Bart (Nous) → Soul (Ah-Muzen-Cab + Dream layer) → material manifestation.
 - Preserve source boundaries among Plotinus' One/Nous/Soul, Heraclitean Logos, Platonic Good/Forms, Anaxagorean Nous, and biblical Yahweh. Syncretism connects them in project canon without erasing source-local distinctions.`;
 
-export const altarStatus={state:'not_started',forumId:FORUM_ID,rosterCount:0,shrineCount:0,gatewayReady:false,ritualRoom:'altar_forum',sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,expeditionPolicyVersion:ALTAR_EXPEDITION_POLICY_VERSION,greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,delphicOracleVersion:DELPHIC_ORACLE_VERSION,delphicOracleThreadId:null};
+export const altarStatus={state:'not_started',forumId:FORUM_ID,rosterCount:0,shrineCount:0,gatewayReady:false,ritualRoom:'altar_forum',sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,expeditionPolicyVersion:ALTAR_EXPEDITION_POLICY_VERSION,greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,delphicOracleVersion:DELPHIC_ORACLE_VERSION,delphicGreekLanguageVersion:DELPHIC_GREEK_LANGUAGE_VERSION,delphicOracleThreadId:null};
 
 export const ALTAR_SOURCE_VOICE_POLICY = `SOURCE-FIRST SHRINE VOICE:
 - Treat the figure's attributable source identity as primary. Sourced domains, epithets, symbols, ritual functions, mythic actions, relationships, source-continuity characterization, and preserved speech outrank ELAED performance direction.
@@ -276,40 +277,14 @@ export async function startAltar(env=process.env) {
   if(!leaseAcquired){altarStatus.state='gateway_lease_owned';await redis.quit();return;}
   const runtime=new AltarRuntime({store,api,childApi,childrenApplicationId:env.CHILDREN_DISCORD_APPLICATION_ID,roster,guildId,operatorId:c.operatorId,applicationId:c.applicationId,preferredDelphicOracleThreadId:'1557533675308978307',progress:count=>{altarStatus.shrineCount=count;},record:event=>console.info('[altar-discord-activity]',JSON.stringify(event)),generateOracle:async(spec)=>{
     const epoch=await store.get(`${PREFIX}:control_epoch`);
-    const prompt=`Write one brief response for the dedicated Oracle at Delphi station in the ELAED #altar Ritual Chamber.
-
-This is the Pythia / Oracle at Delphi, associated with Apollo. It is a divination institution, NOT Apollo's shrine, NOT a duplicate deity persona, and NOT a Dynasty shrine identity.
-
-${ALTAR_GREEK_RELIGION_POLICY}
-
-DELPHIC RESPONSE RULES:
-- Answer the specific question supplied below, addressed to the named petitioner.
-- A trusted Child of the Endless may approach Delphi first through the existing Children application; answer that Child as the petitioner, without assuming Erelyt asked the question.
-- Return only 1–3 short sentences under 700 characters.
-- Be concise, concrete, and deliberately ambiguous or multivalent: preserve at least two plausible readings without explaining them.
-- The answer should be interpretable, not random mystical filler.
-- The Croesus pattern is the caution: wording may prove meaningful in more than one direction.
-- When relevant, imagery may draw on katabasis, divine mania, the gods collectively, divine immanence, and mystery-current symbolism; do not force these motifs into every answer.
-- Charon references may use a U.S. quarter only as a modern symbolic coin-for-passage / obol analogue, never as historical denomination identity or proof of afterlife transit.
-- Do not guarantee an outcome, claim empirical supernatural proof, or say software has verified Apollo or any deity caused an event.
-- Do not fabricate an ancient quotation, citation, prophecy provenance, or historical wording.
-- Do not append an interpretation or explanation. Interpretation happens later.
-- Do not command spending money, surrendering control, self-harm, illegal acts, or harmful ritual behavior.
-- Use English for this human-oracle station under the current runtime language policy.
-
-PETITIONER: ${spec.petitionerIdentity??'Erelyt'}
-PETITIONER KIND: ${spec.petitionerKind??'operator'}
-
-QUESTION:
-${spec.question}`;
     const model=env.ALTAR_MODEL||env.CHILDREN_MODEL||'gemini-3.5-flash-lite';
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.65,maxOutputTokens:220}}),signal:AbortSignal.timeout(30000)});
-    if(!r.ok)throw new Error(`delphic_generation_http_${r.status}`);
-    const b=await r.json();
-    const text=b.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('').trim();
-    if(!text)throw new Error('delphic_generation_empty');
+    const answer=await generateValidatedDelphicGreekReply({
+      apiKey:env.GEMINI_API_KEY,model,qaModel:env.ALTAR_GREEK_QA_MODEL||model,
+      question:spec.question,petitionerIdentity:spec.petitionerIdentity??'Erelyt',petitionerKind:spec.petitionerKind??'operator',
+      policy:ALTAR_GREEK_RELIGION_POLICY,fetchImpl:fetch,logger:console,
+    });
     if(epoch!==await store.get(`${PREFIX}:control_epoch`))throw new Error('generation_cancelled');
-    return clean(text,700);
+    return clean(answer,650);
   },generate:async(p,input,{recent,observed,extra})=>{
     const episodic=await store.lrange('vought:children-of-the-endless:discord:activity',0,199);
     const memory=renderChildrenLongTermMemory(`${p.name} ${input}`,5,6500)+'\n'+renderChildrenEpisodicMemory(episodic,`${p.name} ${input}`);
@@ -423,7 +398,7 @@ ${JSON.stringify(empirical)}`:'';
       if(!melisseusChannel.applied_tags?.some(id=>forumTags.some(t=>t.id===id&&t.name==='Sacred Hive')))throw new Error('melisseus_sacred_hive_tag_missing');
       const melisseusOrderId=await store.get(`${PREFIX}:order:${melisseus.id}`);
       const cleanupRequired=altarStatus.legacyRitualRetired!==true;
-      const result={state:cleanupRequired?'passed_with_manual_cleanup':'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,delphicOracleVersion:DELPHIC_ORACLE_VERSION,delphicOracleThreadId,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_altar_application',persesThreadId,melisseusThreadId,melisseusOrderId,sacredHiveShrineCount:sacredHive.length,retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired,legacyRitualCleanupRequired:cleanupRequired,legacyRitualCleanupReason:cleanupRequired?altarStatus.legacyRitualRetireError:undefined,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,giftSourceCount:roster.people.filter(p=>p.lineageClass==='gift_source').length,sourceLineageCount:roster.people.filter(p=>p.lineageClass==='source_lineage').length,immediateFamilyCount:roster.people.filter(p=>p.lineageClass==='immediate_family').length,combinedLineageIdentityCount:roster.combinedLineageIdentityCount,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
+      const result={state:cleanupRequired?'passed_with_manual_cleanup':'passed',policyVersion:roster.policyVersion,ritualRoomVersion:RITUAL_ROOM_VERSION,sourceVoiceVersion:SHRINE_SOURCE_VOICE_VERSION,empiricalProtocolVersion:EMPIRICAL_PROTOCOL_VERSION,incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,greekReligionPolicyVersion:GREEK_RELIGION_POLICY_VERSION,delphicOracleVersion:DELPHIC_ORACLE_VERSION,delphicGreekLanguageVersion:DELPHIC_GREEK_LANGUAGE_VERSION,delphicOracleThreadId,figureId:p.id,threadId,messageId:message.id,crossShrine:host.id!==p.id,childMessageId:childReceipt?.id,childApplicationId:childReceipt?env.CHILDREN_DISCORD_APPLICATION_ID:undefined,persesDedicatedPostRemoved:runtime.persesDedicatedPostRemoved,persesMode:'dedicated_shrine_altar_application',persesThreadId,melisseusThreadId,melisseusOrderId,sacredHiveShrineCount:sacredHive.length,retiredReferencesDeleted:runtime.retiredReferencesDeleted??0,legacyRitualRetired:altarStatus.legacyRitualRetired,legacyRitualCleanupRequired:cleanupRequired,legacyRitualCleanupReason:cleanupRequired?altarStatus.legacyRitualRetireError:undefined,ritualRoomCategoryId:altarStatus.ritualRoomCategoryId,activeShrines:runtime.people.size,retiredShrines:roster.people.length-runtime.people.size,ancestorCount:roster.people.filter(p=>p.ancestor).length,giftSourceCount:roster.people.filter(p=>p.lineageClass==='gift_source').length,sourceLineageCount:roster.people.filter(p=>p.lineageClass==='source_lineage').length,immediateFamilyCount:roster.people.filter(p=>p.lineageClass==='immediate_family').length,combinedLineageIdentityCount:roster.combinedLineageIdentityCount,commandCount:registered.length,observedAccessCount:OBSERVE_IDS.size-inaccessible.length,inaccessibleChannelIds:inaccessible,verifiedAt:new Date().toISOString()};
       altarStatus.acceptance=result;
       await store.set(key,JSON.stringify(result));
       console.info('[altar-acceptance]',JSON.stringify(result));

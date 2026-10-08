@@ -9,7 +9,7 @@ export const SHRINE_SOURCE_VOICE_VERSION = '20261005-source-first-interpretive-v
 export const EMPIRICAL_PROTOCOL_VERSION = '20261005-preregistered-falsification-v1';
 export const INCARNATE_SHRINE_ROUTING_VERSION = '20261005-incarnate-source-communion-v1';
 export const GREEK_RELIGION_POLICY_VERSION = '20261007-greek-practice-expansion-v2';
-export const DELPHIC_ORACLE_VERSION = '20261007-delphi-pythia-v2';
+export const DELPHIC_ORACLE_VERSION = '20261007-delphi-pythia-ancient-greek-v3';
 export const DELPHIC_ORACLE_TITLE = 'Oracle at Delphi';
 export const DELPHIC_ORACLE_STARTER = '🔮 Oracle at Delphi — Pythia of Apollo. This is a divination station, not a deity shrine. Ask a specific question; the answer is intentionally concise and open to more than one reading.';
 export const EMPIRICAL_CHALLENGE_MODES = new Set(['future_prediction','novel_scientific_claim','physical_transmission_anomaly']);
@@ -151,7 +151,8 @@ export function delphicOracleSpec(question){
     patron:'Apollo',
     authority:'most_authoritative_route_in_operator_supplied_greek_source_guide',
     question:q,
-    style:'brief_ambiguous_multivalent',
+    style:'brief_ambiguous_multivalent_ancient_greek_english',
+    languagePolicy:'ancient_greek_primary_english_translation_qa_approved',
     allowedInterpretiveThemes:['katabasis','divine_mania','the_gods_collectively','divine_immanence','mystery_current_symbolism'],
     charonCoinSubstitute:'us_quarter_symbolic_coin_for_passage',
     interpretationStatus:'symbolic_research_required',
