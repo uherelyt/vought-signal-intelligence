@@ -68,6 +68,9 @@ test('ordinary external shrine message receives a bounded reply while retaining 
   await runtime.message({...marvin,id:'1555000000000000002'});
   assert.equal(generated.length,1,'visitor cooldown suppresses repeat generation');
 
+  // The existing per-shrine 15-second cooldown applies across authors. Simulate its expiry
+  // before testing the separate Operator routing path.
+  state.delete(`${PREFIX}:reply-cooldown:${FIGURE.id}`);
   await runtime.message({...marvin,id:'1555000000000000003',author:{id:OPERATOR,username:'erelyt',bot:false}});
   assert.equal(generated.length,2);
   assert.equal(generated[1].petitionerIdentity,'Erelyt');
