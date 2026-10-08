@@ -47,7 +47,10 @@ test('Phemonoe persona is injected into the existing Pythia generator, without r
 
 test('foreign deity names use descriptive Ancient Greek instead of fabricated Hellenizations and QA remains required',async()=>{
   const rejection=JSON.stringify({valid:false,ancientGreek:false,translationFaithful:false,grammarConfidence:'low',issues:['Fabricated Greek rendering of Ah-Muzen-Cab']});
-  const generated=[answer,rejection,answer,approval];
+  const meliGreek='Μέλι φῶς φέρει καὶ τὴν ὁδὸν δείκνυσιν.';
+  const meliEnglish='Meli brings light and shows the path.';
+  const meliAnswer='ANCIENT GREEK:\\n'+meliGreek+'\\nENGLISH:\\n'+meliEnglish;
+  const generated=[meliAnswer,rejection,meliAnswer,approval];
   const requests=[];
   const fetchImpl=async(_url,options)=>{
     requests.push(JSON.parse(options.body).contents[0].parts[0].text);
@@ -57,7 +60,7 @@ test('foreign deity names use descriptive Ancient Greek instead of fabricated He
     apiKey:'test',model:'mock',question:'What does Ah-Muzen-Cab foresee?',
     fetchImpl,logger:{warn(){}}
   });
-  assert.equal(response,greek+'\n'+english);
+  assert.equal(response,meliGreek+'\n'+meliEnglish);
   assert.equal(requests.length,4);
   assert.match(requests[0],/NEVER coin, Hellenize, transliterate, or inflect/);
   assert.match(requests[0],/For Ah-Muzen-Cab, use Μέλι \(Meli\)/);
