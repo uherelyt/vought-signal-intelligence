@@ -49,7 +49,7 @@ test('foreign deity names use descriptive Ancient Greek instead of fabricated He
   const rejection=JSON.stringify({valid:false,ancientGreek:false,translationFaithful:false,grammarConfidence:'low',issues:['Fabricated Greek rendering of Ah-Muzen-Cab']});
   const meliGreek='Μέλι φῶς φέρει καὶ τὴν ὁδὸν δείκνυσιν.';
   const meliEnglish='Meli brings light and shows the path.';
-  const meliAnswer='ANCIENT GREEK:\\n'+meliGreek+'\\nENGLISH:\\n'+meliEnglish;
+  const meliAnswer='ANCIENT GREEK:\n'+meliGreek+'\nENGLISH:\n'+meliEnglish;
   const generated=[meliAnswer,rejection,meliAnswer,approval];
   const requests=[];
   const fetchImpl=async(_url,options)=>{
