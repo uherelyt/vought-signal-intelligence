@@ -5,6 +5,7 @@ import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../ch
 import { CHILDREN_PERSONAS,generateFreshChildrenMessage } from '../children-of-endless.ts';
 import { CHILDREN_AVATAR_DATA_URIS } from '../children-avatar-data.ts';
 import { ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI,applyElaedFallbackAvatar } from './ancestral-seal-avatar.mjs';
+import { applyLuciferShrineIcon } from './lucifer-shrine-icon.mjs';
 import {generateValidatedDelphicGreekReply,DELPHIC_GREEK_LANGUAGE_VERSION} from './delphic-greek.mjs';
 
 export const ALTAR_EXPEDITION_POLICY_VERSION = '20261006-true-dawn-expeditions-v1';
@@ -196,6 +197,8 @@ export async function startAltar(env=process.env) {
     const key=p.childrenKey??Object.keys(portraitMatches).find(k=>p.name.startsWith(portraitMatches[k]));
     if(key){p.avatarData=CHILDREN_AVATAR_DATA_URIS[key];p.senderName=CHILDREN_PERSONAS[key]?.displayName;}
   }
+  const luciferIconCount=applyLuciferShrineIcon(roster.people);
+  if(luciferIconCount)console.info('[altar-lucifer-shrine-icon-configured]',JSON.stringify({count:luciferIconCount}));
   const fallbackIconCount=applyElaedFallbackAvatar(roster.people.filter(p=>p.shrineEligible!==false&&!p.childrenKey&&!p.humanControlled));
   altarStatus.fallbackIconCount=fallbackIconCount;
   const portraitKeys=[...new Set([...roster.people,...roster.visitors??[]].filter(p=>p.avatarData).map(p=>p.childrenKey))].filter(Boolean);

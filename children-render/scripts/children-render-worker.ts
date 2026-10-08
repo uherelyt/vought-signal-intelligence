@@ -199,11 +199,17 @@ process.env.CHILDREN_RUNTIME_HOST ||= "render";
 
 const port = Number(process.env.PORT?.trim() || "10000");
 const phemonoeIcon = readFileSync(new URL("../assets/phemonoe-pythia-portrait.jpg", import.meta.url));
+const luciferIcon = readFileSync(new URL("../assets/lucifer-morningstar-shrine-icon.jpg", import.meta.url));
 const httpServer = createServer((request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
   if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/assets/phemonoe-pythia-portrait.jpg") {
     response.writeHead(200, { "content-type": "image/jpeg", "content-length": phemonoeIcon.length, "cache-control": "public, max-age=86400", "x-content-type-options": "nosniff" });
     response.end(request.method === "HEAD" ? undefined : phemonoeIcon);
+    return;
+  }
+  if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/assets/lucifer-morningstar-shrine-icon.jpg") {
+    response.writeHead(200, { "content-type": "image/jpeg", "content-length": luciferIcon.length, "cache-control": "public, max-age=86400", "x-content-type-options": "nosniff" });
+    response.end(request.method === "HEAD" ? undefined : luciferIcon);
     return;
   }
   if (url.pathname === "/healthz" || url.pathname === "/") {
