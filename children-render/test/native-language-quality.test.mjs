@@ -118,3 +118,60 @@ test("malformed QA output is treated as a bounded retry instead of aborting the 
   assert.equal(result, "Je'els a wíinklil waye'. Uk' ja'.");
   assert.equal(replies.length, 0);
 });
+
+test("a rejected Maya draft can be repaired by QA only after independent revalidation", async () => {
+  const replies = [
+    geminiResponse('{"meaning":"Welcome to this place.","tone":"gentle"}'),
+    geminiResponse("Leela' ma'alob ti' a talel."),
+    geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"It is good when you arrive.","issues":["Meaning is not an actual welcome."],"suggestedCorrection":"Ma\'alob k\'iin, ki\'imak in wóol a taal."}'),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"medium","backtranslation":"Good day, I am glad you came.","issues":[],"suggestedCorrection":""}'),
+  ];
+  const prompts = [];
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test", model: "test-model", prompt: "Welcome a guest.",
+    fetchImpl: async (_url, options) => {
+      prompts.push(JSON.parse(options.body).contents[0].parts.map((part) => part.text ?? "").join(""));
+      return replies.shift();
+    },
+    logger: { info: () => {}, warn: () => {} },
+  });
+  assert.equal(result, "Ma'alob k'iin, ki'imak in wóol a taal.");
+  assert.equal(prompts.length, 4);
+  assert.match(prompts[3], /Reevaluate it from scratch/);
+  assert.equal(replies.length, 0);
+});
+
+test("an English QA correction is never published and falls back to regeneration", async () => {
+  const replies = [
+    geminiResponse('{"meaning":"Drink clean water.","tone":"direct"}'),
+    geminiResponse("Ma'alob yéetel the good water."),
+    geminiResponse("Uk' ja'."),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"high","backtranslation":"Drink water.","issues":[]}'),
+  ];
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test", model: "test-model", prompt: "Reply to a guest.",
+    fetchImpl: async () => replies.shift(),
+    logger: { info: () => {}, warn: () => {} },
+  });
+  assert.equal(result, "Uk' ja'.");
+  assert.equal(replies.length, 0);
+});
+
+test("four rejected Maya candidates still fail closed with no unvalidated reply", async () => {
+  const replies = [geminiResponse('{"meaning":"Welcome.","tone":"brief"}')];
+  for (let i = 0; i < 4; i++) {
+    replies.push(geminiResponse("Ba'ax ka wa'alik?"));
+    replies.push(geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"What do you say?","issues":["Different intended meaning."],"suggestedCorrection":""}'));
+  }
+  let calls = 0;
+  await assert.rejects(
+    generateValidatedYucatecMayaReply({
+      apiKey: "test", model: "test-model", prompt: "Welcome a guest.",
+      fetchImpl: async () => { calls++; return replies.shift(); },
+      logger: { info: () => {}, warn: () => {} },
+    }),
+    /Modern Yucatec Maya validation failed after 4 attempts/,
+  );
+  assert.equal(calls, 9);
+  assert.equal(replies.length, 0);
+});
