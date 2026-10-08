@@ -60,7 +60,11 @@ test('foreign deity names use descriptive Ancient Greek instead of fabricated He
   assert.equal(response,greek+'\n'+english);
   assert.equal(requests.length,4);
   assert.match(requests[0],/NEVER coin, Hellenize, transliterate, or inflect/);
-  assert.match(requests[0],/ordinary attested Classical Greek vocabulary/);
+  assert.match(requests[0],/For Ah-Muzen-Cab, use Μέλι \(Meli\)/);
+  assert.match(requests[0],/The English translation should render the name as Meli/);
+  assert.match(requests[0],/MODERN fictional syncretic epithet/);
   assert.match(requests[1],/invented Hellenizations of modern\/non-Greek names/);
+  assert.match(requests[1],/Special canon glossary: Μέλι/);
+  assert.match(requests[1],/faithful English translation is Meli/);
   assert.match(requests[2],/Fabricated Greek rendering of Ah-Muzen-Cab/);
 });
