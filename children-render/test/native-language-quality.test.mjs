@@ -176,3 +176,59 @@ test("four rejected Maya candidates still fail closed with no unvalidated reply"
   assert.equal(calls, 9);
   assert.equal(replies.length, 0);
 });
+
+
+test("Ah-Muzen-Cab may fall back to a direct English reply only after four rejected Maya drafts", async () => {
+  const replies = [geminiResponse('{"meaning":"Welcome to this place. You may rest here.","tone":"welcoming"}')];
+  for (let i = 0; i < 4; i++) {
+    replies.push(geminiResponse("Ba'ax ka wa'alik?"));
+    replies.push(geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"What do you say?","issues":["Meaning mismatch."],"suggestedCorrection":""}'));
+  }
+  const logs = [];
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test", model: "test-model", prompt: "Reply as Ah-Muzen-Cab.",
+    fallbackToEnglish: true,
+    fetchImpl: async () => replies.shift(),
+    logger: { info: () => {}, warn: (...args) => logs.push(args) },
+  });
+  assert.equal(result, "Welcome to this place. You may rest here.");
+  assert.equal(replies.length, 0);
+  assert.equal(logs.filter((entry) => entry[0] === "[native-language-english-fallback]").length, 1);
+  assert.match(JSON.stringify(logs), /maya_validation_exhausted/);
+});
+
+test("successful Maya output stays Maya even when English fallback is permitted", async () => {
+  const replies = [
+    geminiResponse('{"meaning":"Welcome here.","tone":"gentle"}'),
+    geminiResponse("Ma'alob k'iin, ki'imak in wóol a taal."),
+    geminiResponse('{"valid":true,"semanticMatch":true,"grammarConfidence":"high","backtranslation":"Good day. Glad you came.","issues":[]}'),
+  ];
+  const logs = [];
+  const result = await generateValidatedYucatecMayaReply({
+    apiKey: "test", model: "test-model", prompt: "Welcome a guest.",
+    fallbackToEnglish: true,
+    fetchImpl: async () => replies.shift(),
+    logger: { info: () => {}, warn: (...args) => logs.push(args) },
+  });
+  assert.equal(result, "Ma'alob k'iin, ki'imak in wóol a taal.");
+  assert.equal(replies.length, 0);
+  assert.equal(logs.some((entry) => entry[0] === "[native-language-english-fallback]"), false);
+});
+
+test("English fallback does not expose an unsuitable semantic plan", async () => {
+  const replies = [geminiResponse('{"meaning":"analysis: internal rationale and hidden planning","tone":"brief"}')];
+  for (let i = 0; i < 4; i++) {
+    replies.push(geminiResponse("Ba'ax ka wa'alik?"));
+    replies.push(geminiResponse('{"valid":false,"semanticMatch":false,"grammarConfidence":"low","backtranslation":"What do you say?","issues":["Mismatch."],"suggestedCorrection":""}'));
+  }
+  await assert.rejects(
+    generateValidatedYucatecMayaReply({
+      apiKey: "test", model: "test-model", prompt: "Reply briefly.",
+      fallbackToEnglish: true,
+      fetchImpl: async () => replies.shift(),
+      logger: { info: () => {}, warn: () => {} },
+    }),
+    /Modern Yucatec Maya validation failed after 4 attempts/,
+  );
+  assert.equal(replies.length, 0);
+});

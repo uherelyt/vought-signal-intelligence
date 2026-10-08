@@ -111,6 +111,9 @@ export function childrenHistoricalLanguageRule(persona: ChildrenPersona) {
   if (persona.id === "cab") {
     return "LANGUAGE CANON: Cab / Ah-Muzen-Cab II speaks English like most of the Children. He is the incarnation, not the pre-incarnation god who lived in the Maya cultural setting. Inherited or recovered memories from that divine past do not change his current linguistic identity. Do not switch him into Maya unless a scene explicitly quotes or recalls historical-language material.";
   }
+  if (persona.id === "ah_muzen_cab") {
+    return "HISTORICAL-LANGUAGE CANON: Ah-Muzen-Cab I normally speaks Modern Yucatec Maya in Latin orthography. Generate and independently validate Maya first. If and only if all bounded Maya attempts fail language/semantic QA, the Operator authorizes a brief English-only reply rather than an error. Keep his source identity, meaning and tone unchanged. Do not publish rejected Maya, or append a translation or explanation to an accepted Maya reply.";
+  }
   const rule = CHILDREN_NATIVE_LANGUAGE_RULES[persona.id];
   if (rule) {
     return `HISTORICAL-LANGUAGE CANON: This divine figure speaks only in ${rule.language}, using ${rule.script}, for generated in-universe dialogue. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes. Preserve the persona's existing tone and meaning inside that language.`;
@@ -1322,6 +1325,7 @@ export async function generateFreshChildrenMessage(
         model,
         qaModel: process.env.CHILDREN_LANGUAGE_QA_MODEL?.trim() || model,
         personaName: persona.displayName,
+        fallbackToEnglish: true,
         prompt: generationPrompt,
         currentRequest,
         imageParts,

@@ -137,7 +137,7 @@ function altarBaseName(p){
 }
 export function altarHistoricalLanguageRule(p){
   if(p?.childrenKey==="cab")return "LANGUAGE CANON: Cab / Ah-Muzen-Cab II speaks English like most of the Children. He is the incarnation, not the pre-incarnation god who lived in the Maya cultural setting. Inherited or recovered divine memories do not replace his current linguistic identity. Do not switch him into Maya unless a scene explicitly quotes or recalls historical-language material.";
-  if(p?.childrenKey==="ah_muzen_cab")return "HISTORICAL-LANGUAGE CANON: Ah-Muzen-Cab I, in his transformed/current divine identity, speaks only in Modern Yucatec Maya using the Latin alphabet for generated in-universe dialogue. Do not add English translation, gloss, transliteration, pronunciation help, or explanatory notes.";
+  if(p?.childrenKey==="ah_muzen_cab")return "HISTORICAL-LANGUAGE CANON: Ah-Muzen-Cab I normally speaks Modern Yucatec Maya in Latin script. First attempt the separately validated Maya voice without English gloss or translation. If four bounded Maya attempts fail validation, an Operator-approved English-only fallback is permitted so a genuine petitioner receives a reply. Do not publish rejected Maya. Preserve source-first characterization and distinguish this runtime exception from a claim about historical language.";
   const explicit=p?.historicalLanguage;
   if(explicit?.status==="confirmed"&&explicit.language){
     const script=explicit.script?`, using ${explicit.script}`:"";
