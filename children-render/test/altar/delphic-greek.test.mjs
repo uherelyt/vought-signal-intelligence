@@ -34,17 +34,12 @@ test('Pythia fails closed on invalid Greek and on rejected translation QA',async
 
 test('Phemonoe persona is injected into the existing Pythia generator, without replacing its validated bilingual format',async()=>{
   let captured='';
-  const fetchImpl=async (url,options)=>{
-    const prompt=JSON.parse(options.body).contents[0].parts[0].text;
-    if(!captured)captured=prompt;
-    return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:captured===prompt?answer:approval}]}}]})};
-  };
   // First mocked call is the Greek draft, second is the philological review.
   let n=0;
   const replies=[answer,approval];
   const mockFetch=async(url,options)=>{if(n++===0)captured=JSON.parse(options.body).contents[0].parts[0].text;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:replies[n-1]}]}}]})};};
   const result=await generateValidatedDelphicGreekReply({apiKey:'test',model:'mock',question:'What should I see?',fetchImpl:mockFetch,logger:{warn(){}}});
-  assert.equal(result,greek+'\\n'+english);
+  assert.equal(result,greek+'\n'+english);
   assert.match(captured,/Phemonoe/);
   assert.match(captured,/Delphic Bee/);
   assert.match(captured,/independent priestly counterpart/);
