@@ -5,6 +5,8 @@ const newsUrl=q=>'https://news.google.com/rss/search?q='+encodeURIComponent(q)+'
 export const ARGUS_PUBLIC_FEEDS=Object.freeze([
   {id:'mrbeast',kind:'upload',name:'MrBeast',url:'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6OQ3DkcsbYNE6H8uQQuVA'},
   {id:'markrober',kind:'upload',name:'Mark Rober',url:'https://www.youtube.com/feeds/videos.xml?channel_id=UCY1kMZp36IQSyNx_9h4mpCg'},
+  {id:'mkbhd',kind:'upload',name:'MKBHD',url:'https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ'},
+  {id:'tseries',kind:'upload',name:'T-Series',url:'https://www.youtube.com/feeds/videos.xml?channel_id=UCq-Fj5jknLsUf-MWSy4_brA'},
   {id:'release-news',kind:'release',name:'Creator release news',url:newsUrl('("new video" OR "new upload" OR "new stream") (YouTube OR TikTok OR Twitch) when:7d')},
   {id:'growth-news',kind:'growth',name:'Creator growth news',url:newsUrl('("subscribers" OR "followers" OR "milestone") (creator OR YouTube OR TikTok OR Twitch) when:7d')},
   {id:'bee-news',kind:'bees',name:'Bee and pollinator news',url:newsUrl('("honey bees" OR honeybees OR beekeeping OR pollinators OR apiaries) when:7d')},
