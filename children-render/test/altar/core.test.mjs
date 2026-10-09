@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AltarRuntime,FORUM_ID,PREFIX,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,DELPHIC_ORACLE_STARTER,DELPHIC_ORACLE_PORTRAIT_URL,DELPHIC_ORACLE_PORTRAIT_VERSION,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
+import {AltarRuntime,FORUM_ID,PREFIX,SHRINE_PRESENTATION_VERSION,validThread,drawOracle,TAROT,RUNES,shrineTitle,isSacredHiveMember,migrateRosterTo4Oct,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,DELPHIC_ORACLE_STARTER,DELPHIC_ORACLE_PORTRAIT_URL,DELPHIC_ORACLE_PORTRAIT_VERSION,delphicOracleSpec,validateEmpiricalChallengeSpec,sealEmpiricalChallenge,empiricalClaimLooksTestable,incarnateShrineRoute} from '../../lib/altar/core.mjs';
 import {applyElaedFallbackAvatar,ELAED_ANCESTRAL_SEAL_AVATAR_DATA_URI} from '../../lib/altar/ancestral-seal-avatar.mjs';
 
 function fixture(){
