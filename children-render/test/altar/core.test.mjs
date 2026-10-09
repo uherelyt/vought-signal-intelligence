@@ -204,6 +204,40 @@ test('separate New Gods and Old Gods tags provision without reclassifying existi
  assert.equal(tags.filter(t=>t.name==='New Gods vs Old Gods').length,0);
  assert.deepEqual(thread.applied_tags,['0']);
 });
+test('classified shrine gains only its own generation tag while preserving existing tags and retries idempotently',async()=>{
+ const f=fixture();
+ const p={...f.p,id:'elaed-e84e672cd9e2-1',name:'Apollo',displayName:'Apollo',shrineEligible:true};
+ f.values.clear();
+ f.values.set(`${PREFIX}:shrine:${p.id}`,f.thread);
+ f.values.set(`${PREFIX}:thread:${f.thread}`,p.id);
+ f.values.set(`${PREFIX}:policy:${p.id}`,'v1');
+ f.values.set(`${PREFIX}:presentation:${p.id}`,SHRINE_PRESENTATION_VERSION);
+ f.runtime.roster={people:[p],policyVersion:'v1'};
+ f.runtime.provisionRoster=[p];
+ f.runtime.people=new Map([[p.id,p]]);
+ const names=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods','Old Gods','Manual Label'];
+ const tags=names.map((name,i)=>({name,id:String(i)}));
+ let thread={id:f.thread,guild_id:f.guildId,parent_id:FORUM_ID,type:11,name:'Apollo',applied_tags:['0','10']};
+ let patches=0;
+ f.runtime.api=async(path,method='GET',body)=>{
+   if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:tags};
+   if(path===`/guilds/${f.guildId}/threads/active`)return {threads:[thread]};
+   if(path.includes('/threads/archived/'))return {threads:[],has_more:false};
+   if(path===`/channels/${f.thread}`){
+     if(method==='PATCH'){patches++;thread={...thread,...body};}
+     return thread;
+   }
+   return {};
+ };
+ await f.runtime.provision();
+ assert.deepEqual(thread.applied_tags,['0','10','9']);
+ assert.equal(patches,1);
+ assert.deepEqual(f.runtime.generationTagVerifiedCount,{old:1,new:0,both:0,classifiedShrines:1});
+ await f.runtime.provision();
+ assert.deepEqual(thread.applied_tags,['0','10','9']);
+ assert.equal(patches,1);
+});
+
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const {shrineTitle}=await import('../../lib/altar/core.mjs');const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p)};

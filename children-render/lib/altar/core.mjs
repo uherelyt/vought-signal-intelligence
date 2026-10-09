@@ -1,5 +1,6 @@
 import { randomInt, randomUUID, createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
+import { divineGenerationTags } from './generation-tags.mjs';
 
 export const FORUM_ID = '1555666568409653268';
 export const LEGACY_RITUAL_CHANNEL_ID = '1555340514356625489';
@@ -360,6 +361,7 @@ export class AltarRuntime {
       if(more&&!before)throw new Error('archive_pagination_failed');
     }
     let completed=0;this.presentationVerifiedCount=0;this.retiredReferencesDeleted=0;
+    this.generationTagVerifiedCount={old:0,new:0,both:0,classifiedShrines:0};
     const fullTitleCounts=new Map();
     for(const p of this.provisionRoster)fullTitleCounts.set(shrineTitle(p),(fullTitleCounts.get(shrineTitle(p))??0)+1);
     const candidateThreads=p=>{
@@ -397,19 +399,25 @@ export class AltarRuntime {
       const tag=tags.find(t=>t.name===primaryTagName);
       const bridgeTag=p.childrenKey?tags.find(t=>t.name==='Children bridge'):null;
       const hiveTag=isSacredHiveMember(p)?tags.find(t=>t.name==='Sacred Hive'):null;
+      const generationNames=divineGenerationTags(p);
+      const generationTags=generationNames.map(name=>tags.find(t=>t.name===name));
+      if(generationTags.some(t=>!t))throw new Error('generation_forum_tag_unavailable');
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
       if(p.childrenKey&&(forum.flags&16)&&!bridgeTag)throw new Error('children_bridge_tag_unavailable');
       if(isSacredHiveMember(p)&&(forum.flags&16)&&!hiveTag)throw new Error('sacred_hive_tag_unavailable');
-      const requiredTags=[tag?.id,bridgeTag?.id,hiveTag?.id].filter(Boolean);
+      const requiredTags=[...new Set([tag?.id,bridgeTag?.id,hiveTag?.id,...generationTags.map(t=>t.id)].filter(Boolean))];
+      if(requiredTags.length>5)throw new Error('shrine_forum_tag_capacity_exceeded');
       const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:requiredTags,message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
       let thread=stored?await this.checkOwnThread(stored,p):found??await create();
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
       await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
       if(this.roster.policyVersion&&await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
-        const applied=requiredTags;
+        const applied=[...new Set([...(thread.applied_tags??[]),...requiredTags])];
+        if(applied.length>5)throw new Error('shrine_forum_tag_capacity_exceeded');
         try {
-          await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          const patched=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          thread={...thread,...patched,applied_tags:patched.applied_tags??applied};
         } catch(error) {
           // A bot can own a retired thread without permission to unlock it. Keep that history;
           // adopt a previously created active replacement before creating a new shrine.
@@ -420,7 +428,8 @@ export class AltarRuntime {
           await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
           await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
           await this.store.del(`${PREFIX}:thread:${retiredId}`);
-          await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          const patched=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
+          thread={...thread,...patched,applied_tags:patched.applied_tags??applied};
           await this.activity(p,thread.id,`Active shrine replaces locked reference ${retiredId}; its history remains archived.`,[],{eventType:'shrine_reactivation',previousThreadId:retiredId,shrineEligible:true});
         }
         await this.api(`/channels/${thread.id}/messages/${thread.id}`,'PATCH',{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}});
@@ -430,9 +439,10 @@ export class AltarRuntime {
       const missingRequired=requiredTags.filter(id=>!(thread.applied_tags??[]).includes(id));
       if(missingRequired.length){
         const applied=[...new Set([...(thread.applied_tags??[]),...requiredTags])];
+        if(applied.length>5)throw new Error('shrine_forum_tag_capacity_exceeded');
         try{
           const tagged=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:applied,locked:false,archived:false});
-          thread={...thread,...tagged,applied_tags:applied};
+          thread={...thread,...tagged,applied_tags:tagged.applied_tags??applied};
         }catch(error){
           if(error.status!==403||!thread.thread_metadata?.archived||!thread.thread_metadata?.locked)throw error;
           const retiredId=thread.id;
@@ -446,6 +456,18 @@ export class AltarRuntime {
           await this.activity(p,thread.id,`Active shrine replaces locked reference ${retiredId}; its history remains archived.`,[],{eventType:'shrine_reactivation',previousThreadId:retiredId,shrineEligible:true});
         }
         await this.activity(p,thread.id,'Shrine forum tags reconciled.',[],{eventType:'shrine_tag_reconciliation',sacredHive:isSacredHiveMember(p),childrenBridge:Boolean(p.childrenKey)});
+      }
+      if(generationNames.length){
+        // Discord GET verifies the actual tags after PATCH, not merely a planned mapping.
+        const confirmed=await this.api(`/channels/${thread.id}`);
+        if(!validThread(confirmed,this.guildId)||requiredTags.some(id=>!confirmed.applied_tags?.includes(id)))
+          throw new Error('shrine_generation_tags_unverified');
+        const old=generationNames.includes('Old Gods'),fresh=generationNames.includes('New Gods');
+        this.generationTagVerifiedCount.classifiedShrines++;
+        if(old)this.generationTagVerifiedCount.old++;
+        if(fresh)this.generationTagVerifiedCount.new++;
+        if(old&&fresh)this.generationTagVerifiedCount.both++;
+        thread={...thread,...confirmed};
       }
       if(thread.name!==shrineTitle(p)){
         const renamed=await this.api(`/channels/${thread.id}`,'PATCH',{name:shrineTitle(p)});
