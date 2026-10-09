@@ -411,7 +411,25 @@ export class AltarRuntime {
       const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:requiredTags,message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
       let thread=stored?await this.checkOwnThread(stored,p):found??await create();
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
-      const currentTags=thread.applied_tags??[];
+      let currentTags=thread.applied_tags??[];
+      // The original Ah-Muzen-Cab I is Immediate Family, NOT a genealogical Ancestor.
+      // A legacy Ancestor forum tag contradicts the controlling divine-family dossier.
+      // Retire only this verified stale label, retaining the distinct bridge and hive tags.
+      if(p.id==='elaed-5744ee101e27-1'){
+        if(primaryTagName!=='Immediate Family')throw new Error('ah_muzen_cab_lineage_classification_mismatch');
+        const staleAncestorTag=tags.find(t=>t.name==='Ancestor');
+        if(staleAncestorTag&&currentTags.includes(staleAncestorTag.id)){
+          const corrected=currentTags.filter(id=>id!==staleAncestorTag.id);
+          const patched=await this.api(`/channels/${thread.id}`,'PATCH',{applied_tags:corrected,locked:false,archived:false});
+          const observed=await this.api(`/channels/${thread.id}`);
+          if(!validThread(observed,this.guildId)||observed.applied_tags?.includes(staleAncestorTag.id)||corrected.some(id=>!observed.applied_tags?.includes(id)))
+            throw new Error('ah_muzen_cab_lineage_tag_correction_unverified');
+          thread={...thread,...patched,...observed};
+          currentTags=thread.applied_tags??[];
+          console.info('[altar-ah-muzen-cab-lineage-corrected]',JSON.stringify({id:p.id,removed:'Ancestor',retained:currentTags.map(id=>tags.find(t=>t.id===id)?.name??id)}));
+          await this.activity(p,thread.id,'Stale Ancestor forum tag retired; Immediate Family and Sacred Hive retained.',[],{eventType:'shrine_lineage_tag_correction',removedTag:'Ancestor',canonicalClass:'immediate_family'});
+        }
+      }
       const union=[...new Set([...currentTags,...requiredTags])];
       if(generationNames.length&&union.length>5){
         const base=[...new Set([...currentTags,tag?.id,bridgeTag?.id,hiveTag?.id].filter(Boolean))];
