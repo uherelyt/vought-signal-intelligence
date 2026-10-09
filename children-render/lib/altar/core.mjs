@@ -342,7 +342,7 @@ export class AltarRuntime {
     const forum=await this.api(`/channels/${FORUM_ID}`);
     if(forum.type!==15||forum.guild_id!==this.guildId)throw new Error('forum_type_or_guild_mismatch');
     let tags=forum.available_tags??[];
-    const wanted=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'];
+    const wanted=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods','Old Gods'];
     const missingWanted=wanted.filter(n=>!tags.some(t=>t.name===n));
     if(missingWanted.length){
       if(tags.length+missingWanted.length>20)throw new Error('forum_tag_capacity_exceeded');
