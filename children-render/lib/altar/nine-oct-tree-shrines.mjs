@@ -42,7 +42,7 @@ export function appendNineOctDynastyShrines(doc){
     existingIds.add(id);existingSourceIds.add(entry.sourceId);
     return {
       id,name:entry.name,displayName:entry.name,gender:entry.gender,dynastySourceId:entry.sourceId,
-      relationships:[...entry.relationships],humanControlled:['F0HG4','QERCG'].includes(entry.sourceId),
+      relationships:[...entry.relationships],humanControlled:!entry.shrine,
       shrineEligible:entry.shrine,ancestor:false,lineageClass:'dynasty',
       sourceClassification:entry.shrine?'separate_devotional_figure_source_first':'familyecho_reference_only',
       ...(entry.shrine?{divineStatus:entry.generation!=='none',eligibilityReason:entry.generation!=='none'?'Divine office / mythic personification':'Hermetic syncretic devotional figure',historicalLanguage:{status:'pending_operator_choice'}}:{}),
