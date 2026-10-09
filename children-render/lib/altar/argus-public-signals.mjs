@@ -70,7 +70,7 @@ export function argusSignalTopics({shrineId,question,empirical=false}={}){
   const all=/\b(surveillance|monitoring|world report|global report|worldwide report|all three|three signals|status brief|public signals)\b/i.test(q);
   const uploads=/\b(new uploads?|latest uploads?|recent uploads?|new videos?|recent videos?|new content|recent content|content drops?|new posts?|creator uploads?|creator activity)\b/i.test(q);
   const growth=/\b(followers?|followership|subscribers?|subscriptions?|rising numbers?|growth|milestones?|popular creators?|audience)\b/i.test(q);
-  const bees=/\b(bees?|honeybees?|pollinat(?:or|ors|ion)|beekeeping|apiar(?:y|ies)|hives?|bee news)\b/i.test(q);
+  const bees=/\b(bees?|honeybees?|pollinat(?:or|ors|ion)|beekeeping|apiar(?:y|ies)|bee\s*hives?|hives?|bee news)\b/i.test(q);
   if(!all&&!uploads&&!growth&&!bees)return null;
   const hiveCount=bees&&/\b(how many|count|number of|stock|total|managed beehives?)\b/i.test(q)&&/\b(hives?|beehives?)\b/i.test(q);
   return {uploads:all||uploads,growth:all||growth,bees:all||bees,hiveCount};
