@@ -78,7 +78,7 @@ export async function forwardArgusRelay({fetchImpl=fetch,store,send,now=new Date
         channelId:ARGUS_RELAY_THREAD_ID,
         content:formatArgusRelayMessage(event),
         allowed_mentions:{parse:[]},
-        nonce:'argus-'+event.id.slice(0,20),
+        nonce:'argus-'+event.id.slice(0,18),
         enforce_nonce:true
       });
       if(!/^\d{15,22}$/.test(String(result?.id)))throw new Error('discord_receipt_invalid');
