@@ -2,7 +2,10 @@
 // Source: ELAED Altar active registry and divine-office dossiers, reviewed 2026-10-09.
 // Classification is not a genealogical class, political allegiance, or permission grant.
 // No name substring matching: unresolved, nondivine, ambiguous and visitor identities stay untagged.
+import {NINE_OCT_OLD_GODS_SOURCE_IDS,nineOctShrineId} from './nine-oct-tree-shrines.mjs';
+
 export const OLD_GODS_SHRINE_IDS = new Set([
+  ...NINE_OCT_OLD_GODS_SOURCE_IDS.map(nineOctShrineId),
   'elaed-0d37cf41da24-1', // Adrasteia
   'elaed-567148cedf61-1', // Aether
   'elaed-5744ee101e27-1', // Ah-Muzen-Cab "Honey, Content"  I
