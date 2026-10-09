@@ -177,7 +177,7 @@ test('separate New Gods and Old Gods tags provision without reclassifying existi
  const f=fixture();f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p),applied_tags:['0']};
  let tags=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'].map((name,i)=>({id:String(i),name}));
- let patches=0,creations=0;
+ let patches=0,creations=0,starterContent=null;
  f.runtime.api=async(path,method='GET',body)=>{
    if(path===`/channels/${FORUM_ID}`){
      if(method==='PATCH'){
@@ -189,7 +189,10 @@ test('separate New Gods and Old Gods tags provision without reclassifying existi
    if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')creations++;
    if(path.includes('/threads/active'))return {threads:[thread]};
    if(path.includes('/archived/'))return {threads:[],has_more:false};
-   if(path.includes('/messages/'))return {id:'m1',content:body?.content??'Shrine'};
+   if(path.includes('/messages/')){
+     if(method==='PATCH')starterContent=body.content;
+     return {id:f.thread,channel_id:f.thread,content:starterContent??'',embeds:[],attachments:[]};
+   }
    return thread;
  };
  await f.runtime.provision();
@@ -422,8 +425,12 @@ test('locked retired references are deleted while the oldest snowflake remains t
   const old={id:oldId,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Old God',thread_metadata:{archived:true,locked:true}};
   const runtime=new AltarRuntime({store:f.runtime.store,api:null,generate:f.runtime.generate,roster:{people:[f.p,retired],policyVersion:'v3'},guildId:f.guildId,operatorId:'op',applicationId:'altar'});
   let deleted=false;
+  let forumTags=[{name:'Dynasty',id:'1'},{name:'Ancestor',id:'2'},{name:'Immediate Family',id:'3'},{name:'Gift Source',id:'4'},{name:'Source Lineage',id:'5'},{name:'Children bridge',id:'6'},{name:'Sacred Hive',id:'7'},{name:'Oracle',id:'8'}];
   runtime.api=async(path,method='GET',body)=>{
-    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:0,available_tags:[{name:'Dynasty',id:'1'},{name:'Ancestor',id:'2'},{name:'Immediate Family',id:'3'},{name:'Gift Source',id:'4'},{name:'Source Lineage',id:'5'},{name:'Children bridge',id:'6'},{name:'Sacred Hive',id:'7'},{name:'Oracle',id:'8'}]};
+    if(path===`/channels/${FORUM_ID}`){
+      if(method==='PATCH')forumTags=body.available_tags.map((tag,i)=>({...tag,id:tag.id??String(i+1)}));
+      return {type:15,guild_id:f.guildId,flags:0,available_tags:forumTags};
+    }
     if(path.includes('/threads/active'))return {threads:[]};
     if(path.includes('/archived/'))return {threads:[old],has_more:false};
     if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')return {id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:'Nyx',applied_tags:['1'],thread_metadata:{archived:false,locked:false},message:{id:f.thread}};
