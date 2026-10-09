@@ -238,6 +238,39 @@ test('classified shrine gains only its own generation tag while preserving exist
  assert.equal(patches,1);
 });
 
+test('Ah-Muzen-Cab I replaces only an incorrect legacy Ancestor tag with Old and New Gods',async()=>{
+ const f=fixture();
+ const p={...f.p,id:'elaed-5744ee101e27-1',name:'Ah-Muzen-Cab',displayName:'Ah-Muzen-Cab',lineageClass:'immediate_family',childrenKey:'ah_muzen_cab',shrineEligible:true};
+ f.values.clear();
+ f.values.set(`${PREFIX}:shrine:${p.id}`,f.thread);
+ f.values.set(`${PREFIX}:thread:${f.thread}`,p.id);
+ f.values.set(`${PREFIX}:policy:${p.id}`,'v1');
+ f.values.set(`${PREFIX}:presentation:${p.id}`,SHRINE_PRESENTATION_VERSION);
+ f.runtime.roster={people:[p],policyVersion:'v1'};
+ f.runtime.provisionRoster=[p];
+ f.runtime.people=new Map([[p.id,p]]);
+ const tags=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods','Old Gods'].map((name,i)=>({name,id:String(i)}));
+ let thread={id:f.thread,guild_id:f.guildId,parent_id:FORUM_ID,type:11,name:p.displayName,applied_tags:['5','2','6','1']};
+ let patches=0;
+ f.runtime.api=async(path,method='GET',body)=>{
+   if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:tags};
+   if(path===`/guilds/${f.guildId}/threads/active`)return {threads:[thread]};
+   if(path.includes('/threads/archived/'))return {threads:[],has_more:false};
+   if(path===`/channels/${f.thread}`){
+     if(method==='PATCH'){patches++;thread={...thread,...body};}
+     return thread;
+   }
+   return {};
+ };
+ await f.runtime.provision();
+ assert.deepEqual(thread.applied_tags,['5','2','6','9','8']);
+ assert.equal(patches,2);
+ assert.deepEqual(f.runtime.generationTagVerifiedCount,{old:1,new:1,both:1,classifiedShrines:1});
+ assert.deepEqual(f.runtime.generationTagCapacityBlocked,[]);
+ await f.runtime.provision();
+ assert.equal(patches,2);
+});
+
 test('a dual-generation shrine with five-tag pressure retains every existing label and reports the conflict',async()=>{
  const f=fixture();
  const p={...f.p,id:'elaed-5744ee101e27-1',name:'Ah-Muzen-Cab',displayName:'Ah-Muzen-Cab',lineageClass:'immediate_family',childrenKey:'ah_muzen_cab',shrineEligible:true};
