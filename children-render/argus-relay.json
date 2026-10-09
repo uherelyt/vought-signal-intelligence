@@ -1,17 +1,6 @@
 {
   "version": 1,
   "lane": "argus-public-signals",
-  "events": [
-    {
-      "id": "argus:relay:activation:20261009",
-      "origin": "vought-life-sensor",
-      "category": "mixed",
-      "observed_at": "2026-10-09T22:03:00Z",
-      "message": "ARGUS | Public Signals | 2026-10-09 22:03 UTC\nI see the watchline. This is a delivery-channel verification, not evidence of a new upload, subscriber milestone, or bee development. When public signals arrive, I shall name their sources and the limits of what I can see.",
-      "sources": [
-        "https://github.com/uherelyt/vought-signal-intelligence/pull/55"
-      ]
-    }
-  ],
-  "updated_at": "2026-10-09T22:03:00Z"
+  "events": [],
+  "updated_at": "2026-10-09T22:05:15Z"
 }
