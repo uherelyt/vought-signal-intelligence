@@ -362,6 +362,7 @@ export class AltarRuntime {
     }
     let completed=0;this.presentationVerifiedCount=0;this.retiredReferencesDeleted=0;
     this.generationTagVerifiedCount={old:0,new:0,both:0,classifiedShrines:0};
+    this.generationTagCapacityBlocked=[];
     const fullTitleCounts=new Map();
     for(const p of this.provisionRoster)fullTitleCounts.set(shrineTitle(p),(fullTitleCounts.get(shrineTitle(p))??0)+1);
     const candidateThreads=p=>{
@@ -399,17 +400,30 @@ export class AltarRuntime {
       const tag=tags.find(t=>t.name===primaryTagName);
       const bridgeTag=p.childrenKey?tags.find(t=>t.name==='Children bridge'):null;
       const hiveTag=isSacredHiveMember(p)?tags.find(t=>t.name==='Sacred Hive'):null;
-      const generationNames=divineGenerationTags(p);
+      let generationNames=divineGenerationTags(p);
       const generationTags=generationNames.map(name=>tags.find(t=>t.name===name));
       if(generationTags.some(t=>!t))throw new Error('generation_forum_tag_unavailable');
       if((forum.flags&16)&&!tag)throw new Error('required_forum_tag_unavailable');
       if(p.childrenKey&&(forum.flags&16)&&!bridgeTag)throw new Error('children_bridge_tag_unavailable');
       if(isSacredHiveMember(p)&&(forum.flags&16)&&!hiveTag)throw new Error('sacred_hive_tag_unavailable');
-      const requiredTags=[...new Set([tag?.id,bridgeTag?.id,hiveTag?.id,...generationTags.map(t=>t.id)].filter(Boolean))];
+      let requiredTags=[...new Set([tag?.id,bridgeTag?.id,hiveTag?.id,...generationTags.map(t=>t.id)].filter(Boolean))];
       if(requiredTags.length>5)throw new Error('shrine_forum_tag_capacity_exceeded');
       const create=()=>this.api(`/channels/${FORUM_ID}/threads`,'POST',{name:shrineTitle(p),auto_archive_duration:10080,applied_tags:requiredTags,message:{content:shrineReference(p,this.roster),allowed_mentions:{parse:[]}}});
       let thread=stored?await this.checkOwnThread(stored,p):found??await create();
       if(!validThread(thread,this.guildId))throw new Error('created_thread_outside_altar');
+      const currentTags=thread.applied_tags??[];
+      const union=[...new Set([...currentTags,...requiredTags])];
+      if(generationNames.length&&union.length>5){
+        const base=[...new Set([...currentTags,tag?.id,bridgeTag?.id,hiveTag?.id].filter(Boolean))];
+        if(base.length>5)throw new Error('shrine_forum_tag_capacity_exceeded_for_base');
+        const conflict={id:p.id,name:p.displayName??p.name,existing:currentTags.map(id=>tags.find(t=>t.id===id)?.name??id),requested:generationNames};
+        this.generationTagCapacityBlocked.push(conflict);
+        console.warn('[altar-generation-tag-capacity]',JSON.stringify(conflict));
+        // Discord permits five tags. Preserve all existing semantic, lineage and custom labels.
+        // Leave this figure for explicit review instead of deleting an existing classification.
+        generationNames=[];
+        requiredTags=[...new Set([tag?.id,bridgeTag?.id,hiveTag?.id].filter(Boolean))];
+      }
       await this.store.set(`${PREFIX}:shrine:${p.id}`,thread.id);
       await this.store.set(`${PREFIX}:thread:${thread.id}`,p.id);
       if(this.roster.policyVersion&&await this.store.get(`${PREFIX}:policy:${p.id}`)!==this.roster.policyVersion){
