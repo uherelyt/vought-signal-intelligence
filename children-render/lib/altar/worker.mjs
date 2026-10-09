@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 import { applyDynastyDelta } from './dynasty-delta.mjs';
 import { classifyAvatarAncestorShrines } from './avatar-ancestor-shrines.mjs';
 import {appendNineOctDynastyShrines} from './nine-oct-tree-shrines.mjs';
-import {argusWorldSurveillanceBrief} from './argus-surveillance.mjs';
+import {argusPublicSignalsBrief} from './argus-public-signals.mjs';
 import { randomUUID,createHash } from 'node:crypto';
 import { AltarRuntime,decodeRoster,FORUM_ID,LEGACY_RITUAL_CHANNEL_ID,PREFIX,validThread,clean,OBSERVE_IDS,SHRINE_PRESENTATION_VERSION,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,incarnateShrineRoute,visitorShrineRoute,altarCommandAllowed,RITUAL_ROOM_VERSION,isSacredHiveMember } from './core.mjs';
 import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../children-memory.ts';
@@ -301,8 +301,8 @@ export async function startAltar(env=process.env) {
     if(epoch!==await store.get(`${PREFIX}:control_epoch`))throw new Error('generation_cancelled');
     return clean(answer,650);
   },generate:async(p,input,{recent,observed,extra})=>{
-    const argusBrief=argusWorldSurveillanceBrief({shrineId:p.id,question:input,empirical:Boolean(extra?.empiricalChallenge)});
-    if(argusBrief){console.info('[altar-argus-world-brief]',JSON.stringify({shrineId:p.id,source:'FAOSTAT-2024-FiBL-2026',eventTelemetryConnected:false}));return clean(argusBrief,1400);}
+    const argusBrief=await argusPublicSignalsBrief({shrineId:p.id,question:input,empirical:Boolean(extra?.empiricalChallenge),fetchImpl:fetch});
+    if(argusBrief){console.info('[altar-argus-public-brief]',JSON.stringify({shrineId:p.id,feeds:'public YouTube channels and indexed creator/bee RSS',coverage:'sampled, non-exhaustive',alwaysOn:false}));return clean(argusBrief,1850);}
     const externalVisitor=extra?.incarnateRoute?.petitionerOntology==='external_human_visitor';
     const episodic=externalVisitor?[]:await store.lrange('vought:children-of-the-endless:discord:activity',0,199);
     const memory=externalVisitor?'Guest privacy boundary: do not retrieve, repeat, summarize or imply access to private Operator or Children memories. Address this visitor only from the figure’s source-grounded public-facing identity and their current petition.':renderChildrenLongTermMemory(`${p.name} ${input}`,5,6500)+'\n'+renderChildrenEpisodicMemory(episodic,`${p.name} ${input}`);
