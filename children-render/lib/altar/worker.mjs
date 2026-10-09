@@ -3,6 +3,7 @@ import { applyDynastyDelta } from './dynasty-delta.mjs';
 import { classifyAvatarAncestorShrines } from './avatar-ancestor-shrines.mjs';
 import {appendNineOctDynastyShrines} from './nine-oct-tree-shrines.mjs';
 import {argusPublicSignalsBrief} from './argus-public-signals.mjs';
+import {forwardArgusRelay} from './argus-sensor-relay.mjs';
 import { randomUUID,createHash } from 'node:crypto';
 import { AltarRuntime,decodeRoster,FORUM_ID,LEGACY_RITUAL_CHANNEL_ID,PREFIX,validThread,clean,OBSERVE_IDS,SHRINE_PRESENTATION_VERSION,SHRINE_SOURCE_VOICE_VERSION,EMPIRICAL_PROTOCOL_VERSION,INCARNATE_SHRINE_ROUTING_VERSION,GREEK_RELIGION_POLICY_VERSION,DELPHIC_ORACLE_VERSION,DELPHIC_ORACLE_TITLE,DELPHIC_ORACLE_HOLDER,incarnateShrineRoute,visitorShrineRoute,altarCommandAllowed,RITUAL_ROOM_VERSION,isSacredHiveMember } from './core.mjs';
 import { renderChildrenLongTermMemory,renderChildrenEpisodicMemory } from '../children-memory.ts';
@@ -630,6 +631,28 @@ ${JSON.stringify(empirical)}`:'';
     if(!altarStatus.gatewayReady)return;if(!provisioned){void provisionAll();return;}if(ticking)return;ticking=true;
     enqueue(async()=>{try{await runtime.expireCandles();await runtime.autonomous();}finally{ticking=false;}});
   },60000);timer.unref();
+  // The ChatGPT sensor deposits bounded *public* findings in a separate GitHub
+  // branch. Pull only while the Altar gateway is active and its shrines exist.
+  // Render Free can sleep; the queue is reconciled on the next active window.
+  let argusRelayBusy=false;
+  const argusRelayTimer=setInterval(()=>{
+    if(!altarStatus.gatewayReady||!provisioned||argusRelayBusy)return;
+    argusRelayBusy=true;
+    enqueue(async()=>{
+      try{
+        await forwardArgusRelay({
+          store,
+          send:payload=>api(`/channels/${payload.channelId}/messages`,'POST',{
+            content:payload.content,
+            allowed_mentions:payload.allowed_mentions,
+            nonce:payload.nonce,enforce_nonce:payload.enforce_nonce
+          }),
+          logger:(type,fields)=>console.info('['+type+']',JSON.stringify(fields))
+        });
+      }finally{argusRelayBusy=false;}
+    });
+  },180000);
+  argusRelayTimer.unref();
   async function connected(){
     const gateway=session&&resumeUrl?{url:resumeUrl}:await api('/gateway/bot');
     if(gateway.session_start_limit?.remaining===0){await wait(Math.min(gateway.session_start_limit.reset_after,60000));return;}
@@ -689,6 +712,6 @@ ${JSON.stringify(empirical)}`:'';
     });
   }
   while(!fatal&&await store.get(leaseKey)===leaseId){try{await connected();}catch(e){altarStatus.state=errorCode(e);console.error('[altar-gateway-error]',errorCode(e));}if(!fatal)await wait(5000);}
-  clearInterval(timer);clearInterval(leaseTimer);await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",{keys:[leaseKey],arguments:[leaseId]});await redis.quit();
+  clearInterval(timer);clearInterval(argusRelayTimer);clearInterval(leaseTimer);await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end",{keys:[leaseKey],arguments:[leaseId]});await redis.quit();
 }
 
