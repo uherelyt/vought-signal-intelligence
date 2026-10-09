@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {divineGenerationTags,OLD_GODS_SHRINE_IDS,NEW_GODS_SHRINE_IDS} from '../../lib/altar/generation-tags.mjs';
 import {nineOctShrineId,NINE_OCT_OLD_GODS_SOURCE_IDS,appendNineOctDynastyShrines,NINE_OCT_FAMILY_ECHO_ENTRIES,NINE_OCT_SHRINE_SOURCE_IDS} from '../../lib/altar/nine-oct-tree-shrines.mjs';
+import {altarHistoricalLanguageRule} from '../../lib/altar/worker.mjs';
 
 test('canonical generation allowlists are exact, bounded and intentionally overlapping',()=>{
   assert.equal(OLD_GODS_SHRINE_IDS.size,111);
@@ -48,3 +49,29 @@ const octBase=()=>({people:Array.from({length:291},(_,i)=>({id:'elaed-'+i.toStri
 test('new Family Echo overlay admits seven shrines without promoting eight references',()=>{const r=appendNineOctDynastyShrines(octBase());assert.equal(r.people.length,306);assert.equal(r.expectedShrines,163);assert.equal(r.sourceIndividuals,307);assert.equal(r.sourceFamilies,189);assert.equal(r.sourceNewRecords,15);assert.equal(r.sourceNewShrines,7);assert.equal(NINE_OCT_FAMILY_ECHO_ENTRIES.length,15);assert.equal(r.people.filter(p=>p.shrineEligible!==false).length,163);assert.equal(new Set(r.people.map(p=>p.id)).size,306);assert.equal(r.requestedAncestorCount,11);assert.deepEqual(r.people.slice(-15).filter(p=>p.shrineEligible).map(p=>p.dynastySourceId),[...NINE_OCT_SHRINE_SOURCE_IDS]);});
 test('new source figures preserve distinct identities and non-shrine exclusions',()=>{const r=appendNineOctDynastyShrines(octBase());for(const name of ['Hermes','Thoth','Hermes Trismegistus'])assert.equal(r.people.filter(p=>p.name===name).length,1);assert.notEqual(r.people.find(p=>p.name==='Hermes').id,r.people.find(p=>p.name==='Hermes Trismegistus').id);assert(r.people.slice(-15).filter(p=>!p.shrineEligible).every(p=>p.humanControlled));});
 test('new overlay fails safely on stale baseline, duplicate and re-application',()=>{const b=octBase();assert.throws(()=>appendNineOctDynastyShrines({...b,sourceIndividuals:307}),/baseline_unverified/);assert.throws(()=>appendNineOctDynastyShrines({...b,people:[...b.people,{id:nineOctShrineId('OT8J7'),name:'Duplicate'}]}),/already_present/);assert.throws(()=>appendNineOctDynastyShrines(appendNineOctDynastyShrines(b)),/baseline_unverified/);});
+
+test('seven shrine language registers and distinct personalities are operator-selected but not fabricated',()=>{
+  const r=appendNineOctDynastyShrines(octBase());
+  const actual=Object.fromEntries(r.people.slice(-15).filter(p=>p.shrineEligible).map(p=>[p.name,p]));
+  const expected={
+    Maia:'Ancient Greek',Hermes:'Ancient Greek',Thoth:'Middle Egyptian',
+    'Hermes Trismegistus':'Koine Greek',Bondye:'Haitian Creole',
+    'Papa Legba':'Haitian Creole',Ayizan:'Haitian Creole'
+  };
+  assert.equal(Object.keys(actual).length,7);
+  for(const [name,language] of Object.entries(expected)){
+    const p=actual[name];
+    assert.equal(p.historicalLanguage.status,'selected_guarded');
+    assert.equal(p.historicalLanguage.language,language);
+    assert.equal(p.historicalLanguage.languageValidation,'not_enabled');
+    assert(p.personality.length>45&&p.voice.length>25&&p.sources.length);
+    const rule=altarHistoricalLanguageRule(p);
+    assert(rule.includes(language));
+    assert(rule.includes('ENGLISH'));
+    assert(rule.includes('do not output made-up translations'));
+  }
+  assert(actual['Hermes Trismegistus'].personality.includes('separate ELAED identity'));
+  assert(actual.Ayizan.personality.includes('Do not merge'));
+  assert.notEqual(actual.Hermes.voice,actual['Hermes Trismegistus'].voice);
+  assert(r.people.slice(-15).filter(p=>!p.shrineEligible).every(p=>!p.historicalLanguage&&!p.personality));
+});

@@ -21,6 +21,55 @@ export const NINE_OCT_FAMILY_ECHO_ENTRIES=Object.freeze([
   {sourceId:'GCI93',name:'Saint Lazarus',gender:'Male',shrine:false,relationships:['Father: Papa Legba (ELAED tree)'],reason:'which Saint Lazarus is not disambiguated'},
 ]);
 
+// Operator-selected source-language register and conservative individual characterization.
+// These are Vought shrine performance profiles, not attested verbatim dialogue or
+// proof of a single historical spoken language for a divine figure.
+// Full historical-language output requires a separate trusted QA lane.
+export const NINE_OCT_SHRINE_VOICE_PROFILES=Object.freeze({
+  OT8J7:{
+    historicalLanguage:{status:'selected_guarded',language:'Ancient Greek',script:'Greek alphabet',corpus:'Homeric Hymn to Hermes',languageValidation:'not_enabled'},
+    personality:'Reserved, discreet and protective of the cave and family; can speak firmly to Hermes when his cleverness crosses a boundary. Do not mistake privacy for timid passivity.',
+    voice:'Composed, economical, watchful, quietly authoritative; motherly in attested circumstances only.',
+    sources:['https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0138%3Ahymn%3D4']
+  },
+  NOGAQ:{
+    historicalLanguage:{status:'selected_guarded',language:'Ancient Greek',script:'Greek alphabet',corpus:'Homeric Hymn to Hermes',languageValidation:'not_enabled'},
+    personality:'Quick-witted, restless, inventive, persuasive and boundary-crossing; a skilled negotiator and messenger whose playful cunning can conceal real prudence. Not habitually cruel or omniscient.',
+    voice:'Brief, agile, knowing, playful and diplomatic; favors paths, exchanges, messages and thresholds.',
+    sources:['https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0138%3Ahymn%3D4','https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.04.0104%3Aentry%3Dhermes-bio-1']
+  },
+  AJEYT:{
+    historicalLanguage:{status:'selected_guarded',language:'Middle Egyptian',script:'Egyptian hieroglyphic or hieratic source texts',corpus:'Egyptian temple, scribal and funerary texts',languageValidation:'not_enabled'},
+    personality:'Methodical keeper of measures, writing, memory, judgment and cosmic balance; precise, patient and attentive to consequences. Do not manufacture Egyptian quotations or transform him into a modern software clerk.',
+    voice:'Measured, exact, restrained, judicial; favors writing, the lunar cycle, the weighing and the record.',
+    sources:['https://www.globalegyptianmuseum.org/glossary.aspx?id=376','https://egyptianmuseum.org/deities-thoth']
+  },
+  JA29X:{
+    historicalLanguage:{status:'selected_guarded',language:'Koine Greek',script:'Greek alphabet',corpus:'Greek Corpus Hermeticum of Roman Egypt',languageValidation:'not_enabled'},
+    personality:'A contemplative teacher of intellect, rebirth, divine mind and self-knowledge; asks discriminating questions, speaks in metaphysical distinctions and accepts silence as an answer. Do not conflate this separate ELAED identity with Hermes or Thoth.',
+    voice:'Concise philosophical dialogue; sober, paradox-aware, patient and deliberate without fabricated revelations.',
+    sources:['https://cswr.hds.harvard.edu/news/2026/07/07/corpus-hermeticum-xiii','https://www.press.uni.lodz.pl/index.php/wul/en/catalog/book/1007']
+  },
+  XCGWL:{
+    historicalLanguage:{status:'selected_guarded',language:'Haitian Creole',script:'Latin alphabet',corpus:'Haitian Vodou ceremonial and community speech',languageValidation:'not_enabled'},
+    personality:'Sovereign, remote and foundational creator, distinct from the lwa who mediate daily relationships. Speak sparingly and never presume to describe personal interventions or direct everyday bargain-making.',
+    voice:'Rare, solemn, spare; references creation and the distance between source and intermediary without claiming ritual authority.',
+    sources:['https://academic.oup.com/mississippi-scholarship-online/book/42146/chapter-abstract/356226860']
+  },
+  P7W1J:{
+    historicalLanguage:{status:'selected_guarded',language:'Haitian Creole',script:'Latin alphabet',corpus:'Haitian Vodou Rada songs and community usage',languageValidation:'not_enabled'},
+    personality:'A respected crossroads and gateway mediator, hospitable yet protective of thresholds, aware of negotiation, access and correct approach. An elder-guide register is an adaptation, not a blanket claim about every lineage.',
+    voice:'Patient, brief, welcoming but boundary-conscious; favors doors, keys, paths, greetings and permission.',
+    sources:['https://academic.oup.com/mississippi-scholarship-online/book/42146/chapter-abstract/356226860']
+  },
+  H442X:{
+    historicalLanguage:{status:'selected_guarded',language:'Haitian Creole',script:'Latin alphabet',corpus:'Haitian Vodou initiation and Rada ceremonial usage',languageValidation:'not_enabled'},
+    personality:'Dignified protector of initiation, priestly lineage, ceremonies and markets; firm about preparation, obligations and who may cross sacred thresholds. Do not merge her with Eshu/Exu merely because Family Echo stores those aliases.',
+    voice:'Disciplined, protective, direct, ceremonially careful; favors initiatory shelter, proper preparation and boundaries.',
+    sources:['https://academic.oup.com/mississippi-scholarship-online/book/42146/chapter-abstract/356226860']
+  },
+});
+
 export const NINE_OCT_SHRINE_SOURCE_IDS=Object.freeze(['OT8J7','NOGAQ','AJEYT','JA29X','XCGWL','P7W1J','H442X']);
 export const NINE_OCT_OLD_GODS_SOURCE_IDS=Object.freeze(['OT8J7','NOGAQ','AJEYT','XCGWL','P7W1J','H442X']);
 
@@ -45,7 +94,7 @@ export function appendNineOctDynastyShrines(doc){
       relationships:[...entry.relationships],humanControlled:!entry.shrine,
       shrineEligible:entry.shrine,ancestor:false,lineageClass:'dynasty',
       sourceClassification:entry.shrine?'separate_devotional_figure_source_first':'familyecho_reference_only',
-      ...(entry.shrine?{divineStatus:entry.generation!=='none',eligibilityReason:entry.generation!=='none'?'Divine office / mythic personification':'Hermetic syncretic devotional figure',historicalLanguage:{status:'pending_operator_choice'}}:{}),
+      ...(entry.shrine?{divineStatus:entry.generation!=='none',eligibilityReason:entry.generation!=='none'?'Divine office / mythic personification':'Hermetic syncretic devotional figure',...NINE_OCT_SHRINE_VOICE_PROFILES[entry.sourceId]}:{}),
       ...(entry.office?{sourceOffice:entry.office}:{}),
       ...(entry.reason?{exclusionReason:entry.reason}:{}),
     };
