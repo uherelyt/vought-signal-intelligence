@@ -173,10 +173,36 @@ test('empirical outcomes remain pending review and preserve the original seal',a
  assert.equal(event.empiricalStatus,'OUTCOME_RECORDED_PENDING_REVIEW');
  await assert.rejects(f.runtime.recordEmpiricalOutcome(f.thread,sealed.challengeId,'Duplicate result.','https://example.org/duplicate'),/already_recorded/);
 });
+test('New Gods vs Old Gods forum topic provisions without reclassifying existing shrines',async()=>{
+ const f=fixture();f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
+ const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p),applied_tags:['0']};
+ let tags=['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'].map((name,i)=>({id:String(i),name}));
+ let patches=0,creations=0;
+ f.runtime.api=async(path,method='GET',body)=>{
+   if(path===`/channels/${FORUM_ID}`){
+     if(method==='PATCH'){
+       patches++;
+       tags=body.available_tags.map((entry,i)=>({...entry,id:entry.id??String(i)}));
+     }
+     return {type:15,guild_id:f.guildId,available_tags:tags};
+   }
+   if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')creations++;
+   if(path.includes('/threads/active'))return {threads:[thread]};
+   if(path.includes('/archived/'))return {threads:[],has_more:false};
+   if(path.includes('/messages/'))return {id:'m1',content:body?.content??'Shrine'};
+   return thread;
+ };
+ await f.runtime.provision();
+ await f.runtime.provision();
+ assert.equal(patches,1);
+ assert.equal(creations,0);
+ assert.equal(tags.filter(t=>t.name==='New Gods vs Old Gods').length,1);
+ assert.deepEqual(thread.applied_tags,['0']);
+});
 test('provisioning retries adopt an existing thread rather than create a duplicate',async()=>{
  const f=fixture();f.values.clear();let creates=0,starter;f.runtime.roster={people:[f.p],version:'v1'};f.runtime.provisionRoster=[f.p];f.runtime.people=new Map([[f.p.id,f.p]]);
  const {shrineTitle}=await import('../../lib/altar/core.mjs');const thread={id:f.thread,type:11,parent_id:FORUM_ID,guild_id:f.guildId,name:shrineTitle(f.p)};
- f.runtime.api=async(path,method='GET',body)=>{if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
+ f.runtime.api=async(path,method='GET',body)=>{if(path===`/channels/${FORUM_ID}/threads`&&method==='POST')creates++;if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:f.thread,channel_id:f.thread};}if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods vs Old Gods','Human-controlled'].map((name,i)=>({name,id:String(i)}))};if(path.includes('/threads/active'))return {threads:[thread]};if(path.includes('/archived/'))return {threads:[],has_more:false};return thread;};
  await f.runtime.provision();await f.runtime.provision();assert.equal(creates,0);assert.equal(f.values.get(`${PREFIX}:shrine:${f.p.id}`),f.thread);
 });
 test('a god may visit another registered shrine but never an unregistered altar thread',async()=>{
@@ -196,7 +222,7 @@ test('a locked retired ancestor gets one active replacement, with history preser
  f.runtime.store.set=async(k,v,o)=>{if(k===`${PREFIX}:shrine:${f.p.id}`&&v===fresh.id&&failSave){failSave=false;throw new Error('transient_store_failure');}return set(k,v,o);};
  f.runtime.api=async(path,method='GET',body)=>{
   if(path.includes('/messages/')){if(method==='PATCH')starter=body;return {...starter,id:fresh.id,channel_id:fresh.id};}
-  if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'].map((name,i)=>({name,id:String(i)}))};
+  if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods vs Old Gods'].map((name,i)=>({name,id:String(i)}))};
   if(path.includes('/threads/active'))return {threads:creates?[fresh]:[]};
   if(path.includes('/archived/'))return {threads:[old],has_more:false};
   if(path===`/channels/${FORUM_ID}/threads`&&method==='POST'){creates++;return fresh;}
@@ -363,7 +389,7 @@ test('current-policy locked shrine is replaced when new forum tags must be appli
   const fresh={...old,id:'1555666568409654777',applied_tags:[],thread_metadata:{archived:false,locked:false}};
   let creates=0;
   f.runtime.api=async(path,method='GET',body)=>{
-    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:16,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle'].map((name,i)=>({name,id:String(i+1)}))};
+    if(path===`/channels/${FORUM_ID}`)return {type:15,guild_id:f.guildId,flags:16,available_tags:['Dynasty','Ancestor','Immediate Family','Gift Source','Source Lineage','Children bridge','Sacred Hive','Oracle','New Gods vs Old Gods'].map((name,i)=>({name,id:String(i+1)}))};
     if(path.includes('/threads/active'))return {threads:creates?[fresh]:[]};
     if(path.includes('/archived/'))return {threads:[old],has_more:false};
     if(path===`/channels/${FORUM_ID}/threads`&&method==='POST'){creates++;return fresh;}
