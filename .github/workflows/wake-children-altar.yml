@@ -28,13 +28,13 @@ jobs:
           HEALTH_URL: https://children-voughtcord.onrender.com/healthz
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 14); do
-            status="$(curl --silent --show-error --location --max-time 35 --connect-timeout 15 --output "$RUNNER_TEMP/children-altar-health.json" --write-out '%{http_code}' "$HEALTH_URL" || true)"
+          for attempt in $(seq 1 10); do
+            status="$(curl --silent --show-error --location --max-time 25 --connect-timeout 15 --output "$RUNNER_TEMP/children-altar-health.json" --write-out '%{http_code}' "$HEALTH_URL" || true)"
             if [ "$status" = "200" ] && node -e 'const fs=require("node:fs"); let s; try { s=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); } catch { process.exit(1); } if (s.ok!==true || s.service!=="children-voughtcord") process.exit(1); console.log(JSON.stringify({ service:s.service, altarState:s.altar?.state, altarGatewayReady:s.altar?.gatewayReady })); if (s.altar?.state!=="live" || s.altar?.gatewayReady!==true) process.exit(1);' "$RUNNER_TEMP/children-altar-health.json"; then
               echo "Children host responding; Altar gateway reports LIVE and READY."
               exit 0
             fi
-            echo "Wake attempt $attempt/14 not ready; waiting for Render Free startup and Discord handshake."
+            echo "Wake attempt $attempt/10 not ready; waiting for Render Free startup and Discord handshake."
             sleep 15
           done
           echo "Automatic wake did not confirm both host and Altar gateway. Check Render logs." >&2
