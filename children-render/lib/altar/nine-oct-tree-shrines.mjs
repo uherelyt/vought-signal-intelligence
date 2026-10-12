@@ -78,7 +78,7 @@ export function nineOctShrineId(sourceId){
   return 'elaed-'+createHash('sha256').update('familyecho:2026-10-09:2007:'+sourceId).digest('hex').slice(0,12)+'-1';
 }
 
-export function appendNineOctDynastyShrines(doc){
+export function appendNineOctDynastyShrines(doc,familyEchoOverlayRaw){
   if(doc?.sourceIndividuals!==292||doc?.sourceFamilies!==182||!Array.isArray(doc.people))
     throw new Error('nine_oct_source_baseline_unverified');
   const existingIds=new Set(doc.people.map(p=>p.id));
@@ -110,7 +110,7 @@ export function appendNineOctDynastyShrines(doc){
       'Hermes, Thoth and Hermes Trismegistus are three distinct Vought/ELAED identities. The Family Echo parent/partner structures are local canonical edges, not external mythological attestation.',
       'Papa Legba and Ayizan retain their Haitian Vodou lwa offices; Bondye retains separate supreme-God office. Do not collapse Eshu/Exu, Christian saints, lwa, or African/Caribbean traditions through family-tree aliases.',
       'No additional Erelyt genealogical forebear, Endless Gift Source, Avatar ancestor or Children-vessel identity is created by these shrine additions.']};
-  return applyPrivateFamilyEchoOverlay(next,process.env.ALTAR_FAMILY_ECHO_OVERLAY_JSON);
+  return applyPrivateFamilyEchoOverlay(next,familyEchoOverlayRaw);
 
 }
 
