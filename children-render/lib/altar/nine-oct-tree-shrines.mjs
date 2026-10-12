@@ -102,7 +102,7 @@ export function appendNineOctDynastyShrines(doc){
   const shrineAdds=additions.filter(p=>p.shrineEligible).length;
   if(additions.length!==15||shrineAdds!==7||new Set(additions.map(p=>p.id)).size!==15)
     throw new Error('nine_oct_roster_validation_failed');
-  return {...doc,people:[...doc.people,...additions],
+  const next={...doc,people:[...doc.people,...additions],
     expectedShrines:expectedShrines+shrineAdds,sourceIndividuals:307,sourceFamilies:189,
     sourceNewRecords:15,sourceNewShrines:shrineAdds,version:'20261009-familyecho-2007-shrines-v1',
     canonOverrides:[...(doc.canonOverrides??[]),
@@ -110,4 +110,77 @@ export function appendNineOctDynastyShrines(doc){
       'Hermes, Thoth and Hermes Trismegistus are three distinct Vought/ELAED identities. The Family Echo parent/partner structures are local canonical edges, not external mythological attestation.',
       'Papa Legba and Ayizan retain their Haitian Vodou lwa offices; Bondye retains separate supreme-God office. Do not collapse Eshu/Exu, Christian saints, lwa, or African/Caribbean traditions through family-tree aliases.',
       'No additional Erelyt genealogical forebear, Endless Gift Source, Avatar ancestor or Children-vessel identity is created by these shrine additions.']};
+  return applyPrivateFamilyEchoOverlay(next,process.env.ALTAR_FAMILY_ECHO_OVERLAY_JSON);
+
+}
+
+/**
+ * Private, explicitly supplied Family Echo overlay. Contents live ONLY in Render
+ * environment configuration; do not commit exports, biographies or raw dossiers.
+ * This updates a bounded subset of shrine identity fields, NOT a full GEDCOM sync.
+ * Existing shrine IDs, human controls, ancestral classes and discord order keys
+ * must survive. The source snapshot size is a receipt, not a roster target.
+ */
+export function applyPrivateFamilyEchoOverlay(doc,raw){
+  if(!raw)return doc;
+  let delta;
+  try{delta=JSON.parse(raw);}catch{throw new Error('family_echo_overlay_invalid_json');}
+  if(delta?.version!=='20261012-164729282-targeted-v1'||
+     delta.sourceIndividuals!==327||
+     !/^[a-f0-9]{64}$/.test(String(delta.sourceSha256??''))||
+     !Array.isArray(delta.entries)||delta.entries.length<5||delta.entries.length>64){
+    throw new Error('family_echo_overlay_version_or_count_mismatch');
+  }
+  const people=doc.people.map(p=>({...p,relationships:[...(p.relationships??[])]}));
+  const used=new Set(),names=new Set();
+  let inserted=0,newShrines=0,updated=0;
+  for(const entry of delta.entries){
+    if(!entry||typeof entry.name!=='string'||!entry.name.trim()||entry.name.length>140||
+       !Array.isArray(entry.matchNames)||entry.matchNames.some(s=>typeof s!=='string'||s.length>140)||
+       typeof entry.sourceOffice!=='string'||entry.sourceOffice.length>2500||
+       !Array.isArray(entry.relationshipsAdd)||entry.relationshipsAdd.some(s=>typeof s!=='string'||s.length>200)||
+       !['Male','Female','Other'].includes(entry.gender)||
+       names.has(entry.name)){
+      throw new Error('family_echo_overlay_invalid_entry');
+    }
+    names.add(entry.name);
+    const aliases=new Set([entry.name,...entry.matchNames].map(s=>s.trim().toLowerCase()));
+    const matches=people.filter(p=>(entry.childrenKey&&p.childrenKey===entry.childrenKey)||
+      aliases.has(String(p.name??'').trim().toLowerCase())||
+      aliases.has(String(p.displayName??'').trim().toLowerCase()));
+    if(matches.length>1)throw new Error('family_echo_overlay_ambiguous_match');
+    const p=matches[0];
+    if(p){
+      if(used.has(p.id))throw new Error('family_echo_overlay_duplicate_target');
+      used.add(p.id);
+      if(entry.preferredDisplayName)p.displayName=entry.preferredDisplayName;
+      if(entry.sourceOffice&&!String(p.sourceOffice??'').includes(entry.sourceOffice)){
+        p.sourceOffice=[p.sourceOffice,entry.sourceOffice].filter(Boolean).join(' | ');
+      }
+      p.relationships=[...new Set([...p.relationships,...entry.relationshipsAdd])];
+      updated+=1;
+    }else{
+      if(entry.create!==true||!['god','goddess','dream_daimon'].includes(entry.divineStatus))
+        throw new Error('family_echo_overlay_unresolved_person');
+      const id='elaed-'+createHash('sha256').update('familyecho:20261012:164729282:overlay:'+entry.name).digest('hex').slice(0,12)+'-1';
+      if(people.some(x=>x.id===id))throw new Error('family_echo_overlay_id_collision');
+      people.push({id,name:entry.name,displayName:entry.preferredDisplayName??entry.name,
+        gender:entry.gender,relationships:[...new Set(entry.relationshipsAdd)],
+        sourceOffice:entry.sourceOffice,divineStatus:entry.divineStatus,
+        sourceClassification:'source_local_greek_divine_or_dream_spirit',
+        humanControlled:false,shrineEligible:true,ancestor:false,lineageClass:'dynasty',
+        relationshipReview:['Family Echo prose-export names are not stable person IDs; preserve variant ancient genealogies without treating them as verified material-world biology.']});
+      inserted+=1;newShrines+=1;
+    }
+  }
+  const expectedShrines=people.filter(p=>p.shrineEligible!==false).length;
+  return {...doc,people,expectedShrines,
+    version:delta.version,sourceIndividuals:delta.sourceIndividuals,sourceFamilies:null,
+    sourceNewRecords:(doc.sourceNewRecords??0)+inserted,
+    sourceNewShrines:(doc.sourceNewShrines??0)+newShrines,
+    sourceSyncStatus:'targeted_overlay_not_full_genealogy_sync',
+    sourceOverlayUpdated:updated,sourceOverlayInserted:inserted,
+    canonOverrides:[...(doc.canonOverrides??[]),
+      'Private Family Echo 12 Oct 2026 16:47 textual export: 327 individual records. A bounded, deduplicated mythological/scene overlay is applied. This is NOT a full person-ID or family-link sync; older shrine IDs, human privacy and source-boundary rules remain controlling.',
+      'The twenty-two Minecraft domain-to-gameplay correspondences belong to Ah-Muzen-Cab I source canon, with Ah-Muzen-Cab II a separate remembrance figure. Gameplay symbolism does not verify supernatural mechanics.']};
 }
