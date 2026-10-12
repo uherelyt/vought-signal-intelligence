@@ -160,17 +160,18 @@ export function applyPrivateFamilyEchoOverlay(doc,raw){
       p.relationships=[...new Set([...p.relationships,...entry.relationshipsAdd])];
       updated+=1;
     }else{
-      if(entry.create!==true||!['god','goddess','dream_daimon'].includes(entry.divineStatus))
-        throw new Error('family_echo_overlay_unresolved_person');
+      if(entry.childrenKey)throw new Error('family_echo_overlay_missing_shared_persona');
+      const eligible=entry.create===true&&['god','goddess','dream_daimon'].includes(entry.divineStatus);
       const id='elaed-'+createHash('sha256').update('familyecho:20261012:164729282:overlay:'+entry.name).digest('hex').slice(0,12)+'-1';
       if(people.some(x=>x.id===id))throw new Error('family_echo_overlay_id_collision');
       people.push({id,name:entry.name,displayName:entry.preferredDisplayName??entry.name,
         gender:entry.gender,relationships:[...new Set(entry.relationshipsAdd)],
-        sourceOffice:entry.sourceOffice,divineStatus:entry.divineStatus,
-        sourceClassification:'source_local_greek_divine_or_dream_spirit',
-        humanControlled:false,shrineEligible:true,ancestor:false,lineageClass:'dynasty',
+        sourceOffice:entry.sourceOffice,
+        ...(eligible?{divineStatus:entry.divineStatus}:{}),
+        sourceClassification:eligible?'source_local_greek_divine_or_dream_spirit':'familyecho_reference_only_pending_individual_id',
+        humanControlled:false,shrineEligible:eligible,ancestor:false,lineageClass:'dynasty',
         relationshipReview:['Family Echo prose-export names are not stable person IDs; preserve variant ancient genealogies without treating them as verified material-world biology.']});
-      inserted+=1;newShrines+=1;
+      inserted+=1;if(eligible)newShrines+=1;
     }
   }
   const expectedShrines=people.filter(p=>p.shrineEligible!==false).length;
