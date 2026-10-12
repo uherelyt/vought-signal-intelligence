@@ -55,7 +55,7 @@ test('the no-contact sentinel never becomes a Discord message',async()=>{
   runtime.roster={people:[]};
   runtime.generate=async()=> 'NO_OPEN_LINE_MESSAGE';
   runtime.deliver=async()=>{posts++;return {id:'unexpected'};};
-  const result=await runtime.reply(h.person,'1555308025525440584','No petition.',{openLine:true});
+  const result=await AltarRuntime.prototype.reply.call(runtime,h.person,'1555308025525440584','No petition.',{openLine:true});
   assert.equal(result,null);
   assert.equal(posts,0);
 });
