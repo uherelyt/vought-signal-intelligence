@@ -243,9 +243,11 @@ export function isSacredHiveMember(p){
   return ['colel cab','aristaeus','melissae artemis','melisseus','mellona','mellonia','oshun','osun','austeja','bubilas','babilas','bhramari'].some(name=>key===name||key.startsWith(`${name} `));
 }
 
+export const ALTAR_OPEN_LINE_VERSION='20261012-open-line-v1';
+
 export class AltarRuntime {
-  constructor({store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId=null,roster,guildId,operatorId,applicationId,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
-    Object.assign(this,{store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId,roster,guildId,operatorId,applicationId,now,record,progress});
+  constructor({store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId=null,roster,guildId,operatorId,applicationId,openLineEnabled=false,now=()=>Date.now(),record=()=>{},progress=()=>{}}) {
+    Object.assign(this,{store,api,childApi,childrenApplicationId,generate,generateOracle,preferredDelphicOracleThreadId,roster,guildId,operatorId,applicationId,openLineEnabled,now,record,progress});
     const promoteFormerChild=(childrenKey,name)=>{
       const rosterPerson=roster.people.find(p=>p.childrenKey===childrenKey)??roster.people.find(p=>String(p.name??'').trim().toLowerCase()===name);
       const visitor=(roster.visitors??[]).find(p=>p.childrenKey===childrenKey);
@@ -693,18 +695,22 @@ export class AltarRuntime {
     const isVisitor=incarnateRoute.petitionerOntology==='external_human_visitor';
     const recent=isVisitor?[]:await this.store.lrange(`${PREFIX}:recent:${threadId}`,0,9);
     const observed=isVisitor?[]:await this.store.lrange(`${PREFIX}:observed`,0,9);
+    const openLine=extra.openLine===true;
     const content=await this.generate(p,clean(input,1500),{recent,observed,roster:this.roster,extra:{...extra,incarnateRoute}});
+    // Silence is valid. Never send the sentinel as a Discord message.
+    if(openLine&&clean(content)==='NO_OPEN_LINE_MESSAGE')return null;
     return this.deliver(p,threadId,content,epoch,{
+      ...(openLine?{eventType:'open_line_initiated',sourceKind:'elaed_altar_simulated_contact',callerInitiated:true,operatorPetition:false,openLineVersion:ALTAR_OPEN_LINE_VERSION}:{}),
       sourceVoiceVersion: SHRINE_SOURCE_VOICE_VERSION,
-      interpretationStatus: 'research_required',
+      interpretationStatus: openLine?'symbolic_unverified':'research_required',
       sourceGrounding: 'source_first_dossier',
       incarnationRoutingVersion:INCARNATE_SHRINE_ROUTING_VERSION,
-      petitionMode:incarnateRoute.mode,
-      petitionerIdentity:incarnateRoute.petitionerIdentity,
+      petitionMode:openLine?'open_line':incarnateRoute.mode,
+      petitionerIdentity:openLine?null:incarnateRoute.petitionerIdentity,
       petitionerOntology:incarnateRoute.petitionerOntology,
       divineSoulSource:incarnateRoute.divineSoulSource,
       targetRelation:incarnateRoute.targetRelation,
-      ahMuzenCabSpeaking:incarnateRoute.ahMuzenCabSpeaking,
+      ahMuzenCabSpeaking:openLine?false:incarnateRoute.ahMuzenCabSpeaking,
     });
   }
   async empiricalChallenge(p,threadId,spec) {
@@ -879,24 +885,37 @@ export class AltarRuntime {
   async autonomous() {
     if(await this.store.get(`${PREFIX}:banished:all`)==='1')return;
     const now=this.now(),last=Number(await this.store.get(`${PREFIX}:last-auto`)||0);
-    if(now-last<21600000)return;
+    // Open lines allow initiations without a human petition or an observed signal.
+    // Keep the established context-triggered mode when the new feature is off.
+    if(now-last<(this.openLineEnabled?43200000:21600000))return;
     const date=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
     if(Number(await this.store.get(`${PREFIX}:daily:${date}`)||0)>=2)return;
+    if(this.openLineEnabled&&now-Number(await this.store.get(`${PREFIX}:open-line:last-attempt`)||0)<21600000)return;
     const observed=await this.store.lrange(`${PREFIX}:observed`,0,9);
-    if(!observed.length)return; // Silence, not canned activity, without observed context.
-    const text=observed.join(' ').toLowerCase();
-    const eligible=[];
+    if(!observed.length&&!this.openLineEnabled)return;
+    const context=observed.join(' ').toLowerCase();
+    const matched=[],available=[];
     for(const p of this.people.values()){
-      if(p.humanControlled||p.autonomyEligible===false||!await this.enabled(p)||now-Number(await this.store.get(`${PREFIX}:auto:${p.id}`)||0)<604800000)continue;
+      if(p.humanControlled||p.autonomyEligible===false||!await this.enabled(p))continue;
+      const lastFigure=Number(await this.store.get(`${PREFIX}:auto:${p.id}`)||0);
+      if(now-lastFigure<604800000)continue;
       const terms=[p.name.split('"')[0].trim().toLowerCase(),...(p.relevanceTerms??[]).map(x=>x.toLowerCase())].filter(t=>t.length>=4);
-      const score=terms.filter(t=>text.includes(t)).length;
-      if(score)eligible.push({p,score});
+      const score=terms.filter(t=>context.includes(t)).length;
+      if(score)matched.push({p,score,lastFigure});
+      available.push({p,lastFigure});
     }
-    eligible.sort((a,b)=>b.score-a.score);const p=eligible[0]?.p;if(!p)return;
+    matched.sort((a,b)=>b.score-a.score||a.lastFigure-b.lastFigure||a.p.id.localeCompare(b.p.id));
+    available.sort((a,b)=>a.lastFigure-b.lastFigure||a.p.id.localeCompare(b.p.id));
+    const p=matched[0]?.p??(this.openLineEnabled?available[0]?.p:null);
+    if(!p)return;
     const threadId=await this.store.get(`${PREFIX}:shrine:${p.id}`);if(!threadId)return;
     const lock=await this.store.set(`${PREFIX}:auto-lock`,'1',{nx:true,ex:180});if(lock!=='OK')return;
     try{
-      const m=await this.reply(p,threadId,'Offer one brief, domain-relevant symbolic omen or reflection prompted by the observed Network context. Speak only within this shrine; silence is valid if irrelevant.');
+      if(this.openLineEnabled)await this.store.set(`${PREFIX}:open-line:last-attempt`,now);
+      const input=this.openLineEnabled
+        ?'There is no current human petition. You may initiate a brief contact in your own shrine if your established domains or relationships provide something meaningful to convey. Do not invent what the Operator has said, done, felt or dreamed. If there is no source-grounded reason to speak, return exactly NO_OPEN_LINE_MESSAGE.'
+        :'Offer one brief, domain-relevant symbolic omen or reflection prompted by the observed Network context. Speak only within this shrine; silence is valid if irrelevant.';
+      const m=await this.reply(p,threadId,input,this.openLineEnabled?{openLine:true}:{});
       if(m){await this.store.set(`${PREFIX}:last-auto`,now);await this.store.set(`${PREFIX}:auto:${p.id}`,now);await this.store.incr(`${PREFIX}:daily:${date}`);await this.store.expire(`${PREFIX}:daily:${date}`,259200);}
     }finally{await this.store.del(`${PREFIX}:auto-lock`);}
   }
