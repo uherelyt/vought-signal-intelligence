@@ -15,7 +15,7 @@ Status date: 2026-10-13 (US/Eastern). In-universe Vought branding for the 3Ð¯3â…
 
 1. **REVIEW**. Inspect actual queue snapshots, titles, descriptions, flags, identity compliance, format and fictional disclosures.
 2. **APPROVE**. Existing creator-produced Minecraft releases retain their original times and narratives. New or changed commercial content is blocked by sponsor freeze. New posts must be consistent with the signal persona.
-3. **PUBLISH**. Use authenticated platforms only: Finalizer for VoughtTube/VoughtTok if made accessible; Render for VoughtCord; PostPeer for Reddit and V if an authenticated API/account connection is provided. No credential sharing in chat or repository.
+3. **PUBLISH**. Use authenticated platforms only: Finalizer for VoughtTube/VoughtTok if made accessible; Render for VoughtCord; PostPeer for V / X if an authenticated API/account connection is provided. Reddit requires a separate supported API or account integration; PostPeer's published platform list does not include Reddit. No credential sharing in chat or repository.
 4. **MONITOR**. Check successful publish IDs, platform notices, engagement, Render health/deploy logs and potential moderation issues. Never manufacture metrics.
 5. **REPORT**. Record per-channel status (approved, live, blocked, unverified), timestamps and publication links.
 
@@ -56,8 +56,8 @@ Do not publish teaser copy until the underlying video is public and links can be
 | VoughtTube | Snapshot reviewed; existing schedule untouched | Uploaded Studio snapshot; Finalizer not connected. |
 | VoughtTok | Caption prepared, not published | Finalizer not connected. |
 | VoughtCord | Source changed and Render pause configured | Deployment status must be verified independently. |
-| Reddit | Copy prepared, not published | PostPeer access unverified. |
-| V | Copy prepared, not published | PostPeer access unverified. |
+| Reddit | Copy prepared, not published | No authenticated Reddit publishing path available; PostPeer does not list Reddit among supported platforms. |
+| V | Copy prepared, not published | PostPeer advertises X publishing, but no authenticated PostPeer access is available in this session. |
 | Sponsors | Paused | Render variable and governance. |
 | Bluesky | Retired | User confirmation; no outreach or cross-posting. |
 
