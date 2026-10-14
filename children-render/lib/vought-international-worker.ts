@@ -61,6 +61,23 @@ const optRoles = {
   announcements:"Vought Announcements",events:"Vought Events",giveaways:"Vought Giveaways"
 };
 
+// Canonical hero identity; never overwrite the creator's signal name with a corporate alias.
+function signalBrandCard() {
+  return [
+    "VOUGHT HERO MANAGEMENT | SIGNAL DOSSIER",
+    "3Я3⅃YT (Erelyt) | WITV 91.7 FM",
+    "the world is still here.",
+    "YouTube: youtube.com/@uherelyt",
+    "TikTok: @erelyt",
+    "V / X: @uherelyt",
+    "Reddit: u/uherelyt",
+    "VoughtCord: @uherelyt",
+    "Bluesky: retired; no active account.",
+    "Minecraft transmissions: Wednesdays.",
+    "Vought / promotional products: fictional in-universe material, not real paid endorsements."
+  ].join("\n");
+}
+
 type Rating = {score:number;messages:number;voiceMinutes:number;lastAward:number};
 type Reminder = {id:string;guildId:string;channelId:string;userId:string;dueAt:number;text:string;repeatEveryMs:number|null;remaining:number};
 type Giveaway = {guildId:string;channelId:string;messageId:string;itemId:string;winnerCount:number;endsAt:number;entrants:string[];closed:boolean};
@@ -300,6 +317,7 @@ const bumpGroup:any={type:O.GROUP,name:"bump",description:"DISBOARD bump reminde
 ]};
 const networkGroup:any={type:O.GROUP,name:"network",description:"Vought International Network utilities",options:[
   sub("profile","Show a Child Network Supe Score",[s("child","Child entity ID",true)]),
+  sub("brand","Show the 3Я3⅃YT signal brand and official channels"),
   sub("leaderboard","Show Children Network rankings"),sub("store","Show the Vought Network store"),
   sub("balance","Show your Vought Credits and inventory"),sub("buy","Buy a promotional product",[s("item","Product ID from the store",true)]),
   sub("role","Toggle an opt-in notification role",[s("role","Role",true,[{name:"Announcements",value:"announcements"},{name:"Events",value:"events"},{name:"Giveaways",value:"giveaways"}])]),
@@ -387,7 +405,7 @@ async function updateStoreSurface(guild:any) {
     embeds:[{
       title:"VOUGHT NETWORK STORE",
       description:storeCatalogText(),
-      footer:{text:"Buy with /cove network buy • Vought Credits are promotional Network currency"}
+      footer:{text:"Fictional in-universe items only • Vought Credits are noncash promotional points"}
     }]
   };
 
@@ -455,6 +473,7 @@ async function handleCommand(i:any) {
   if(!isNetworkGuild(i.guild)){await i.reply({content:"Vought Network utilities are not enabled here.",ephemeral:true});return;}
   if(isNetworkGuest(i.member,i.guild)){await i.reply({content:"Network Guest access is limited to the Ritual Chamber and shrines. Vought Network utilities are not available to guest members.",ephemeral:true});return;}
   state.activity.commands++; const cmd=i.options.getSubcommand(); await log(i.guild,"COMMAND /cove network "+cmd+" by <@"+i.user.id+">");
+  if(cmd==="brand"){await i.reply({content:signalBrandCard(),ephemeral:true});return;}
   if(cmd==="leaderboard"){await i.reply(rows().map(r=>(r.rank?"#"+r.rank:"Unranked")+" "+r.name+" — "+r.score+" Network Supe Score — "+r.tier+(r.tier==="Unranked"?"":"-Rank")+" — "+r.credits+" VC").join("\n"));return;}
   if(cmd==="profile"){const id=i.options.getString("child",true);const r=rows().find(x=>x.id===id);if(!r){await i.reply({content:"Child not found.",ephemeral:true});return;}const p=state.ratings[id];await i.reply(["VOUGHT PROFILE — "+r.name,"Network Supe Score: "+r.score,"Vought Network Rank: "+(r.rank?"#"+r.rank:"Unranked"),"Tier: "+r.tier,"Vought Credits: "+r.credits+" VC","Rated messages: "+p.messages,"Rated voice minutes: "+p.voiceMinutes].join("\n"));return;}
   if(cmd==="store"){await updateStoreSurface(i.guild);await i.reply({content:"The Vought Network Store is pinned in <#"+PRIMARY_MATERIAL_CHANNEL+">. Use /cove network buy with the displayed product ID.",ephemeral:true});return;}
