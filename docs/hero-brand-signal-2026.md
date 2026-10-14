@@ -64,6 +64,8 @@ The snapshot also includes further scheduled Minecraft episodes extending into 2
 
 ## Sponsorship strategy
 
+**CORPORATE HOLD | effective 2026-10-13:** All new real-world sponsorship proposals, paid endorsements, affiliate promotions, brand outreach and externally published sponsor campaigns are paused until the user expressly resumes them. Existing fictional in-universe references are not proof of real paid partnerships. The Render worker uses `VOUGHT_SPONSORSHIPS_PAUSED=true` to flag the hold and block sponsor-coded /cove network announcements. Do not launch new giveaways or paid sponsor activations while this hold is in place. This section is archival planning, not an active campaign.
+
 **Stage 1 | In-universe brand association, no real monetization claim:**
 Vought Water (recurring transmission break), Voughtality (gaming/interactive framing), Vought backpack (exploration/travel framing). Treat these as fictional props; never describe them as genuine paid partners or sales inventory.
 
