@@ -60,6 +60,8 @@ const channelNames = {
 const optRoles = {
   announcements:"Vought Announcements",events:"Vought Events",giveaways:"Vought Giveaways"
 };
+const sponsorshipsPaused = () => process.env.VOUGHT_SPONSORSHIPS_PAUSED?.trim().toLowerCase() !== "false";
+const isCommercialCampaign = (text:string) => /\b(sponsored|sponsorship|paid partnership|brand deal|affiliate link|promo code|advertisement|paid promotion)\b/i.test(text);
 
 // Canonical hero identity; never overwrite the creator's signal name with a corporate alias.
 function signalBrandCard() {
@@ -74,6 +76,7 @@ function signalBrandCard() {
     "VoughtCord: @uherelyt",
     "Bluesky: retired; no active account.",
     "Minecraft transmissions: Wednesdays.",
+    "Commercial sponsorships: " + (sponsorshipsPaused() ? "PAUSED." : "case-by-case review."),
     "Vought / promotional products: fictional in-universe material, not real paid endorsements."
   ].join("\n");
 }
@@ -90,14 +93,14 @@ type State = {
   warnings:Record<string,unknown[]>;reminders:Reminder[];giveaways:Record<string,Giveaway>;tickets:Record<string,Ticket>;
   tags:Record<string,string>;triggers:Record<string,string>;starboarded:Record<string,boolean>;
   voiceSessions:Record<string,{startedAt:number;guildId:string;name:string}>;welcomed:Record<string,boolean>;
-  statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;childrenBridgeSeen:Record<string,boolean>;
+  statsMessageIds:Record<string,string>;storeMessageIds:Record<string,string>;brandMessageIds:Record<string,string>;childrenBridgeSeen:Record<string,boolean>;
   bumpReminders:Record<string,BumpReminder>;
 };
 
 const blankState = ():State => ({
   ratings:{},childBalances:{},userBalances:{},inventories:{},dailyCredits:{},cooldowns:{},
   activity:{messages:0,voiceMinutes:0,joins:0,leaves:0,commands:0},warnings:{},reminders:[],
-  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{},childrenBridgeSeen:{},
+  giveaways:{},tickets:{},tags:{},triggers:{},starboarded:{},voiceSessions:{},welcomed:{},statsMessageIds:{},storeMessageIds:{},brandMessageIds:{},childrenBridgeSeen:{},
   bumpReminders:{}
 });
 
@@ -318,6 +321,7 @@ const bumpGroup:any={type:O.GROUP,name:"bump",description:"DISBOARD bump reminde
 const networkGroup:any={type:O.GROUP,name:"network",description:"Vought International Network utilities",options:[
   sub("profile","Show a Child Network Supe Score",[s("child","Child entity ID",true)]),
   sub("brand","Show the 3Я3⅃YT signal brand and official channels"),
+  sub("sponsorship","Show commercial sponsorship hold"),
   sub("leaderboard","Show Children Network rankings"),sub("store","Show the Vought Network store"),
   sub("balance","Show your Vought Credits and inventory"),sub("buy","Buy a promotional product",[s("item","Product ID from the store",true)]),
   sub("role","Toggle an opt-in notification role",[s("role","Role",true,[{name:"Announcements",value:"announcements"},{name:"Events",value:"events"},{name:"Giveaways",value:"giveaways"}])]),
@@ -397,6 +401,26 @@ async function inviteChildrenResponse(message:any, content:string, kind="public"
   }
 }
 
+async function updateBrandSurface(guild:any) {
+  const material=chan(guild,"hq");
+  if(!material?.isTextBased()) return;
+  const text=signalBrandCard();
+  let message:any=null;
+  const existingId=state.brandMessageIds?.[guild.id];
+  if(existingId) message=await material.messages.fetch(existingId).catch(()=>null);
+  if(!message) {
+    const pinned=await material.messages.fetchPinned().catch(()=>null);
+    message=pinned?.find((m:any)=>m.author?.id===process.env.COVE_DISCORD_APPLICATION_ID?.trim() && m.content?.startsWith("VOUGHT HERO MANAGEMENT | SIGNAL DOSSIER"))||null;
+  }
+  if(message) await message.edit({content:text,allowedMentions:{parse:[]}}).catch(()=>{});
+  else message=await material.send({content:text,allowedMentions:{parse:[]}}).catch(()=>null);
+  if(message) {
+    state.brandMessageIds ||= {};
+    state.brandMessageIds[guild.id]=message.id;
+    if(!message.pinned) await message.pin("Canonical 3Я3⅃YT signal identity and sponsor hold").catch(()=>{});
+    await log(guild,"Signal brand card visible; commercial sponsorships "+(sponsorshipsPaused()?"paused":"require review")+".");
+  }
+}
 async function updateStoreSurface(guild:any) {
   const material=chan(guild,"store");
   if(!material?.isTextBased()) return;
@@ -474,6 +498,7 @@ async function handleCommand(i:any) {
   if(isNetworkGuest(i.member,i.guild)){await i.reply({content:"Network Guest access is limited to the Ritual Chamber and shrines. Vought Network utilities are not available to guest members.",ephemeral:true});return;}
   state.activity.commands++; const cmd=i.options.getSubcommand(); await log(i.guild,"COMMAND /cove network "+cmd+" by <@"+i.user.id+">");
   if(cmd==="brand"){await i.reply({content:signalBrandCard(),ephemeral:true});return;}
+  if(cmd==="sponsorship"){await i.reply({content:sponsorshipsPaused()?"VOUGHT COMMERCIAL PARTNERSHIPS: PAUSED. No paid deals, pitches, endorsements, or promotional announcements are authorized. Fictional Vought Network items are not real sponsors.":"VOUGHT COMMERCIAL PARTNERSHIPS: REVIEW REQUIRED. No unverified endorsement permitted.",ephemeral:true});return;}
   if(cmd==="leaderboard"){await i.reply(rows().map(r=>(r.rank?"#"+r.rank:"Unranked")+" "+r.name+" — "+r.score+" Network Supe Score — "+r.tier+(r.tier==="Unranked"?"":"-Rank")+" — "+r.credits+" VC").join("\n"));return;}
   if(cmd==="profile"){const id=i.options.getString("child",true);const r=rows().find(x=>x.id===id);if(!r){await i.reply({content:"Child not found.",ephemeral:true});return;}const p=state.ratings[id];await i.reply(["VOUGHT PROFILE — "+r.name,"Network Supe Score: "+r.score,"Vought Network Rank: "+(r.rank?"#"+r.rank:"Unranked"),"Tier: "+r.tier,"Vought Credits: "+r.credits+" VC","Rated messages: "+p.messages,"Rated voice minutes: "+p.voiceMinutes].join("\n"));return;}
   if(cmd==="store"){await updateStoreSurface(i.guild);await i.reply({content:"The Vought Network Store is pinned in <#"+PRIMARY_MATERIAL_CHANNEL+">. Use /cove network buy with the displayed product ID.",ephemeral:true});return;}
@@ -485,7 +510,7 @@ async function handleCommand(i:any) {
   if(cmd==="remind"){const mins=i.options.getInteger("minutes",true),repeat=i.options.getInteger("repeat_minutes"),count=i.options.getInteger("repeat_count")||1;state.reminders.push({id:"rem-"+Date.now(),guildId:i.guildId,channelId:i.channelId,userId:i.user.id,dueAt:Date.now()+mins*60000,text:i.options.getString("text",true),repeatEveryMs:repeat?repeat*60000:null,remaining:repeat?count:1});await saveState();await i.reply({content:"Reminder scheduled.",ephemeral:true});return;}
   if(cmd==="ticket-open"){const subject=i.options.getString("subject",true),id="ticket-"+Date.now().toString(36);state.tickets[id]={id,guildId:i.guildId,userId:i.user.id,subject,openedAt:new Date().toISOString(),status:"open"};await saveState();await log(i.guild,"TICKET OPEN "+id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+id+" opened. Subject: "+subject,ephemeral:true});return;}
   if(cmd==="ticket-close"){const ticket=Object.values(state.tickets).filter(t=>t.guildId===i.guildId&&t.userId===i.user.id&&t.status==="open").sort((a,b)=>b.openedAt.localeCompare(a.openedAt))[0];if(!ticket){await i.reply({content:"No open Vought support ticket found for you.",ephemeral:true});return;}ticket.status="closed";ticket.closedAt=new Date().toISOString();await saveState();await log(i.guild,"TICKET CLOSE "+ticket.id+" by "+i.user.id);await i.reply({content:"Vought support ticket "+ticket.id+" closed.",ephemeral:true});return;}
-  if(cmd==="announce"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const c=chan(i.guild,"hq")||i.channel,text="**"+(i.options.getString("title")||"Vought International")+"**\n"+i.options.getString("text",true),m=await c.send(text);await inviteChildrenResponse(m,text,"announcement");await i.reply({content:"Announcement issued.",ephemeral:true});return;}
+  if(cmd==="announce"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}const title=i.options.getString("title")||"Vought International",body=i.options.getString("text",true);if(sponsorshipsPaused()&&isCommercialCampaign(title+"\n"+body)){await log(i.guild,"COMMERCIAL ANNOUNCEMENT BLOCKED — sponsorship freeze");await i.reply({content:"Commercial sponsorships are paused. Paid-promotion announcements cannot be issued.",ephemeral:true});return;}const c=chan(i.guild,"hq")||i.channel,text="**"+title+"**\n"+body,m=await c.send(text);await inviteChildrenResponse(m,text,"announcement");await i.reply({content:"Announcement issued.",ephemeral:true});return;}
   if(cmd==="event-create"){const c=chan(i.guild,"hq")||i.channel,name=i.options.getString("name",true),mins=i.options.getInteger("minutes",true),details=i.options.getString("details")||"No additional details.",text="VOUGHT EVENT — "+name+"\nStarts <t:"+Math.floor((Date.now()+mins*60000)/1000)+":R>\n"+details+"\n✅ attending • ❔ maybe • ❌ unavailable";const m=await c.send(text);for(const e of ["✅","❔","❌"])await m.react(e).catch(()=>{});await inviteChildrenResponse(m,text,"event");await i.reply({content:"Event posted.",ephemeral:true});return;}
   if(cmd==="tag-set"){if(!isAdmin(i)){await i.reply({content:"Authorization denied.",ephemeral:true});return;}state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")]=i.options.getString("text",true);await saveState();await i.reply({content:"Tag saved.",ephemeral:true});return;}
   if(cmd==="tag"){const v=state.tags[i.guildId+":"+norm(i.options.getString("name",true)).replace(/ /g,"-")];await i.reply({content:v||"Vought tag not found.",ephemeral:!v});return;}
@@ -516,7 +541,7 @@ export async function startVoughtInternational() {
   await loadState(); for(const [id] of children) ensureChild(id);
   const intents=[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.GuildMembers];
   const client=new Client({intents,partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember]});
-  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);await updateStoreSurface(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
+  client.once(Events.ClientReady,async c=>{voughtInternationalStatus.state="ready";voughtInternationalStatus.applicationId=appId;const networkGuilds=[...c.guilds.cache.values()].filter(isNetworkGuild);await registerNetworkGroup(token,appId,networkGuilds.map(g=>g.id));for(const g of networkGuilds){await bootstrap(g);await log(g,"Network utility suite online.");await updateStats(g);await updateStoreSurface(g);await updateBrandSurface(g);}await saveState();console.info("[vought-international-ready]",JSON.stringify({guilds:networkGuilds.length}));});
   client.on(Events.InteractionCreate,i=>handleCommand(i).catch(async e=>{console.error("[vought-network-command-error]",e?.message||e);if(i.isRepliable()){const p={content:"Vought Network command failed.",ephemeral:true};if(i.replied||i.deferred)await i.followUp(p).catch(()=>{});else await i.reply(p).catch(()=>{});}}));
   client.on(Events.MessageCreate,async m=>{if(!m.guild||!isNetworkGuild(m.guild)||m.system)return;if(looksLikeDisboardBump(m)){const existing=bumpReminderFor(m.guildId);const armed=armBumpReminder(m.guildId,existing.channelId||PRIMARY_MATERIAL_CHANNEL);await log(m.guild,"DISBOARD BUMP detected; next reminder <t:"+Math.floor((armed.dueAt||0)/1000)+":F>");await saveState();return;}const guest=isNetworkGuest(m.member,m.guild);if(!guest)state.activity.messages++;if(!m.author.bot&&!guest){awardUser(m.author.id,2);const wk=m.guildId+":"+m.author.id;if(!state.welcomed[wk]){const r=await role(m.guild,NETWORK_MEMBER_ROLE).catch(()=>null);if(r&&m.member&&!m.member.roles.cache.has(r.id))await m.member.roles.add(r).catch(()=>{});state.welcomed[wk]=true;}const trig=state.triggers[m.guildId+":"+norm(m.content)];if(trig)await m.reply(trig.slice(0,1900)).catch(()=>{});}const child=guest?null:childFrom(m.member,m.author);if(child){ensureChild(child.id);const k=m.guildId+":"+child.id,last=state.cooldowns[k]||0;if(Date.now()-last>=60000){awardChild(child.id,1,2);state.ratings[child.id].messages++;state.cooldowns[k]=Date.now();}}const spamKey="spam:"+m.guildId+":"+m.author.id;const raw=(state as any)[spamKey]||[];(state as any)[spamKey]=raw.filter((x:number)=>Date.now()-x<8000);(state as any)[spamKey].push(Date.now());if(!m.author.bot&&(state as any)[spamKey].length>7){if(m.deletable)await m.delete().catch(()=>{});await log(m.guild,"ANTI-SPAM flagged <@"+m.author.id+"> in #"+m.channel.name);}await saveState();});
   client.on(Events.MessageReactionAdd,async (r,user)=>{if(user.bot)return;if(r.partial)try{await r.fetch();}catch{return;}if(!isNetworkGuild(r.message.guild))return;const g=state.giveaways[r.message.id];if(g&&!g.closed&&r.emoji.name==="🎟️"&&!g.entrants.includes(user.id))g.entrants.push(user.id);if(r.emoji.name==="⭐"&&r.count>=3&&!state.starboarded[r.message.id]){const c=chan(r.message.guild,"starboard");if(c?.isTextBased()){state.starboarded[r.message.id]=true;await c.send("⭐ "+r.count+" — #"+r.message.channel.name+"\n"+r.message.author+": "+(r.message.content||"[attachment]")+"\n"+r.message.url).catch(()=>{});}}await saveState();});
