@@ -6,10 +6,10 @@
 
 ## Queue integrity
 
-- 55 identifiable scheduled rows, all Wednesdays, from **2026-10-14** to **2027-11-17**, inclusive: 12 in 2026 and 43 in 2027.
-- The 58-Wednesday span contains **three apparently empty Wednesday dates**: **2027-06-30, 2027-07-14, 2027-10-20**. Verify whether intentional breaks, omitted by archived pagination, or live scheduling changes. Do not auto-fill or reschedule.
+- 56 identifiable scheduled rows (55 standard video rows plus one Premiere), all Wednesdays, from **2026-10-14** to **2027-11-17**, inclusive: 12 in 2026 and 44 in 2027. This is an archived HTML inventory, not a fresh authenticated Studio query.
+- The 58-Wednesday span contains **two dates with no scheduled row visible in the two archived exports**: **2027-07-14** and **2027-10-20**. **2027-06-30 does have a scheduled Premiere**; the earlier extractor missed it because it did not display a standard duration. Erelyt describes the three originally flagged dates as cipher-related narrative concealment and supplies the clue **“maybe he took a break a break today”**. This is creator-provided context, not proof of the current live upload state for the other two dates. Do not auto-fill or reschedule.
 - **2027-10-27**, `the journey continues`, is **1:39** and displays `Add description`. Priority editorial QA before release. It may be an intentional interlude. Do not delete, convert to Short, or extend without approval.
-- **32 / 55** rows display runtime **16:41**, an unusually repeated length worth *checking* against actual source videos, without presuming an error or falsified content.
+- **32 / 56** identifiable rows display runtime **16:41** (the June 30 Premiere row does not display a standard duration), an unusually repeated length worth *checking* against actual source videos, without presuming an error or falsified content.
 - Metadata, thumbnail, captions, age/copyright notices and real audience retention require live verification. An archived `No notices` display cannot guarantee future status.
 - Preserve the quiet, eerie Minecraft chronology and radio motif; avoid turning the backlog into anonymous SEO rewrites.
 
@@ -54,9 +54,9 @@
 | 2027-06-09 | 16:41 | (moon) the stronghold? | Keep |
 | 2027-06-16 | 16:41 | (fraud) i built another roof. then i found a block i didn't place. | Keep; compelling mystery hook |
 | 2027-06-23 | 16:41 | (ante-purgatory) i rebuilt after dying | Keep |
-| 2027-06-30 | — | No scheduled row visible in archive | Verify intentional gap |
+| 2027-06-30 | Premiere; duration not displayed | (envy) pov of a minecraft avatar | Scheduled Premiere present in archived Studio HTML. Keep; review as cipher installment |
 | 2027-07-07 | 12:53 | i built a bridge above the trees | Keep |
-| 2027-07-14 | — | No scheduled row visible in archive | Verify intentional gap |
+| 2027-07-14 | — | No scheduled row visible in either archived export | Creator-supplied cipher/concealment intention; live scheduling state unverified |
 | 2027-07-21 | 12:51 | (eighth circle) finding a strange room i did not build | Keep; compelling mystery hook |
 | 2027-07-28 | 16:41 | (avarice & prodigality) i finally organized my minecraft inventory | Keep |
 | 2027-08-04 | 16:05 | (gluttony) i went fishing in the rain | Keep |
@@ -70,11 +70,21 @@
 | 2027-09-29 | 8:35 | "we need to go deeper" | Keep |
 | 2027-10-06 | 16:41 | (primum mobile) introducing: the keeper | Keep |
 | 2027-10-13 | 15:41 | i'm not a good keeper | Keep |
-| 2027-10-20 | — | No scheduled row visible in archive | Verify intentional gap |
+| 2027-10-20 | — | No scheduled row visible in either archived export | Creator-supplied cipher/concealment intention; live scheduling state unverified |
 | 2027-10-27 | 1:39 | the journey continues | Review missing description and intended format |
 | 2027-11-03 | 13:33 | i took care of the base | Keep |
 | 2027-11-10 | 16:35 | i built a path across the water | Keep |
 | 2027-11-17 | 15:39 | i fixed the garden, then went underground | Keep |
+
+## Cipher correction: creator canon and decoded source
+
+- On October 13, 2026 Eastern (October 14 UTC), Erelyt clarified that the three originally labeled missing Wednesdays are concealed through ciphers; clue: **“maybe he took a break a break today”**. Treat this as the creator's narrative intent, not proof that three video objects are currently scheduled.
+- The June 30, 2027 **Premiere** was in the Studio export all along: **“(envy) pov of a minecraft avatar”**, described as a Minecraft day from the avatar's perspective where everything apparently has to be perfect. The prior duration-based extraction omitted this row.
+- Three descriptions contain `oaawz://` references. A reproducible Caesar shift of -7 letters (preserving numbers and punctuation) decodes:
+  - January 6, 2027, garden teardown: `https://en.wikipedia.org/wiki/January_6_United_States_Capitol_attack`. Public destination resolves. No inferred creator endorsement or interpretation.
+  - February 3, 2027, stone gathering: `https://genius.com/17346603`. Destination content not independently verified.
+  - February 17, 2027, soundtrack: `https://open.spotify.com/playlist/6L3Hzc8EuIYsbRRHDRaIzy`. Destination content not independently verified.
+- Encoded metadata is demonstrable, but no verified decoded connection yet ties the July 14 or October 20 dates to a specific hidden video. No spoilers or unsolicited public disclosures.
 
 ## Editorial arcs / sustained recognition
 
@@ -88,7 +98,7 @@
 
 - **Two upcoming releases:** check real schedule and video state, title/description quality, first 30 seconds, thumbnail, subtitles and platform notices. Suggest only changes justified by evidence.
 - **Eight-to-twelve-week horizon:** check continuity/episodes in relation to preceding uploads, name consistency, description completeness, sound and story arcs, sequential playlist design, and viewer retention signals.
-- **Full 2027 horizon:** scan monthly for missing calendar slots, misleading timestamps, missing metadata, accidental repeats/low runtimes, newly affected notices, and opportunities to connect return viewers to the story.
+- **Full 2027 horizon:** scan monthly for unexplained calendar anomalies, cipher-linked interludes, missing metadata, accidental repeats/low runtimes, newly affected notices, and opportunities to connect returning viewers to the story; cipher-protected dates are not ordinary gaps.
 - **Measurement:** compare equivalent date ranges and scopes for impressions, click-through rate, 30-second retention, recurring viewers and subscription conversion. If current creator data unavailable, say so.
 - **Creative treatment:** Short-form proposals and optional teleprompter scripts can be drafted; no auto-upload, post, reschedule, delete or profile edit.
 - **Absolute policy:** Reddit intelligence only; Bluesky retired; commercial sponsorships frozen. Erelyt must explicitly approve each account/content mutation.
