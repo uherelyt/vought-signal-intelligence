@@ -13,7 +13,7 @@ import {
 
 const API = "https://discord.com/api/v10";
 const PREFIX = "vought:children-of-the-endless:commands";
-const COMMAND_VERSION = "20261004-membership-vessel-split-2";
+const COMMAND_VERSION = "20261016-private-canon-bridge-v1";
 const RETIRED_MEMBER_COMMANDS = new Set(["thanatos", "perses"]);
 export const MEMBER_COMMANDS: Record<string, PersonaId> = {
   john: "john", orpheus: "orpheus", rose: "rose", distress: "distress",
