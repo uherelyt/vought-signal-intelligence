@@ -1,4 +1,5 @@
 import type { Redis } from "@upstash/redis";
+import { PRIVATE_CANON_COMMAND, handlePrivateCanonInteraction } from "./erelyt-canon-bridge.mjs";
 import {
   isChildrenDiscordImageAttachmentSupported,
   loadChildrenDiscordImageFiles,
@@ -43,6 +44,7 @@ export const CHILDREN_SLASH_COMMANDS = [
     name: "crew", type: 1, description: "Summon three people currently traveling aboard the vessel.",
     options: [messageOption, imageOption],
   },
+  PRIVATE_CANON_COMMAND,
 ];
 
 export type ChildrenInteraction = {
@@ -202,6 +204,7 @@ export async function ensureChildrenSlashCommands(redis: Redis) {
 }
 
 export async function handleChildrenInteraction(interaction: ChildrenInteraction) {
+  if (await handlePrivateCanonInteraction(interaction)) return;
   const appId = process.env.CHILDREN_DISCORD_APPLICATION_ID?.trim();
   if (!appId || interaction.application_id !== appId || !interaction.id || !interaction.token || interaction.type !== 2) return;
   const user = interaction.member?.user;
