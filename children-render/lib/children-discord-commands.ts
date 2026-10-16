@@ -1,4 +1,5 @@
 import type { Redis } from "@upstash/redis";
+import { PRIVATE_CANON_COMMAND, handlePrivateCanonInteraction } from "./erelyt-canon-bridge.mjs";
 import {
   isChildrenDiscordImageAttachmentSupported,
   loadChildrenDiscordImageFiles,
@@ -12,7 +13,7 @@ import {
 
 const API = "https://discord.com/api/v10";
 const PREFIX = "vought:children-of-the-endless:commands";
-const COMMAND_VERSION = "20261004-membership-vessel-split-2";
+const COMMAND_VERSION = "20261016-private-canon-bridge-v1";
 const RETIRED_MEMBER_COMMANDS = new Set(["thanatos", "perses"]);
 export const MEMBER_COMMANDS: Record<string, PersonaId> = {
   john: "john", orpheus: "orpheus", rose: "rose", distress: "distress",
@@ -43,6 +44,7 @@ export const CHILDREN_SLASH_COMMANDS = [
     name: "crew", type: 1, description: "Summon three people currently traveling aboard the vessel.",
     options: [messageOption, imageOption],
   },
+  PRIVATE_CANON_COMMAND,
 ];
 
 export type ChildrenInteraction = {
@@ -202,6 +204,7 @@ export async function ensureChildrenSlashCommands(redis: Redis) {
 }
 
 export async function handleChildrenInteraction(interaction: ChildrenInteraction) {
+  if (await handlePrivateCanonInteraction(interaction)) return;
   const appId = process.env.CHILDREN_DISCORD_APPLICATION_ID?.trim();
   if (!appId || interaction.application_id !== appId || !interaction.id || !interaction.token || interaction.type !== 2) return;
   const user = interaction.member?.user;
