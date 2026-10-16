@@ -89,7 +89,8 @@ test("slash registry includes /children and /crew", () => {
   const names = CHILDREN_SLASH_COMMANDS.map((row) => row.name);
   assert(names.includes("children"));
   assert(names.includes("crew"));
-  assert.equal(names.length, 9);
+  assert(names.includes("canon"));
+  assert.equal(names.length, 10);
 });
 
 
