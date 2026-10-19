@@ -6,4 +6,5 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 COPY . .
+RUN node --check scripts/redis-state-transfer.mjs && node --check scripts/vercel-daemon-preflight.mjs
 CMD ["sh", "-c", "node scripts/vercel-daemon-preflight.mjs && exec npm start"]
