@@ -4,8 +4,26 @@
     {
       "source": "/docs/(.*)",
       "headers": [
-        {"key": "X-Robots-Tag", "value": "noindex, nofollow"}
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
       ]
     }
-  ]
+  ],
+  "daemons": {
+    "voughtcord": {
+      "root": "children-render/",
+      "entrypoint": "Dockerfile",
+      "instances": {
+        "iad1": 0
+      },
+      "resources": {
+        "requests": {
+          "memory": "1Gi"
+        }
+      },
+      "terminationGracePeriodSeconds": 45
+    }
+  }
 }
