@@ -87,7 +87,9 @@ async function load(file) {
     throw new Error('Invalid snapshot header');
   }
   const rows = lines.slice(1,-1).map(line => safeEntry(JSON.parse(line)));
-  const digest = createHash('sha256').update(lines.slice(1,-1).join('\n') + '\n').digest('hex');
+  const payloadLines = lines.slice(1,-1);
+  const digest = createHash('sha256').update(payloadLines.map(line => line + '\
+').join('')).digest('hex');
   if (footer.count !== rows.length || footer.sha256 !== digest) throw new Error('Snapshot digest/count mismatch');
   if (rows.length > MAX_KEYS || new Set(rows.map(x=>x.key)).size !== rows.length) throw new Error('Duplicate or excessive snapshot keys');
   return {header,rows,footer};
