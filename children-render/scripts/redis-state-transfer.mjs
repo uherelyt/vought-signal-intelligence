@@ -88,8 +88,7 @@ async function load(file) {
   }
   const rows = lines.slice(1,-1).map(line => safeEntry(JSON.parse(line)));
   const payloadLines = lines.slice(1,-1);
-  const digest = createHash('sha256').update(payloadLines.map(line => line + '\
-').join('')).digest('hex');
+  const digest = createHash('sha256').update(payloadLines.length ? payloadLines.join(String.fromCharCode(10)) + String.fromCharCode(10) : '').digest('hex');
   if (footer.count !== rows.length || footer.sha256 !== digest) throw new Error('Snapshot digest/count mismatch');
   if (rows.length > MAX_KEYS || new Set(rows.map(x=>x.key)).size !== rows.length) throw new Error('Duplicate or excessive snapshot keys');
   return {header,rows,footer};
